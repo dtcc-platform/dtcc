@@ -1,3 +1,7 @@
+---
+sidebar_position: 1
+---
+
 # Introduction
 
 The DTCC Platform is an open-source platform for the exploration of

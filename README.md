@@ -1,7 +1,9 @@
 # DTCC Platform
 
-DTCC Platform is a meta package for the collection of DTCC Components.
-It is used to host common and generic code, documentation, and issues.
+DTCC is a meta package for DTCC Platform. It imports all other DTCC
+packages and provides a common interface to DTCC Platform.
+
+This package is also used to host common documentation and issues.
 
 This project is part the
 [Digital Twin Platform (DTCC Platform)](https://gitlab.com/dtcc-platform)

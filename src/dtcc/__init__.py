@@ -1,14 +1,10 @@
-# Option A: Expose all functions in the root namespace
-from dtcc_io import load_pointcloud, load_footprints
-from dtcc_builder import build_citymodel
-from dtcc_viewer import view
+import dtcc_model
+import dtcc_io
 
-__all__ = ['load_pointcloud', 'load_footprints', 'build_citymodel']
-
-# Option B: Require explicit import of functions
-# import dtcc_model as model
-# import dtcc_io as io
-# import dtcc_builder as builder
-# import dtcc_viewer as viewer
-
-# __all__ = ['model', 'io', 'builder', 'viewer']
+# Collect __all__ from submodules
+modules = [dtcc_model, dtcc_io]
+__all__ = []
+for module in modules:
+    for name in module.__all__:
+        globals()[name] = getattr(module, name)
+    __all__ += module.__all__

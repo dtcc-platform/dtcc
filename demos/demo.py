@@ -1,11 +1,6 @@
 from dtcc import *
 
-# Load data
-pointcloud = load_pointcloud('pointcloud.laz')
-footprints = load_footprints('footprints.shp')
+citymodel = load_citymodel('PropertyMap.shp')
+view_citymodel(citymodel)
 
-# Build citymodel
-# citymodel = builder.build_citymodel(pointcloud, footprints)
-
-# View citymodel
-# viewer.view_citymodel(citymodel)
+# FIXME: Extend to building model using dtcc-builder when up and running

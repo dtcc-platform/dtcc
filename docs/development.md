@@ -29,7 +29,7 @@ Scripts and binaries that are installed on the system should be named
 small utility scripts) should be named `foo-bar` (without `dtcc-`).
 
 ## Code formatting
-For python code we use the `black` formatter. For instructions on how to set it up for Visual Studio Code, se for example 
+For python code we use the `black` formatter. All python code should be run through `black` with default settings before commiting.  For instructions on how to set it up for Visual Studio Code, see for example. 
 https://dev.to/adamlombard/how-to-use-the-black-python-code-formatter-in-vscode-3lo0
 
 ## Git practices

@@ -29,7 +29,7 @@ Scripts and binaries that are installed on the system should be named
 small utility scripts) should be named `foo-bar` (without `dtcc-`).
 
 ## Code formatting
-For python code we use the `black` formatter. All python code should be run through `black` with default settings before commiting.  For instructions on how to set it up for Visual Studio Code, see for example. 
+For python code we use the `black` formatter. All python code should be run through `black` with default settings before commiting.  For instructions on how to set it up for Visual Studio Code, see for example.
 https://dev.to/adamlombard/how-to-use-the-black-python-code-formatter-in-vscode-3lo0
 
 ## Git practices
@@ -59,7 +59,7 @@ If you have already cloned a repository and want to load all submodules, use
 
     git submodule update --init
 
-### Remote development
+### Remote development with sshfs
 
 Remote development is an alternative to local development (building
 and running on the host system) and also an alternative to local
@@ -109,7 +109,7 @@ available on the local system. Fire up your editor on the local system
 to edit source files and do everything else in one or more terminals
 to the remote system: `git`, `cmake`, `make` etc.
 
-## Remote development in VS Code
+### Remote development in VS Code
 
 On the left-side menu, go to Remote Explorer, on the SSH line press the + sign and add `username@develop.dtcc.chalmers.se` for the case of user `username` and the host being `develop.dtcc.chalmers.se`
 

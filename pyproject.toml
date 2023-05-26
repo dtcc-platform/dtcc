@@ -5,20 +5,23 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "dtcc"
 version = "0.0.1"
-description="DTCC"
+description = "DTCC"
 readme = "README.md"
 authors = [
-  { name = "Anders Logg", email = "logg@chalmers.se" }
+  { name = "Dag Wästberg", email = "dwastberg@gmail.com" },
+  { name = "Anders Logg", email = "logg@chalmers.se" },
 ]
 requires-python = ">=3.8"
 classifiers = [
   "Intended Audience :: Science/Research",
   "Programming Language :: Python :: 3",
-  "License :: OSI Approved :: MIT License"
+  "License :: OSI Approved :: MIT License",
 ]
 dependencies = [
   "dtcc-model@git+https://github.com/dtcc-platform/dtcc-model.git@develop",
-  "dtcc-io@git+https://github.com/dtcc-platform/dtcc-io.git@develop"  
+  "dtcc-io@git+https://github.com/dtcc-platform/dtcc-io.git@develop",
+  "dtcc-builder@git+https://github.com/dtcc-platform/dtcc-builder.git@develop",
+  "dtcc-viewer@git+https://github.com/dtcc-platform/dtcc-viewer.git@develop",
 ]
 
 [project.optional-dependencies]

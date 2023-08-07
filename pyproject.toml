@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dtcc"
-version = "0.0.1"
+version = "0.7.1"
 description = "DTCC"
 readme = "README.md"
 authors = [
@@ -22,6 +22,7 @@ dependencies = [
   "dtcc-io@git+https://github.com/dtcc-platform/dtcc-io.git@develop",
   "dtcc-builder@git+https://github.com/dtcc-platform/dtcc-builder.git@develop",
   "dtcc-viewer@git+https://github.com/dtcc-platform/dtcc-viewer.git@develop",
+  "dtcc-wrangler@git+https://github.com/dtcc-platform/dtcc-wrangler.git@develop",
 ]
 
 [project.optional-dependencies]

@@ -1,12 +1,12 @@
 import dtcc_model as model
 import dtcc_io as io
+import dtcc_wrangler as wrangler
 import dtcc_builder as builder
 import dtcc_viewer as viewer
-import dtcc_wrangler
 
 
 # Collect __all__ from submodules
-modules = [model, io, builder, viewer]
+modules = [model, io, wrangler, builder, viewer]
 __all__ = []
 for module in modules:
     for name in module.__all__:

@@ -1,0 +1,59 @@
+#!/usr/bin/env python3
+#
+# Copyright (C) 2023 Anders Logg
+# Licensed under the MIT License
+#
+# Simple script for printing a summary of the API for dtcc.
+
+import inspect
+import dtcc
+
+def get_objects(module):
+    modules = []
+    classes = []
+    functions = []
+    for name in dir(module):
+        obj = getattr(module, name)
+        if inspect.ismodule(obj):
+            modules.append((name, obj))
+        elif inspect.isclass(obj):
+            classes.append((name, obj))
+        elif inspect.isfunction(obj):
+            functions.append((name, obj))
+    return modules, classes, functions
+
+def print_modules(modules):
+    print("## Modules\n")
+    for name, module in modules:
+        print(f"* `{name}`")
+    print("")
+
+def print_classes(classes):
+    print("## Classes\n")
+    for name, cls in classes:
+        print(f"### {name}")
+        print(cls.__doc__)
+    print("")
+
+def print_functions(functions):
+    print("## Functions:\n")
+    for name, func in functions:
+        print("###", name + "()")    
+        print(func.__doc__)
+    print("")
+
+modules, classes, functions = get_objects(dtcc)
+
+# Print summary of API for top-level module
+print("# Summary of API for dtcc\n")
+print_modules(modules)
+print_classes(classes)
+print_functions(functions)
+
+# Print summary of API for sub-modules
+for name, module in modules:
+    print("# Summary of API for dtcc.%s\n" % name)
+    modules, classes, functions = get_objects(module)
+    print_modules(modules)
+    print_classes(classes)
+    print_functions(functions)

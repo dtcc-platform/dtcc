@@ -8,6 +8,7 @@
 * `module`
 * `proto`
 * `viewer`
+* `wrangler`
 
 ## Classes
 
@@ -91,13 +92,6 @@ VolumeMeshVectorField(mesh: dtcc_model.meshes.Mesh = <factory>, values: numpy.nd
     Developer note: Consider introducing a new class named Footprints
     so that a city can be built from footprints and point cloud data.
     It is somewhat strange that the input to this function is a city.
-    
-### build_dem()
-
-    Build digital elevation model from point cloud.
-
-    The DEM is computed from ground points only if ground classifiction
-    is available. The DEM is returned as a raster.
     
 ### build_mesh()
 
@@ -196,13 +190,6 @@ A point cloud is a set of points with associated attributes.
     so that a city can be built from footprints and point cloud data.
     It is somewhat strange that the input to this function is a city.
     
-### build_dem()
-
-    Build digital elevation model from point cloud.
-
-    The DEM is computed from ground points only if ground classifiction
-    is available. The DEM is returned as a raster.
-    
 ### build_mesh()
 
     Build mesh for city.
@@ -223,7 +210,6 @@ Build volume mesh for city.
 
 * `bounds`
 * `city`
-* `dtcc_io`
 * `fields`
 * `generic`
 * `gridfield`
@@ -231,7 +217,6 @@ Build volume mesh for city.
 * `logging`
 * `meshes`
 * `pointcloud`
-* `process`
 * `raster`
 * `roadnetwork`
 
@@ -565,4 +550,21 @@ None
 None
 ### view_pointcloud()
 None
+
+# Summary of API for dtcc.wrangler
+
+## Modules
+
+* `city`
+* `geometry`
+* `logging`
+* `pointcloud`
+* `raster`
+* `register`
+
+## Classes
+
+
+## Functions:
+
 

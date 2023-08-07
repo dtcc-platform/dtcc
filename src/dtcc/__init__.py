@@ -6,6 +6,8 @@ import dtcc_builder
 import dtcc_builder as builder
 import dtcc_viewer
 import dtcc_viewer as viewer
+import dtcc_wrangler
+
 
 # Collect __all__ from submodules
 modules = [dtcc_model, dtcc_io]

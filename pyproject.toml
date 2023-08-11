@@ -22,15 +22,12 @@ dependencies = [
   "dtcc-io@git+https://github.com/dtcc-platform/dtcc-io.git@develop",
   "dtcc-builder@git+https://github.com/dtcc-platform/dtcc-builder.git@develop",
   "dtcc-viewer@git+https://github.com/dtcc-platform/dtcc-viewer.git@develop",
-  "dtcc-wrangler@git+https://github.com/dtcc-platform/dtcc-wrangler.git@develop",
-  "sphinx",
-  "python-docs-theme",
-  "pydata-sphinx-theme"
+  "dtcc-wrangler@git+https://github.com/dtcc-platform/dtcc-wrangler.git@develop"
 ]
 
 [project.optional-dependencies]
 test = ["pytest"]
-docs = ["sphinx", "python_docs_theme"]
+docs = ["sphinx", "python_docs_theme", "pydata_sphinx_theme"]
 
 [tool.scikit-build]
 wheel.expand-macos-universal-tags = true

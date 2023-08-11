@@ -27,6 +27,7 @@ dependencies = [
 
 [project.optional-dependencies]
 test = ["pytest"]
+docs = ["sphinx", "python_docs_theme"]
 
 [tool.scikit-build]
 wheel.expand-macos-universal-tags = true

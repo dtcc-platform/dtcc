@@ -6,4 +6,4 @@ DTCC Platform API
     :undoc-members:
     :show-inheritance:
     :inherited-members:
-    
+    :exclude-members: add_methods

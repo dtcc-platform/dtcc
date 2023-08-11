@@ -23,6 +23,9 @@ dependencies = [
   "dtcc-builder@git+https://github.com/dtcc-platform/dtcc-builder.git@develop",
   "dtcc-viewer@git+https://github.com/dtcc-platform/dtcc-viewer.git@develop",
   "dtcc-wrangler@git+https://github.com/dtcc-platform/dtcc-wrangler.git@develop",
+  "sphinx",
+  "python-docs-theme",
+  "pydata-sphinx-theme"
 ]
 
 [project.optional-dependencies]

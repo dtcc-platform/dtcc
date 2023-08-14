@@ -29,7 +29,8 @@ Scripts and binaries that are installed on the system should be named
 small utility scripts) should be named `foo-bar` (without `dtcc-`).
 
 ## Code formatting
-For python code we use the `black` formatter. All python code should be run through `black` with default settings before commiting.  For instructions on how to set it up for Visual Studio Code, see for example.
+
+For python code we use the `black` formatter. All python code should be run through `black` with default settings before commiting.  or instructions on how to set it up for Visual Studio Code, see for example.
 https://dev.to/adamlombard/how-to-use-the-black-python-code-formatter-in-vscode-3lo0
 
 ## Git practices
@@ -42,10 +43,30 @@ DTCC Platform uses the following Git practices:
 * Branches for development (new features) should be named `dev/branch-name` where `branch-name` is a free form descriptive name.
 * Branches for fixes (bugs, small things) should be named `fix/branch-name` where `branch-name` is a free form descriptive name.
 * Branches that will (likely) not be merged but kept for reference should be named `old/branch-name` where `branch-name` is a free form descriptive name.
-* Note that hyp
+* Note that hypens should be used for naming (not underscore).
 * When the work is done, make a pull request for merging the branch into `develop`.
 * When the work has been merged, the branch should be deleted to keep things tidy.
 * When making a release, `develop` is merged into `main` and a release is made from `main`.
+
+## Versioning
+
+DTCC Platform uses semantic versioning (SemVer). It uses a three-part number system in the format of MAJOR.MINOR.PATCH, where:
+
+* MAJOR version is incremented for incompatible API changes.
+* MINOR version is incremented for new features that are backwards-compatible.
+* PATCH version is incremented for backwards-compatible bug fixes.
+
+The version number is set in the `pyproject.toml` file for each repo.
+
+During early development (before the release of 1.0.0) API changes are expected
+to happen often and will not lead to incrementation of the MAJOR number (which
+stays at 0). During this phase, the MINOR number will work in the same way as
+the MAJOR version; that is, the MINOR number should be incremented for incompatible
+API changes. Note that the MINOR number may then advance well beyond 9
+(e.g. 0.29.1, 0.31.3, etc) before we release 1.0.0.
+
+During early development, the MINOR number should stay the same for all
+projects (repos) and post 1.0.0, the MAJOR number should stay the same.
 
 ## Tips & tricks
 

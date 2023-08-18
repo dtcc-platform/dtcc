@@ -281,4 +281,3 @@ signs respectively.
 Then you can use ``Open...`` for opening a folder/file (eg
 ``/home/username/dtcc-builder``) and ``Terminal-> New terminal`` to have
 a new terminal connected.
-Another CI test, Wednesday!!

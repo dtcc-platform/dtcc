@@ -17,8 +17,6 @@ Technology. The aim is to develop an open modelling, simulation and
 visualisation platform for interactive planning, design, and exploration of
 cities.
 
-
-
 Table of contents
 -----------------
 

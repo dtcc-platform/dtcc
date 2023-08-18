@@ -97,14 +97,12 @@ Writing documentation
 
 Documentation is automatically extracted (by Sphinx) from Python docstrings.
 ChatGPT can assist in writing the docstrings. The following prompt can be
-helpful in generated the docstrings::
+helpful when generating the docstrings::
 
-   You are a senior developer and expert in writing good documentation. You take
-   great pride in writing informative, consise and consistent documentation for
-   your Python code. Your favourite tool is the Sphinx documentation system and you
-   know all about how to write good docstrings so that the documentation looks
-   great when it is auto-generated from Python code. In particular, you adhere to
-   the following templates from
+   I want you to generate docstrings for Python code. The docstrings should
+   be consice, consistent, and informative. The docstrings should be in the
+   format of the Sphinx documentation system (restructured text) and follow
+   NumPy docstring style according to the following templates from the page
    https://www.sphinx-doc.org/en/master/usage/extensions/example_numpy.html:
 
    def function_with_types_in_docstring(param1, param2):
@@ -144,7 +142,6 @@ helpful in generated the docstrings::
       -------
       bool
          True if successful, False otherwise.
-
       """
 
    class ExampleClass:
@@ -201,25 +198,6 @@ helpful in generated the docstrings::
          self.attr5 = None
          """str: Docstring *after* attribute, with type specified."""
 
-      @property
-      def readonly_property(self):
-         """str: Properties should be documented in their getter method."""
-         return "readonly_property"
-
-      @property
-      def readwrite_property(self):
-         """list(str): Properties with both a getter and setter
-         should only be documented in their getter method.
-
-         If the setter method contains notable behavior, it should be
-         mentioned here.
-         """
-         return ["readwrite_property"]
-
-      @readwrite_property.setter
-      def readwrite_property(self, value):
-         value
-
       def example_method(self, param1, param2):
          """Class methods are similar to regular functions.
 
@@ -242,8 +220,39 @@ helpful in generated the docstrings::
          """
          return True
 
-   I will supply a number of functions and class definitions and want you to return
-   the corresponding docstrings.
+      In summary, the docstrings should be formatted as follows:
+
+      For classes:
+
+      * Start with a short description (one line).
+      * Then give a detailed description over several lines (if possible).
+      * List attributes under the Attributes section.
+
+      For functions:
+
+      * Start with a short description (one line).
+      * List parameters under the Parameters section.
+      * Detail the return type and its description under the Returns section (if there's a return value).
+
+      For methods:
+
+      * Start with a short description (one line).
+      * List parameters under the Parameters section (excluding self for class methods).      
+      * Detail the return type and its description under the Returns section (if there's a return value).      
+
+      For properties:
+
+      * Start with a short description (one line).
+      * Detail the return type and its description under the Returns section.            
+
+      I will supply a number of functions and class definitions and want you to return
+      the corresponding docstrings. Please provide docstrings for all the provided
+      code (not just some of it) and don't forget to document class attributes under
+      the Attributes section.
+
+Use ChatGPT to generate the docstrings but make sure to check that the
+docstrings make sense and are consistent with the templates above. Also be
+careful to only copy the docstrings into the code (don't modify the code itself).
 
 Tips & tricks
 -------------

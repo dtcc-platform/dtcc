@@ -25,11 +25,13 @@ jobs:
     steps:
     # VN at 16 March 2023: checkout/v3 causes some weird issues, so went for manual cloning instead...
     #- uses: actions/checkout@v3
-    - name: clone repo
-      run: git clone https://github.com/dtcc-platform/${{ github.event.repository.name }} -b $BRANCH && pwd
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+    #- name: clone repo
+    #  run: git clone https://github.com/dtcc-platform/${{ github.event.repository.name }} -b $BRANCH && pwd
     - name: pip install
       run: export PATH="$pythonLocation:$PATH" && python --version && export "DEB_PYTHON_INSTALL_LAYOUT=deb_system" && pip install ${{ github.event.repository.name }}/
-      shell: bash {0}
+    #  shell: bash {0}
     #- name: cmake install
     #  run: cd ${{ github.event.repository.name }}/build/ && cmake .. && make all && sudo make install && cd ..
     - name: run tests

@@ -13,7 +13,7 @@ jobs:
   build:
     strategy:
       matrix: 
-        os: [ubuntu-latest, macos-latest]#, windows-latest, macos-latest]
+        os: [macos-latest]#, windows-latest, macos-latest]
         python-version: ["3.10"]
     runs-on: ${{ matrix.os }}
     # Placeholder for Docker on our Amazon AWS Runner
@@ -29,6 +29,7 @@ jobs:
       run: git clone https://github.com/dtcc-platform/${{ github.event.repository.name }} -b $BRANCH && pwd
     - name: pip install
       run: export "DEB_PYTHON_INSTALL_LAYOUT=deb_system" && pip install ${{ github.event.repository.name }}/
+      shell: bash {0}
     #- name: cmake install
     #  run: cd ${{ github.event.repository.name }}/build/ && cmake .. && make all && sudo make install && cd ..
     - name: run tests

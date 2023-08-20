@@ -27,19 +27,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v2
-        with:
-          node-version: 16
+      #- name: Setup Node.js
+      #  uses: actions/setup-node@v2
+      #  with:
+      #    node-version: 16
 
       - name: Install dependencies and build
         run:
           #pwd && ls -alt && ls bin/ && cd bin/ && cat build-docs 
           #./bin/build-docs && cd website && ls && npm install && npm run build && ls
           #&& cd website && npm install && npm run build
-          pwd
-          ls -alt
-          cd docs && make html
+          pwd && ls -alt && cd docs && cd sphinx ls -alt
+          #cd docs && make html
         shell: bash
 
 

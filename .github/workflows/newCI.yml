@@ -37,7 +37,7 @@ jobs:
           #pwd && ls -alt && ls bin/ && cd bin/ && cat build-docs 
           #./bin/build-docs && cd website && ls && npm install && npm run build && ls
           #&& cd website && npm install && npm run build
-          pwd && ls -alt && cd docs && ls -alt && make html #&& cd sphinx && ls -alt && make html
+          pwd && ls -alt && cd docs && ls -alt && pip install sphinx_immaterial && make  #&& cd sphinx && ls -alt && make html
         shell: bash
 
 

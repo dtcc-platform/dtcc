@@ -30,7 +30,7 @@ jobs:
     #- name: clone repo
     #  run: git clone https://github.com/dtcc-platform/${{ github.event.repository.name }} -b $BRANCH && pwd
     - name: pip install
-      run: ls -alt && export PATH="$pythonLocation:$PATH" && python --version && export "DEB_PYTHON_INSTALL_LAYOUT=deb_system" && pip install ${{ github.event.repository.name }}/
+      run: ls -alt && export PATH="$pythonLocation:$PATH" && python --version && export "DEB_PYTHON_INSTALL_LAYOUT=deb_system" && pip install .#${{ github.event.repository.name }}/
     #  shell: bash {0}
     #- name: cmake install
     #  run: cd ${{ github.event.repository.name }}/build/ && cmake .. && make all && sudo make install && cd ..

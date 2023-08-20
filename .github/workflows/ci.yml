@@ -13,7 +13,7 @@ jobs:
   build:
     strategy:
       matrix: 
-        os: [ubuntu-latest]#, windows-latest, macos-latest]
+        os: [ubuntu-latest, macos-latest]#, windows-latest, macos-latest]
     runs-on: ubuntu-latest
     # Placeholder for Docker on our Amazon AWS Runner
     #container:

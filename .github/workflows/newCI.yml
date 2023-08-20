@@ -1,0 +1,78 @@
+name: CI
+
+on:
+ workflow_dispatch:
+ push:
+    branches:
+      - develop
+ pull_request:
+    branches:
+      - develop
+#  workflow_dispatch:
+    # Inputs the workflow accepts.
+    #inputs:
+    #  name:
+    #    # Friendly description to be shown in the UI instead of 'name'
+    #    description: 'Variable'
+    #    # Default value if no value is explicitly provided
+    #    default: 'None'
+    #    # Input has to be provided for the workflow to run
+    #    required: true
+env:
+  S3_BUCKET: dtccplatform
+  
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: 16
+
+      - name: Install dependencies and build
+        run:
+          #pwd && ls -alt && ls bin/ && cd bin/ && cat build-docs 
+          #./bin/build-docs && cd website && ls && npm install && npm run build && ls
+          #&& cd website && npm install && npm run build
+          pwd
+          ls -alt
+          cd docs && make html
+        shell: bash
+
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: website-build
+          path: website/build/
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: website-build
+          path: website/build/
+
+      - name: Setup AWS CLI
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-north-1
+
+      - name: Deploy to S3
+        run: |
+          cd website/build
+          aws cloudfront create-invalidation --distribution-id E2X21HEI2MF4EQ --paths "/*" 
+          aws s3 ls s3://$S3_BUCKET
+          aws s3 sync . s3://$S3_BUCKET

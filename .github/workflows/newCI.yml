@@ -72,6 +72,7 @@ jobs:
           pwd
           ls -altR
           cd docs/build
-          aws cloudfront create-invalidation --distribution-id E2X21HEI2MF4EQ --paths "/*" 
           aws s3 ls s3://$S3_BUCKET
           aws s3 sync . s3://$S3_BUCKET
+          aws cloudfront create-invalidation --distribution-id E2X21HEI2MF4EQ --paths "/*" 
+

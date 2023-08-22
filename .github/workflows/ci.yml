@@ -32,9 +32,9 @@ jobs:
     - name: pip install MacOS/Ubuntu
       run: ls -alt && export PATH="$pythonLocation:$PATH" && python --version && export "DEB_PYTHON_INSTALL_LAYOUT=deb_system" && pip install .
       if: matrix.os != 'windows-latest'
-    #- name: pip install Windows
-    #- if: matrix.os == 'windows-latest'
-    #  run: echo %cd%  
+    - name: pip install Windows
+      run: echo %cd%  
+      if: matrix.os == 'windows-latest'
       # ${{ github.event.repository.name }}/
     #  shell: bash {0}
     #- name: cmake install

@@ -36,7 +36,7 @@ jobs:
     #- name: cmake install
     #  run: cd ${{ github.event.repository.name }}/build/ && cmake .. && make all && sudo make install && cd ..
     - name: run tests
-      run: pwd && ls -alt && cd ${{ github.event.repository.name }}/tests && pwd && ls -alt && sh run-tests
+      run: pwd && ls -alt && cd tests/ && pwd && ls -alt && sh run-tests
     - name: cleanup op
       if: always()
       run : sudo find /Runner/Runner/_work/${{ github.event.repository.name }}/. -name . -o -prune -exec rm -rf -- {} + || true

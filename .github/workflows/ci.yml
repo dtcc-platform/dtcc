@@ -29,9 +29,10 @@ jobs:
     - uses: actions/setup-python@v2
     #- name: clone repo
     #  run: git clone https://github.com/dtcc-platform/${{ github.event.repository.name }} -b $BRANCH && pwd
-    - name: pip install
+    - name: pip install MacOS/Ubuntu
     - if: matrix.os != 'windows-latest'
       run: ls -alt && export PATH="$pythonLocation:$PATH" && python --version && export "DEB_PYTHON_INSTALL_LAYOUT=deb_system" && pip install .
+    - name: pip install Windows
     - if: matrix.os == 'windows-latest'
       run: echo %cd%  
       # ${{ github.event.repository.name }}/

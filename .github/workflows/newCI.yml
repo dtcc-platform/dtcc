@@ -25,7 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       #- name: Setup Node.js
       #  uses: actions/setup-node@v2
@@ -37,7 +37,7 @@ jobs:
           #pwd && ls -alt && ls bin/ && cd bin/ && cat build-docs 
           #./bin/build-docs && cd website && ls && npm install && npm run build && ls
           #&& cd website && npm install && npm run build
-          pwd && ls -alt && cd docs && ls -alt && pip install sphinx_immaterial && make  #&& cd sphinx && ls -alt && make html
+          pwd && pip show dtcc && ls -alt && cd docs && ls -alt && pip install sphinx_immaterial && make  #&& cd sphinx && ls -alt && make html
         shell: bash
 
 

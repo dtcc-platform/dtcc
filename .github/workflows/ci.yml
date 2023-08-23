@@ -41,9 +41,10 @@ jobs:
     #  run: cd ${{ github.event.repository.name }}/build/ && cmake .. && make all && sudo make install && cd ..
     - name: run tests
       run: pwd && ls -alt && cd tests/ && pwd && ls -alt && sh run-tests
-    - name: cleanup op
-      if: always()
-      run : sudo find /Runner/Runner/_work/${{ github.event.repository.name }}/. -name . -o -prune -exec rm -rf -- {} + || true
+      if: matrix.os != 'windows-latest'
+    #- name: cleanup op
+    #  if: always()
+    #  run : sudo find /Runner/Runner/_work/${{ github.event.repository.name }}/. -name . -o -prune -exec rm -rf -- {} + || true
     # This fails after checkout/v3 was not used
     #- name: more cleanup ops
     #  run : pwd && sudo rm -rf /home/ubuntu/Runner/actions-runner/_work/${{ github.event.repository.name }}

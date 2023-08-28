@@ -1,4 +1,4 @@
-name: CI-docs
+name: CI-docs-old
 
 on:
   push:

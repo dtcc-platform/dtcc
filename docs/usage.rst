@@ -6,7 +6,7 @@ Usage
 Visualisation
 ------------
 
-The DTCC platform provides an integrated viewer which has the capability 
+The DTCC platform provides an integrated viewer which has the capability
 to display large quatities of geometry, including meshes and point clouds.
 
 To visualise a point cloud colored by the x-position of the points:
@@ -77,7 +77,7 @@ using a slightly different approch:
     # Import point clodus to be viewed
     pc_a = pointcloud.load("../../../data/models/PointCloud_HQ_A.csv")
     pc_b = pointcloud.load("../../../data/models/PointCloud_HQ_B.csv")
-    
+
     # Create data for coloring each mesh
     pc_data_a = pc_a.points[:, 0]
     pc_data_b = pc_b.points[:, 1]
@@ -99,4 +99,24 @@ using a slightly different approch:
 
     window.render_multi(mesh_data_list, pc_data_list)
 
+Viewer controls
+^^^^^^^^^^^^^^^
 
+Once the DTCC Viewer is running and a graphics window is open, the following mouse and key commands are used to control the viewer:
+
+Viewport navigation:
+* Left mouse button - Rotate the view around the camera target
+* Right mouse button - Panning the view, thus moving the camera target
+* Scroll - Zoom in and out at the current camera target
+
+Mesh viewing options:
+* Q - Toggle visualisation of mesh **On** and **Off**
+* W - Toggle color options between **Monochrome** and **Colored by data**
+* E - Swich viewing mode between: **Wireframe**, **Diffuse Shaded**, **Fancy Shaded** (default), **Shadow Shaded**
+* R - Toggle animation of light source position that cast shadows (only impacts "Fancy Shaded" and "Shadow Shaded" viewing mode)
+
+Point cloud viewing options:
+* A - Toggle visualisation of point cloud **On** and **Off**
+* S - Toggle colors options between **Monochrome** and **Colored by data**
+* D - Reduce particle size by 20%
+* F - Increase particle size by 20%

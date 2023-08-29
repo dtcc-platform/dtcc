@@ -15,8 +15,19 @@ data, enter the `data` directory and issue the following command:
 > restrictions from the data owners).
 
 
+Loading and saving data
+-----------------------
+
+**@dag Write docs for dtcc-io here**
+
+**Note old copied text below that needs editing!**
+
 Building city models
 --------------------
+
+**@logg Write docs for dtcc-builder here**
+
+**Note old copied text below that needs editing!**
 
 DTCC Builder is a mesh generator for automatic, efficient, and robust
 mesh generation for large-scale city modeling and simulation.

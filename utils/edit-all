@@ -3,14 +3,15 @@
 # Copyright (C) 2023 Anders Logg
 # Licensed under the MIT License
 #
-# Simple script for pulling all core repos.
+# Simple script for editing all core repos.
+
+FILE="README.md"
 
 for p in `cat utils/projects.csv`; do
-    echo "Pulling latest develop in $p"
+    echo "Editing $FILE in $p"
     echo "---------------------------------------------------"
     cd ../$p
-    git checkout develop
-    git pull
+    $EDITOR $FILE
     cd ../dtcc
     echo ""
 done

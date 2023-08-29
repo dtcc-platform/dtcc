@@ -9,8 +9,7 @@ for p in `cat utils/projects.csv`; do
     echo "Pulling latest develop in $p"
     echo "---------------------------------------------------"
     cd ../$p
-    git checkout develop
-    git pull
+    git commit -a
     cd ../dtcc
     echo ""
 done

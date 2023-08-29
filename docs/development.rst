@@ -22,7 +22,7 @@ Platform.
 variable ``snake_case``   ``snake_case``   ``camelCase``
 function ``snake_case()`` ``snake_case()`` ``camelCase()``
 class    ``PascalCase``   ``PascalCase``   ``CamelCase``
-module   ``snake_case``                    
+module   ``snake_case``
 ======== ================ ================ ===============
 
 In addition to this, DTCC Platform uses ``kebab-case`` for naming API
@@ -237,13 +237,13 @@ helpful when generating the docstrings::
       For methods:
 
       * Start with a short description (one line).
-      * List parameters under the Parameters section (excluding self for class methods).      
-      * Detail the return type and its description under the Returns section (if there's a return value).      
+      * List parameters under the Parameters section (excluding self for class methods).
+      * Detail the return type and its description under the Returns section (if there's a return value).
 
       For properties:
 
       * Start with a short description (one line).
-      * Detail the return type and its description under the Returns section.            
+      * Detail the return type and its description under the Returns section.
 
       I will supply a number of functions and class definitions and want you to return
       the corresponding docstrings. Please provide docstrings for all the provided
@@ -281,3 +281,12 @@ signs respectively.
 Then you can use ``Open...`` for opening a folder/file (eg
 ``/home/username/dtcc-builder``) and ``Terminal-> New terminal`` to have
 a new terminal connected.
+
+Handling line endings on Windows
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you are using Windows, you might want to make sure that Git does
+not convert Unix-style file endings on checkout. This can be
+accomplished by:
+
+    git config --global dtcc-builder.autocrlf false

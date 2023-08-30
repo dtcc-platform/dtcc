@@ -1,6 +1,7 @@
 dtcc-common
 dtcc-model
 dtcc-io
+dtcc-data
 dtcc-wrangler
 dtcc-builder
 dtcc-viewer

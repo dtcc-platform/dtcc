@@ -1,10 +1,9 @@
 Installation
 ============
 
-DTCC Platform can be easily installed using
-```pip`` <https://pypi.org/project/pip/>`__.
+DTCC Platform can be installed using `pip <https://pypi.org/project/pip/>`_.
 
-To install from the Python Package Index (PyPI)::
+To install from the `Python Package Index (PyPI) <https://pypi.org/>`_::
 
    pip install dtcc
 
@@ -12,7 +11,8 @@ To install from the source directory::
 
    pip install .
 
-.. note:: Fix for conflicting versions of ``pip`` and ``python``
+.. note::
+
    Sometimes ``pip`` and ``python`` may be out of sync which means
    that ``pip`` will install a package in a location where it will not
    be found by ``python``. It is therefore safer to replace the
@@ -20,7 +20,8 @@ To install from the source directory::
 
        python -m pip install [ package-name or . ]
 
-.. note:: Fix for broken setuptools in Ubuntu 22.04
+.. note::
+
    A bug in Ubuntu 22.04 prevents
    `PEP621 <https://peps.python.org/pep-0621/>`__ compliant Python
    projects from installing properly with ``pip``, resulting in package

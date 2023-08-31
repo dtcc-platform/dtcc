@@ -5,6 +5,7 @@ author = "Digital Twin Cities Centre"
 extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
+    "sphinx.ext.autosectionlabel",
     "sphinx_immaterial",
     "sphinx_immaterial.apidoc.python.apigen",
 ]

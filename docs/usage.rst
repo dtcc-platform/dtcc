@@ -1,11 +1,15 @@
 Usage
 =====
 
+This section provides an overview of the usage and capabilities of
+DTCC Platform. For more details, refer to the :ref:`Demos` and
+:ref:`API Reference`.
+
 Downloading demo data
 ---------------------
 
-DTCC Platform provides a number of demo data sets that can be used to
-test and evaluate the platform.
+DTCC Platform provides a number of demo data sets that can be used for
+demos and testing.
 
 To download the demo data sets, run the following command::
 
@@ -13,6 +17,14 @@ To download the demo data sets, run the following command::
 
 This will create a directory named ``dtcc-demo-data`` containing the
 demo data sets.
+
+.. note::
+
+   For the following documentation, it is assumed that you have
+   downloaded the demo data sets and entered the demo data directory
+   (``cd dtcc-demo-data``). It is also assumed that you have installed
+   the ``dtcc`` Python module on your system by following the
+   :ref:`Installation` instructions.
 
 Loading and saving data
 -----------------------

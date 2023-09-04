@@ -32,9 +32,6 @@ Loading and saving data
 DTCC Platform can load (import) data from a number of formats into the native
 DTCC data model. Data can also be saved (exported) to a number of formats.
 
-building city models from
-raw data, both from the command-line and from Python.
-
 Command-line interface
 ^^^^^^^^^^^^^^^^^^^^^^
 
@@ -60,7 +57,7 @@ available from Python.
 
 **@dag Write docs for dtcc-io here**
 
-**Note old copied text below that needs editing!**
+**@dag Note old copied from dtcc-io further down on this page**
 
 Building city models
 --------------------

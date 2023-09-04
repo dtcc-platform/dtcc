@@ -106,7 +106,7 @@ The corresponding command in Python is ``build()``.
 .. note::
 
    Currently, only LoD1.2 city models are supported but work in
-   progress is aimin to extend the capabilities to generate both
+   progress is aiming to extend the capabilities to generate both
    LoD1.3 and LoD2.x models.
 
 Parameters
@@ -466,26 +466,17 @@ using a slightly different approch:
 Viewer controls
 ^^^^^^^^^^^^^^^
 
-Once the DTCC Viewer is running and a graphics window is open, the following mouse and key commands are used to control the viewer:
+Once the DTCC Viewer is running and a graphics window is the viewport 
+navigation is done with the mouse according to:
 
-Viewport navigation:
-* Left mouse button - Rotate the view around the camera target
-* Right mouse button - Panning the view, thus moving the camera target
-* Scroll - Zoom in and out at the current camera target
+- `Left mouse button` - Rotate the view around the camera target
+- `Right mouse button` - Panning the view, thus moving the camera target
+- `Scroll` - Zoom in and out at the current camera target
 
-Mesh viewing options:
-* Q - Toggle visualisation of mesh **On** and **Off**
-* W - Toggle color options between **Monochrome** and **Colored by data**
-* E - Swich viewing mode between: **Wireframe**, **Diffuse Shaded**, **Fancy Shaded** (default), **Shadow Shaded**
-* R - Toggle animation of light source position that cast shadows (only impacts "Fancy Shaded" and "Shadow Shaded" viewing mode)
-
-Point cloud viewing options:
-* A - Toggle visualisation of point cloud **On** and **Off**
-* S - Toggle colors options between **Monochrome** and **Colored by data**
-* D - Reduce particle size by 20%
-* F - Increase particle size by 20%
-# Usage
-
+A GUI is also created with global controls for the whole scene under 
+apperance which includes things like (background color etc). Individual 
+GUI components are also created for each Mesh and Point Cloud that is 
+on display.    
 
 
 **THE FOLLOWING TEXT IS COPIED FROM dtcc-io AND NEEDS EDITING**

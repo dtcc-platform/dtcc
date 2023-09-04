@@ -13,3 +13,4 @@ city = city.merge_buildings(max_distance=0.5)
 city = city.remove_small_buildings(min_area=15)
 
 city.save("simplified_city.shp")
+city.view()

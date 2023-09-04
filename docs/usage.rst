@@ -106,7 +106,7 @@ The corresponding command in Python is ``build()``.
 .. note::
 
    Currently, only LoD1.2 city models are supported but work in
-   progress is aimin to extend the capabilities to generate both
+   progress is aiming to extend the capabilities to generate both
    LoD1.3 and LoD2.x models.
 
 Parameters

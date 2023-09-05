@@ -11,7 +11,7 @@ Downloading demo data
 DTCC Platform provides a number of demo data sets that can be used for
 demos and testing.
 
-To download the demo data sets, run the following command::
+To download the demo data, run the following command::
 
     dtcc-download-demo-data
 
@@ -21,9 +21,8 @@ demo data sets.
 .. note::
 
    For the following documentation, it is assumed that you have downloaded the
-   demo data sets. It is also assumed that you have installed the ``dtcc``
-   Python module on your system by following the :ref:`Installation`
-   instructions.
+   demo data. It is also assumed that you have installed the ``dtcc`` Python
+   module on your system by following the :ref:`Installation` instructions.
 
 Loading and saving data
 -----------------------
@@ -70,37 +69,84 @@ Command-line interface
 To build a city model using the command-line interface, use the
 ``dtcc-build`` command, for example::
 
-  dtcc-build data/helsingborg-residential-2022
+    dtcc-build data/helsingborg-residential-2022
 
 The single parameter to ``dtcc-build`` in this example is a directory
 of raw data sources. If no argument is given, it is assumed that the
 data sources are in the current working directory. The above example
 is thus equivalent to the following::
 
-  cd data/helsingborg-residential-2022
-  dtcc-build
+    cd data/helsingborg-residential-2022
+    dtcc-build
 
 The `dtcc-build` command accepts a number of parameters that can be
 used to control the generation of the city model, for example::
 
-  dtcc-build --mesh_resolution 5.0 --domain_height 75.0 data/helsingborg-residential-2022
+    dtcc-build --mesh_resolution 20.0 --domain_height 75.0 data/helsingborg-residential-2022
 
 To print a list of available parameters, use the following command::
 
-  dtcc-build --help
+    dtcc-build --help
 
 See also the :ref:`Parameters` section below for more details.
 
 Python interface
 ^^^^^^^^^^^^^^^^
 
-The corresponding command in Python is ``build()``.
+To build a city model from the Python interface, use the ``build()`` command, which is equivalent to running the ``dtcc-build`` command on the command-line:
 
 .. code:: python
 
     from dtcc import *
-    pc = load_pointcloud(...)
-    city = build(pc)
+
+    # Set parameters
+    p = parameters.default()
+    p["data_directory"] = "data/helsingborg-residential-2022"
+    p["mesh_resolution"] = 20.0
+    p["domain_height"] = 75.0
+
+    # Build city model
+    build(p)
+
+In this example, we first create a set of default parameters by calling ``parameters.default()`` and then set the essential ``data_directory`` parameter. We then also change the parameter ``mesh_resolution`` to 20.0 (meters), telling the mesh generator to generate a mesh with a maximum cell size of 20.0 meters, and the ``domain_height`` parameter to 75.0 (meters), telling the mesh generator to generate a mesh with a domain height of 75.0 meters. Finally, we call ``build()`` with the parameters to build the city model with the given parameters.
+
+After the city model has been built, the generated data files can be found in the specified data directory. By default, the data will be saved in
+`Protobuf <https://en.wikipedia.org/wiki/Protocol_Buffers>`_ format.
+
+For more fine-grained control of the city model generation, the commands
+``build_city()``, ``build_mesh()``, and ``build_volume_mesh`` can be used. To
+use these commands, we must first calculate the domain bounds and load the raw
+data:
+
+.. code:: python
+
+    origin, bounds = calculate_bounds(buildings_path, pointcloud_path, p)
+    city = load_city(buildings_path, bounds=bounds)
+    pointcloud = load_pointcloud(pointcloud_path, bounds=bounds)
+
+where ``buildings_path`` and ``pointcloud_path`` are the paths to the raw data files.
+
+We can then build the city model by calling the ``build_city()`` command:
+
+.. code:: python
+
+    city = build_city(city, pointcloud, bounds, p)
+
+Once the city model has been built, we may proceed to build (triangular) surface meshes and (tetrahedral) volume meshes for the city model:
+
+.. code:: python
+
+    ground_mesh, building_mesh = build_mesh(city, p)
+    mesh, volume_mesh = build_volume_mesh(city, p)
+
+The data may then be stored to file using the ``.save()`` method and viewed using the ``.view()`` method, for example:
+
+.. code:: python
+
+    city.save("city.pb")
+    city.view()
+
+For a complete example, see the :ref:`build_city_and_meshes` demo.
 
 .. note::
 

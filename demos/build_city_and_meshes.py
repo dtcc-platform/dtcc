@@ -31,14 +31,14 @@ city = build_city(city, pointcloud, bounds, p)
 ground_mesh, building_mesh = build_mesh(city, p)
 
 # Build city mesh and volume mesh (tetrahedral mesh)
-mesh, volume_mesh = build_volume_mesh(city, p)
+volume_mesh, volume_mesh_boundary = build_volume_mesh(city, p)
 
 # Save data to file
 city.save(data_directory / "city.pb")
 ground_mesh.save(data_directory / "ground_mesh.pb")
 building_mesh.save(data_directory / "building_mesh.pb")
-mesh.save(data_directory / "mesh.pb")
 volume_mesh.save(data_directory / "volume_mesh.pb")
+volume_mesh_boundary.save(data_directory / "volume_mesh_boundary.pb")
 
 # View data
 city.view()

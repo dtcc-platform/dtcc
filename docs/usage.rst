@@ -24,6 +24,29 @@ demo data sets.
    demo data. It is also assumed that you have installed the ``dtcc`` Python
    module on your system by following the :ref:`Installation` instructions.
 
+Importing the DTCC Python module
+--------------------------------
+
+The following Python code imports all (main) classes and functions from the DTCC Python module:
+
+.. code:: python
+
+    from dtcc import *
+
+This will for example import the functions ``load_pointcloud()`` and ``build_city()`` that are discussed in more detail below.
+
+You may instead choose to import the ``dtcc`` module (not its contents) by the following code:
+
+.. code:: python
+
+    import dtcc
+
+In this case, you need to prefix all functions and classes with ``dtcc.``. For example, the ``load_pointcloud()`` function is then called as ``dtcc.load_pointcloud()``.
+
+.. note::
+
+    For the following documentation, it is assumed that you have imported all the main classes and functions from the DTCC Python module by ``from dtcc import *``.
+
 Loading and saving data
 -----------------------
 
@@ -33,29 +56,63 @@ DTCC data model. Data can also be saved (exported) to a number of formats.
 Command-line interface
 ^^^^^^^^^^^^^^^^^^^^^^
 
-Put documentation here for the command-line interface::
+The command-line tool ``dtcc-convert`` provides a simple way to convert data files from one format to another::
 
   dtcc-convert [--from=<format>] [--to=<format>] input.x output.y
+
+For example, a point cloud may be converted from LAS to LAZ format by the following command::
+
+  dtcc-convert pointcloud.las pointcloud.laz
 
 Python interface
 ^^^^^^^^^^^^^^^^
 
-Put documentation here for Python interface.
+To load data from file, use the ``load_*()`` functions, for example:
 
 .. code:: python
 
     from dtcc import *
-    pc = load_pointcloud(...)
+    pointcloud = load_pointcloud("data/helsingborg-residential-2022/pointcloud.las")
+
+To save data to file, use the ``.save()`` method, for example:
+
+.. code:: python
+
+    pointcloud.save("pointcloud.las")
+
+Alternatively, the ``save_*()`` functions may be used, for example:
+
+.. code:: python
+
+    save_pointcloud(pointcloud, "pointcloud.las")
 
 Data formats
 ^^^^^^^^^^^^
 
-List supported formats here and explain how to print which formats are
-available from Python.
+The following tables summarizes the supported input and output formats for the ``load_*()`` and ``save_*()`` functions.
 
-**@dag Write docs for dtcc-io here**
+.. list-table::
+   :widths: 20 40 40
+   :header-rows: 1
 
-**@dag Note old copied from dtcc-io further down on this page**
+   * - Data type
+     - Input formats
+     - Output formats
+   * - ``PointCloud``
+     - ``.pb``, ``.pb2``, ``.las``, ``.laz``
+     - ``.pb``, ``.pb2``, ``.las``, ``.laz``
+   * - ``City``
+     - ``.pb``, ``.pb2``, ``.shp``
+     - ``.pb``, ``.pb2``
+   * - ``Mesh``
+     - ``.pb``, ``.pb2``, ``.obj``, ``.ply``, ``.stl``, ``.vtk``, ``.vtu``, ``.dae``, ``.fbx``
+     - ``.pb``, ``.pb2``, ``.obj``, ``.ply``, ``.stl``, ``.vtk``, ``.vtu``, ``.gltf``, ``.gltf2``, ``.glb``, ``.dae``, ``.fbx``
+
+To print which formats are supported by a given function, use the ``print_*_io()`` functions, for example:
+
+.. code:: python
+
+    print_mesh_io()
 
 Building city models
 --------------------
@@ -66,20 +123,40 @@ raw data, both from the command-line and from Python.
 Command-line interface
 ^^^^^^^^^^^^^^^^^^^^^^
 
-To build a city model using the command-line interface, use the
-``dtcc-build`` command, for example::
+The command-line tool ``dtcc-build`` builds a city model from a given data
+directory and stores the generated city model as several mesh and data files in
+the same directory. The following example illustrates how to build a city model
+for the dataset ``helsingborg-residential-2022`` included as part of the demo
+data::
 
     dtcc-build data/helsingborg-residential-2022
 
-The single parameter to ``dtcc-build`` in this example is a directory
-of raw data sources. If no argument is given, it is assumed that the
-data sources are in the current working directory. The above example
-is thus equivalent to the following::
+The single parameter to ``dtcc-build`` in this example is a directory of raw
+data sources. If no argument is given, it is assumed that the data sources are
+in the current working directory. The above example is thus equivalent to the
+following::
 
     cd data/helsingborg-residential-2022
     dtcc-build
 
-The `dtcc-build` command accepts a number of parameters that can be
+The data directory must contain the following input data:
+
+* Point cloud data in `LAS/LAZ format <https://en.wikipedia.org/wiki/LAS_file_format>`_ consisting of one or more files
+  with suffix ``.las`` or ``.laz``.
+* Building footprints in `shapefile format <https://en.wikipedia.org/wiki/Shapefile>`_  named ``footprints.[shp,shx,dbf,prj,cpg]``.
+* Parameters used to control the city model generation stored
+  as a JSON file named ``parameters.json`` (optional).
+
+After the city model has been built, the generated data files can be found in the specified data directory. By default, the data will be saved in
+`Protobuf format <https://en.wikipedia.org/wiki/Protocol_Buffers>`_. The following files will be generated:
+
+* ``city.pb`` - city model in Protobuf format
+* ``ground_mesh.pb`` - a (triangular) mesh of the ground (excluding buildings)
+* ``building_mesh.pb`` - a (triangular) mesh of the buildings (excluding ground)
+* ``volume_mesh.pb`` - a (tetrahedral) mesh of the city (the empty space between the ground, the buildings, and an enclosing bounding box)
+* ``volume_mesh_boundary.pb`` - a (triangular) mesh of the boundary of the volume mesh (including both the ground and the buildings)
+
+The ``dtcc-build`` command accepts a number of parameters that can be
 used to control the generation of the city model, for example::
 
     dtcc-build --mesh_resolution 20.0 --domain_height 75.0 data/helsingborg-residential-2022
@@ -88,7 +165,7 @@ To print a list of available parameters, use the following command::
 
     dtcc-build --help
 
-See also the :ref:`Parameters` section below for more details.
+See the :ref:`Parameters` section below for more details.
 
 Python interface
 ^^^^^^^^^^^^^^^^
@@ -96,8 +173,6 @@ Python interface
 To build a city model from the Python interface, use the ``build()`` command, which is equivalent to running the ``dtcc-build`` command on the command-line:
 
 .. code:: python
-
-    from dtcc import *
 
     # Set parameters
     p = parameters.default()
@@ -108,10 +183,14 @@ To build a city model from the Python interface, use the ``build()`` command, wh
     # Build city model
     build(p)
 
-In this example, we first create a set of default parameters by calling ``parameters.default()`` and then set the essential ``data_directory`` parameter. We then also change the parameter ``mesh_resolution`` to 20.0 (meters), telling the mesh generator to generate a mesh with a maximum cell size of 20.0 meters, and the ``domain_height`` parameter to 75.0 (meters), telling the mesh generator to generate a mesh with a domain height of 75.0 meters. Finally, we call ``build()`` with the parameters to build the city model with the given parameters.
-
-After the city model has been built, the generated data files can be found in the specified data directory. By default, the data will be saved in
-`Protobuf <https://en.wikipedia.org/wiki/Protocol_Buffers>`_ format.
+In this example, we first create a dictionary of default parameters by calling
+``parameters.default()`` and then set the essential ``data_directory``
+parameter. We also set the parameter ``mesh_resolution`` to 20.0 (meters),
+telling the mesh generator to generate a mesh with a maximum cell size of 20.0
+meters, and the ``domain_height`` parameter to 75.0 (meters), telling the mesh
+generator to generate a mesh with a domain height of 75.0 meters. Finally, we
+call ``build()`` with the parameters to build the city model with the given
+parameters.
 
 For more fine-grained control of the city model generation, the commands
 ``build_city()``, ``build_mesh()``, and ``build_volume_mesh`` can be used. To
@@ -137,9 +216,10 @@ Once the city model has been built, we may proceed to build (triangular) surface
 .. code:: python
 
     ground_mesh, building_mesh = build_mesh(city, p)
-    mesh, volume_mesh = build_volume_mesh(city, p)
+    volume_mesh, volume_mesh_boundary = build_volume_mesh(city, p)
 
-The data may then be stored to file using the ``.save()`` method and viewed using the ``.view()`` method, for example:
+The data may then be save to file using the ``.save()`` method and viewed using
+the ``.view()`` method, for example:
 
 .. code:: python
 
@@ -157,260 +237,75 @@ For a complete example, see the :ref:`build_city_and_meshes` demo.
 Parameters
 ^^^^^^^^^^
 
-To see a list of parameters::
-
-  dtcc-build --help
-
-Parameters can also be set by ``parameters.json`` if present in the
-data directory. For example, the above example can be done with JSON
-file::
-
-  {
-     "foo": ...,
-     "bar": ...
-  }
-
-
-**THE FOLLOWING TEXT IS COPIED FROM dtcc-builder AND NEEDS EDITING**
-
-## Overview
-
-
-    dtcc-generate-citymodel
-    dtcc-generate-mesh
-
-The first of these programs is used to [generate city models from raw
-data](#generating-city-models) and the second program is used to
-[generate meshes for a city model](#generating-meshes). Both programs
-are described in detail below.
-
-
-The output data may be found in the corresponding subdirectory of the
-`data` directory and consist of several data files in JSON and
-[Paraview](https://www.paraview.org/) format. Both the data formats
-and how to visualize the generated city models and meshes are
-described in detail below.
-
-## Generating city models (`dtcc-generate-citymodel`)
-
-The program `dtcc-generate-citymodel` is used to generate a city model
-from a set of point clouds and cadastral data.
-
-### Input data
-
-The following input data are needed:
-
-* **Point cloud data** in LAS/LAZ format consisting of one or more files
-  with suffix `.las` or `.laz`.
-* **Cadastral data** in [shapefile format](https://en.wikipedia.org/wiki/Shapefile)
-  named `PropertyMap.[shp,shx,dbf,prj,cpg]`.
-* **Parameters** used to control the city model generation stored
-  as a JSON file named `Parameters.json` (optional).
-
-If no command-line argument is given, it is assumed that the current
-working directory contains the input data:
-
-    dtcc-generate-citymodel
-
-If a directory is given as command-line argumennt, the given directory
-is searched for the input data:
-
-    dtcc-generate-citymodel <path to data directory>
-
-If a parameter file is given as argument, the specified
-`DataDirectory` parameter is searched for the input data:
-
-    dtcc-generate-citymodel <path to parameter file>
-
-### Output data
-
-* `CityModel.json` - city model in DTCC JSON format
-* `DSM.json` - digital surface map in DTCC JSON format
-* `DSM.vts` - digital surface map in VTK structured grid format
-* `DTM.json` - digital terrain map in DTCC JSON format
-* `DTM.vts` - digital terrain map in VTK structured grid format
-
-In addition, timings and parameters are stored as
-`dtcc-generate-citymodel-timings.json` and
-`dtcc-generate-citymodel-parameters.json`.
-
-## Generating meshes (`dtcc-generate-mesh`)
-
-The program `dtcc-generate-mesh` is used to generate meshes from a
-city model and a digital terrain map.
-
-### Input data
-
-The following input data are needed:
-
-* **City model** in DTCC JSON format named `CityModel.json`.
-* **Digital terrain map** in DTCC JSON format named `DTM.json`.
-* **Parameters** used to control the mesh generation stored
-  as a JSON file named `Parameters.json` (optional).
-
-If no command-line argument is given, it is assumed that the current
-working directory contains the input data:
-
-    dtcc-generate-mesh
-
-If a directory is given as command-line argumennt, the given directory
-is searched for the input data:
-
-    dtcc-generate-mesh <path to data directory>
-
-If a parameter file is given as argument, the specified
-`DataDirectory` parameter is searched for the input data:
-
-    dtcc-generate-mesh <path to parameter file>
-
-### Output data
-
-- `CityModelSimple.json` - simplified city model in DTCC JSON format
-- `GroundSurface.json` - surface mesh of ground in DTCC JSON format
-- `GroundSurface.vtu` - surface mesh of ground in VTK unstructured grid format
-- `BuildingSurface.json` - surface mesh of buildings in DTCC JSON format
-- `BuildingSurface.vtu` - surface mesh of buildings in VTK unstructured grid format
-- `CitySurface.json` - surface mesh of ground and buildings in DTCC JSON format
-- `CitySurface.vtu` - surface mesh of ground and buildings in VTK unstructured grid format
-- `CityMesh.json` - volume mesh of city in DTCC JSON format
-- `CityMesh.vtu` - volume mesh of city in VTK unstructured grid format
-
-In addition, timings and parameters are stored as
-`dtcc-generate-mesh-timings.json` and
-`dtcc-generate-mesh-parameters.json`.
-
-## Visualizing results
-
-Generated data files in DTCC JSON format may be opened and visualized
-using [DTCC Viewer](https://viewer.dtcc.chalmers.se).
-
-Generated data files in VTK structured/unstructured grid format may be
-opened and visualized using [Paraview](https://www.paraview.org/).
-
-## Parameters
-
-DTCC Builder may be controlled using a set of parameters specified in
-JSON format. The parameters file may either be supplied as a
-command-line argument or stored in a file named `Parameters.json` in
-the data directory.
-
-All data files are assumed to be located in a directory determined by
-the parameter `DataDirectory`:
-
-    DataDirectory = directory for input data files
-
-Generated data files will be stored in a directory determined by the
-parameter `OutputDirectory`:
-
-    OutputDirectory = directory for generated data files
-
-When parsing data from original data files (LAS point clouds and SHP
-files), a nonzero origin may be specified to offset the coordinate
-system relative to the origin. This has the advantage that very large
-values for the coordinates may be avoided (which is good for numerical
-stability):
-
-    X0 = x-coordinate of new origin
-    Y0 = y-coordinate of new origin
-
-The offset `(X0, Y0)` is subtracted from the original coordinates
-during processing. In the simplest case, the offset should be set to
-the coordinates of the lower left (south-west) corner of the domain
-covered by the data.
-
-Height maps, city models, and meshes are generated for a rectangular
-domain with coordinates relative to the new origin specified by `X0`
-and `Y0`:
-
-    XMin = x-coordinate for lower left corner
-    YMin = y-coordinate for lower left corner
-    XMax = x-coordinate for upper right corner
-    YMax = y-coordinate for upper right corner
-
-In the simplest case, the lower left corner should be set to `(XMin,
-YMin) = (0, 0)` and the upper right corner should be set to `(XMax,
-YMax) = (Width, Height)`.
-
-Alternatively, the domain may be determined by the bounding box of the
-point cloud(s) by. If `AutoDomain` is `true`, then `XMin`, `YMin`,
-`XMax`, `YMax` are automatically determined (and their parameter
-values ignored):
-
-    AutoDomain = true/false
-
-When generating elevation models from LAS point cloud data, the
-`ElevationModelResolution` parameter determines the resolution of the grid
-onto which the height map is sampled:
-
-    ElevationModelResolution = resolution of elevation models
-
-When generating city models from SHP file data, the
-`MinimalBuildingDistance` parameter determines a minimal distance
-between buildings. Buildings that are closer than the specified
-distance are automatically merged to avoid overlapping buildings or
-buildings that are very close (which may otherwise upset the mesh
-generation):
-
-    MinBuildingDistance = minimal distance between buildings
-
-When generating the volume mesh, the `DomainHeight` parameter
-determines the height of the domain relative to the mean ground level:
-
-    DomainHeight = height of computational domain (volume mesh)
-
-When generating both volume and visualization meshes, the
-`MeshResolution` parameter determines the maximum size (diameter) of
-the mesh cells:
-
-    MeshResolution = resolution of computational mesh (mesh size)
-
-Both volume and visualization meshes may be generated with or without
-displacing the ground level outside of buildings. If the `FlatGround`
-parameter is set to `true`, then the ground is kept flat:
-
-    FlatGround = true / false
-
-The surface mesh generation produces an additional smoothed version of
-the ground surface. The number of smoothing iterations is controlled
-by the `GroundSmoothing` parameter:
-
-    GroundSmoothing = number of smoothing iterations
-
-> **Note**: The list of parameters above is only partly complete since
-experimental parameters may be added/removed during development. For
-a complete list of  parameters, refer to the parameter files
-`dtcc-generate-[citymodel,mesh].json` generated by running the demo.
-
-DTCC Builder is a mesh generator for automatic, efficient, and robust
-mesh generation for large-scale city modeling and simulation.
-
-Using standard and widely available raw data sources in the form of
-point clouds and cadastral data, DTCC Builder generates high-quality
-3D surface and volume meshes, suitable for both visualization and
-simulation. In particular, DTCC Builder is capable of generating
-large-scale, conforming tetrahedral volume meshes of cities suitable
-for finite element (FEM) simulation.
-
-
-The mesh generation algorithm relies on two key ideas. First, the mesh
-generation is reduced from a 3D problem to a 2D problem by taking
-advantage of the cylindrical geometry of extruded 2D footprints; a 2D
-mesh respecting the boundaries of the buildings is generated by a 2D
-mesh generator and then layered to form a 3D mesh. Second, the 3D mesh
-is adapted to the geometries of building and ground by solving a
-partial differential equation (PDE) with the ground and building
-heights as boundary conditions (mesh smoothing). Together these two
-ideas enable the creation of a both efficient and robust pipeline for
-automated large-scale mesh generation from raw data. The algorithm is
-described in detail in the paper [Digital twins for city simulation:
-Automatic, efficient, and robust mesh generation for large-scale city
-modeling and simulation](TBD).
-
-![](images/demo-majorna.jpg)
-*Surface mesh of an area (Majorna) in Gothenburg, generated with DTCC Buider.*
-
-![](images/demo-majorna-zoom.jpg)
-*Detail of surface mesh of an area (Majorna) in Gothenburg, generated with DTCC Builder.*
+The city model and mesh generation may be controlled using a set of parameters.
+
+When working from the command-line, the parameters may be specified either by passing them as command-line arguments or by storing them in a JSON file named ``parameters.json`` in the data directory. In a previous example, we saw the the following command-line call::
+
+    dtcc-build --mesh_resolution 20.0 --domain_height 75.0 data/helsingborg-residential-2022
+
+This is equivalent to the following JSON file present in the data directory::
+
+    {
+        "mesh_resolution": 20.0,
+        "domain_height": 75.0
+    }
+
+When working from Python, the parameters are specified as a Python dictionary. The parameters in the above example may be specified by the following Python code::
+
+    p = parameters.default()
+    p["mesh_resolution"] = 20.0
+    p["domain_height"] = 75.0
+
+The list of available parameters can be viewed from the command-line by ``dtcc-build --help`` or from Python by ``print(parameters.default())``.
+
+Some of the most important parameters are explained below.
+
+.. list-table::
+   :widths: 30 50 20
+   :header-rows: 1
+
+   * - Parameter name
+     - Description
+     - Default value
+   * - ``data_directory``
+     - Path to directory containing input data
+     - ``""``
+   * - ``output_directory``
+     - Path to directory where output data will be stored
+     - ``""``
+   * - ``build_mesh``
+     - Flag indicating whether to build ground and building meshes
+     - ``True``
+   * - ``build_volume_mesh``
+     - Flag indicating whether to build volume mesh
+     -  ``True``
+   * - ``auto_domain``
+     - Flag indicating whether to automatically calculate the domain bounds
+     - ``True``
+   * - ``x_0``
+     - x-coordinate of origin
+     - ``0.0``
+   * - ``y_0``
+     - y-coordinate of origin
+     - ``0.0``
+   * - ``x_min``
+     - Minimum x-coordinate of domain relative to origin
+     - ``0.0``
+   * - ``y_min``
+     - Minimum y-coordinate of domain relative to origin
+     - ``0.0``
+   * - ``x_max``
+     - Maximum x-coordinate of domain relative to origin
+     - ``0.0``
+   * - ``y_max``
+     - Maximum y-coordinate of domain relative to origin
+     - ``0.0``
+   * - ``mesh_resolution``
+     - Maximum cell size of generated meshes
+     - ``10.0``
+   * - ``domain_height``
+     - Height of domain (bounding box)
+     - ``100.0``
 
 Visualising data
 ----------------
@@ -522,24 +417,3 @@ A GUI is also created with global controls for the whole scene under
 apperance which includes things like (background color etc). Individual
 GUI components are also created for each Mesh and Point Cloud that is
 on display.
-
-
-**THE FOLLOWING TEXT IS COPIED FROM dtcc-io AND NEEDS EDITING**
-
-# Usage
-```python
-import dtcc_io as io
-foo = io.load_foo("my_data.foo")
-foo = io.load_foo("my_data.pb")
-io.save_foo(foo, "my_data.foo")
-```
-
-dtcc_io handles loading and saving both our protobuf messages as well as popular file formats to an from our data models.
-
-we currently have the following function:
-
-- `[load|save]_mesh` supports obj, stl, vtu, gltf2, glb
-- `[load|save]_volumemesh` support vtk, vtu
-- `[load|save]_pointcloud` supports las, laz, csv
-- `[load|save]_citymodel` supports shp,geojson,gpkg
-- `[load|save]_elevationmodel` supoprts tif

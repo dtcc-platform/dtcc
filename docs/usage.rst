@@ -8,8 +8,8 @@ DTCC Platform. For more details, refer to the :ref:`Demos` and
 .. toctree::
    :maxdepth: 3
 
-   usage_downloading
+   usage_data
    usage_importing
    usage_io
-   usage_building
-   usage_visualizing
+   usage_buider
+   usage_viewer

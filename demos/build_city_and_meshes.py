@@ -9,8 +9,8 @@ from dtcc import *
 from pathlib import Path
 
 # Set data paths
-data_directory = Path("HelsingborgResidential2022")
-buildings_path = data_directory / "PropertyMap.shp"
+data_directory = Path("data/helsingborg-residential-2022")
+buildings_path = data_directory / "footprints.shp"
 pointcloud_path = data_directory
 
 # Set parameters
@@ -21,8 +21,8 @@ p["auto_domain"] = True
 origin, bounds = calculate_bounds(buildings_path, pointcloud_path, p)
 
 # Load data from file
-city = load_city(data_directory / "PropertyMap.shp", bounds=bounds)
-pointcloud = load_pointcloud(data_directory, bounds=bounds)
+city = load_city(buildings_path, bounds=bounds)
+pointcloud = load_pointcloud(pointcloud_path, bounds=bounds)
 
 # Build city model
 city = build_city(city, pointcloud, bounds, p)

@@ -8,7 +8,7 @@ from dtcc import *
 
 # Set parameters
 p = parameters.default()
-p["data_directory"] = "HelsingborgResidential2022"
+p["data_directory"] = "data/helsingborg-residential-2022"
 
 # Build city model
 build(p)

@@ -15,16 +15,15 @@ To download the demo data sets, run the following command::
 
     dtcc-download-demo-data
 
-This will create a directory named ``dtcc-demo-data`` containing the
+This will create a directory named ``data`` containing the
 demo data sets.
 
 .. note::
 
-   For the following documentation, it is assumed that you have
-   downloaded the demo data sets and entered the demo data directory
-   (``cd dtcc-demo-data``). It is also assumed that you have installed
-   the ``dtcc`` Python module on your system by following the
-   :ref:`Installation` instructions.
+   For the following documentation, it is assumed that you have downloaded the
+   demo data sets. It is also assumed that you have installed the ``dtcc``
+   Python module on your system by following the :ref:`Installation`
+   instructions.
 
 Loading and saving data
 -----------------------
@@ -71,20 +70,20 @@ Command-line interface
 To build a city model using the command-line interface, use the
 ``dtcc-build`` command, for example::
 
-  dtcc-build HelsingborgResidential2022
+  dtcc-build data/helsingborg-residential-2022
 
 The single parameter to ``dtcc-build`` in this example is a directory
 of raw data sources. If no argument is given, it is assumed that the
 data sources are in the current working directory. The above example
 is thus equivalent to the following::
 
-  cd HelsingborgResidential2022
+  cd data/helsingborg-residential-2022
   dtcc-build
 
 The `dtcc-build` command accepts a number of parameters that can be
 used to control the generation of the city model, for example::
 
-  dtcc-build --mesh_resolution 5.0 --domain_height 75.0 HelsingborgResidential2022
+  dtcc-build --mesh_resolution 5.0 --domain_height 75.0 data/helsingborg-residential-2022
 
 To print a list of available parameters, use the following command::
 
@@ -466,17 +465,17 @@ using a slightly different approch:
 Viewer controls
 ^^^^^^^^^^^^^^^
 
-Once the DTCC Viewer is running and a graphics window is the viewport 
+Once the DTCC Viewer is running and a graphics window is the viewport
 navigation is done with the mouse according to:
 
 - `Left mouse button` - Rotate the view around the camera target
 - `Right mouse button` - Panning the view, thus moving the camera target
 - `Scroll` - Zoom in and out at the current camera target
 
-A GUI is also created with global controls for the whole scene under 
-apperance which includes things like (background color etc). Individual 
-GUI components are also created for each Mesh and Point Cloud that is 
-on display.    
+A GUI is also created with global controls for the whole scene under
+apperance which includes things like (background color etc). Individual
+GUI components are also created for each Mesh and Point Cloud that is
+on display.
 
 
 **THE FOLLOWING TEXT IS COPIED FROM dtcc-io AND NEEDS EDITING**

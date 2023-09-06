@@ -11,5 +11,5 @@ DTCC Platform. For more details, refer to the :ref:`Demos` and
    usage_data
    usage_importing
    usage_io
-   usage_buider
+   usage_builder
    usage_viewer

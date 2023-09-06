@@ -93,11 +93,13 @@ projects (repos) and post 1.0.0, the MAJOR number should stay the same.
 Releasing new versions
 ----------------------
 
-New versions should be released from the ``main`` branch (after `develop`) has been merged into ``main``. The following steps should be taken:
+New versions should be released from the ``main`` branch (after ``develop``) has been merged into ``main``. The following steps should be taken:
 
 1. Update the version number in ``pyproject.toml``.
 2. Set the correct dependencies in ``pyproject.toml``. Note that dependencies should be to released versions of all DTCC packages (not Git branches).
-3. Commit the changes with commit message ``Release version x.y.z``.
+3. Commit the changes with commit message ``Release version X.Y.Z``.
+4. Add a tag with the version number: ``git tag vX.Y.Z``
+5. ... pypi, announce, etc.
 
 **@vasilis: Please expand these instructions.**
 

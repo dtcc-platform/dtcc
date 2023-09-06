@@ -5,11 +5,11 @@ DTCC Platform can be installed using `pip <https://pypi.org/project/pip/>`_.
 
 To install from the `Python Package Index (PyPI) <https://pypi.org/>`_::
 
-   pip install dtcc
+   $ pip install dtcc
 
 To install from the source directory::
 
-   pip install .
+   $ pip install .
 
 .. note::
 
@@ -18,7 +18,7 @@ To install from the source directory::
    be found by ``python``. It is therefore safer to replace the
    ``pip`` command by ``python -m pip``::
 
-       python -m pip install [ package-name or . ]
+       $ python -m pip install [ package-name or . ]
 
 .. note::
 
@@ -28,4 +28,4 @@ To install from the source directory::
    name and version number ``UNKNOWN-0.0.0``. To fix this, run the
    following commmand before ``pip install``::
 
-      export DEB_PYTHON_INSTALL_LAYOUT=deb_system
+      $ export DEB_PYTHON_INSTALL_LAYOUT=deb_system

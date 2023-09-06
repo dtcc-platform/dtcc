@@ -13,15 +13,15 @@ the same directory. The following example illustrates how to build a city model
 for the dataset ``helsingborg-residential-2022`` included as part of the demo
 data::
 
-    dtcc-build data/helsingborg-residential-2022
+    $ dtcc-build data/helsingborg-residential-2022
 
 The single parameter to ``dtcc-build`` in this example is a directory of raw
 data sources. If no argument is given, it is assumed that the data sources are
 in the current working directory. The above example is thus equivalent to the
 following::
 
-    cd data/helsingborg-residential-2022
-    dtcc-build
+    $ cd data/helsingborg-residential-2022
+    $ dtcc-build
 
 The data directory must contain the following input data:
 
@@ -43,18 +43,19 @@ After the city model has been built, the generated data files can be found in th
 The ``dtcc-build`` command accepts a number of parameters that can be
 used to control the generation of the city model, for example::
 
-    dtcc-build --mesh_resolution 20.0 --domain_height 75.0 data/helsingborg-residential-2022
+    $ dtcc-build --mesh_resolution 20.0 --domain_height 75.0 data/helsingborg-residential-2022
 
 To print a list of available parameters, use the following command::
 
-    dtcc-build --help
+    $ dtcc-build --help
 
 See the :ref:`Parameters` section below for more details.
 
 Python interface
 ----------------
 
-To build a city model from the Python interface, use the ``build()`` command, which is equivalent to running the ``dtcc-build`` command on the command-line:
+To build a city model from the Python interface, use the ``build`` function,
+which is equivalent to running the ``dtcc-build`` command on the command-line:
 
 .. code:: python
 
@@ -73,13 +74,12 @@ parameter. We also set the parameter ``mesh_resolution`` to 20.0 (meters),
 telling the mesh generator to generate a mesh with a maximum cell size of 20.0
 meters, and the ``domain_height`` parameter to 75.0 (meters), telling the mesh
 generator to generate a mesh with a domain height of 75.0 meters. Finally, we
-call ``build()`` with the parameters to build the city model with the given
-parameters.
+call the ``build`` function with the parameters to build the city model with the
+given parameters.
 
-For more fine-grained control of the city model generation, the commands
-``build_city()``, ``build_mesh()``, and ``build_volume_mesh`` can be used. To
-use these commands, we must first calculate the domain bounds and load the raw
-data:
+For more fine-grained control of the city model generation, the functions
+``build_city``, ``build_mesh``, and ``build_volume_mesh`` can be used. To use
+these commands, we must first calculate the domain bounds and load the raw data:
 
 .. code:: python
 
@@ -89,7 +89,7 @@ data:
 
 where ``buildings_path`` and ``pointcloud_path`` are the paths to the raw data files.
 
-We can then build the city model by calling the ``build_city()`` command:
+We can then build the city model by calling the ``build_city`` function:
 
 .. code:: python
 
@@ -102,8 +102,8 @@ Once the city model has been built, we may proceed to build (triangular) surface
     ground_mesh, building_mesh = build_mesh(city, p)
     volume_mesh, volume_mesh_boundary = build_volume_mesh(city, p)
 
-The data may then be save to file using the ``.save()`` method and viewed using
-the ``.view()`` method, for example:
+The data may then be save to file using the ``.save`` method and viewed using
+the ``.view`` method, for example:
 
 .. code:: python
 

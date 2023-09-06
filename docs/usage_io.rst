@@ -49,11 +49,11 @@ The following table summarizes the supported input and output formats for the ``
      - Input formats
      - Output formats
    * - ``PointCloud``
-     - ``.pb``, ``.pb2``, ``.las``, ``.laz``
-     - ``.pb``, ``.pb2``, ``.las``, ``.laz``
+     - ``.pb``, ``.pb2``, ``.las``, ``.laz``, ``.csv``
+     - ``.pb``, ``.pb2``, ``.las``, ``.laz``, ``.csv``
    * - ``City``
-     - ``.pb``, ``.pb2``, ``.shp``
-     - ``.pb``, ``.pb2``
+     - ``.pb``, ``.pb2``, ``.shp``, ``.gpkg``, ``.geojson``
+     - ``.pb``, ``.pb2``, ``.shp``, ``.gpkg``, ``.geojson``
    * - ``Mesh``
      - ``.pb``, ``.pb2``, ``.obj``, ``.ply``, ``.stl``, ``.vtk``, ``.vtu``, ``.dae``, ``.fbx``
      - ``.pb``, ``.pb2``, ``.obj``, ``.ply``, ``.stl``, ``.vtk``, ``.vtu``, ``.gltf``, ``.gltf2``, ``.glb``, ``.dae``, ``.fbx``

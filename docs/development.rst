@@ -6,12 +6,10 @@ Coding style
 
 DTCC Platform uses the coding style native to each language or domain.
 This means, e.g., following the `Style
-Guide <https://peps.python.org/pep-0008/>`__ for Python code, the `C++
+Guide <https://peps.python.org/pep-0008/>`__ for Python code and the `C++
 Core
 Guidelines <https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines>`__
-for C++ code, and the `Google JSON Style
-Guide <https://google.github.io/styleguide/jsoncstyleguide.xml>`__ for
-JSON.
+for C++ code.
 
 The following table summarizes the naming conventions used for DTCC
 Platform.
@@ -19,14 +17,14 @@ Platform.
 ======== ================ ================ ===============
 \        Python           C++              JavaScript
 ======== ================ ================ ===============
-variable ``snake_case``   ``snake_case``   ``camelCase``
-function ``snake_case()`` ``snake_case()`` ``camelCase()``
-class    ``PascalCase``   ``PascalCase``   ``CamelCase``
-module   ``snake_case``
+Variable ``snake_case``   ``snake_case``   ``camelCase``
+Function ``snake_case()`` ``snake_case()`` ``camelCase()``
+Class    ``PascalCase``   ``PascalCase``   ``CamelCase``
+Module   ``snake_case``
 ======== ================ ================ ===============
 
 In addition to this, DTCC Platform uses ``kebab-case`` for naming API
-endpoints, branches and scripts. For JSON ``camelCase`` is used.
+endpoints, branches and scripts. For JSON ``snake_case`` is used.
 
 Scripts and binaries that are installed on the system should be named
 ``dtcc-foo-bar``. Scripts that are *not* installed on the system
@@ -36,19 +34,19 @@ Scripts and binaries that are installed on the system should be named
 Code formatting
 ---------------
 
-For python code we use the ``black`` formatter. All python code should
-be run through ``black`` with default settings before commiting. or
-instructions on how to set it up for Visual Studio Code, see for
-example.
-https://dev.to/adamlombard/how-to-use-the-black-python-code-formatter-in-vscode-3lo0
+For Python code we use the `Black <https://github.com/psf/black>`_ formatter.
+All Python code should be run through Black with default settings before
+committing. or instructions on how to set it up for Visual Studio Code, see for
+example `these instructions
+<https://dev.to/adamlombard/how-to-use-the-black-python-code-formatter-in-vscode-3lo0>`_.
 
 Git practices
 -------------
 
 DTCC Platform uses the following Git practices:
 
--  The main (release) branch for each repository is named ``main``.
--  The development branch for each repository is named ``develop``.
+-  The main (release) branch is named ``main``.
+-  The development branch is named ``develop``.
 -  All work should take place in separate branches (not directly in
    ``develop`` and certainly not in ``main``).
 -  Branches for development (new features) should be named
@@ -91,6 +89,17 @@ before we release 1.0.0.
 
 During early development, the MINOR number should stay the same for all
 projects (repos) and post 1.0.0, the MAJOR number should stay the same.
+
+Releasing new versions
+----------------------
+
+New versions should be released from the ``main`` branch (after `develop`) has been merged into ``main``. The following steps should be taken:
+
+1. Update the version number in ``pyproject.toml``.
+2. Set the correct dependencies in ``pyproject.toml``. Note that dependencies should be to released versions of all DTCC packages (not Git branches).
+3. Commit the changes with commit message ``Release version x.y.z``.
+
+**@vasilis: Please expand these instructions.**
 
 Writing documentation
 ---------------------
@@ -260,33 +269,20 @@ Tips & tricks
 Remote development in VS Code
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-On the left-side menu, go to Remote Explorer, on the SSH line press the
-+ sign and add ``username@develop.dtcc.chalmers.se`` for the case of
-user ``username`` and the host being ``develop.dtcc.chalmers.se``
+In the left-side menu, go to Remote Explorer and press the + sign on the SSH line. Add your SSH connection in the following format::
 
-.. figure:: https://user-images.githubusercontent.com/125367195/231126612-d6031bce-ca2d-4340-b0e5-9e728da57238.png
-   :alt: image
+   user@develop.dtcc.chalmers.se
 
-   image
+This should add the `develop` server to the connection list and you may connect to it by clicking on the right arrow next to its name.
 
-Then after ``develop.dtcc.chalmers.se`` appears in the list, click on
-the connect to current (right arrow) or new window (plus with folder)
-signs respectively.
-
-.. figure:: https://user-images.githubusercontent.com/125367195/231126959-d1dc6498-576b-42aa-95ce-aff8df80c110.png
-   :alt: image
-
-   image
-
-Then you can use ``Open...`` for opening a folder/file (eg
-``/home/username/dtcc-builder``) and ``Terminal-> New terminal`` to have
-a new terminal connected.
+You may then open files on the remote server using the regular Open command. You
+may also open a remote terminal using the top menu: Terminal --> New Terminal.
 
 Handling line endings on Windows
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you are using Windows, you might want to make sure that Git does
 not convert Unix-style file endings on checkout. This can be
-accomplished by:
+accomplished by::
 
     git config --global dtcc-builder.autocrlf false

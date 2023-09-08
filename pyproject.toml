@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-version = "0.7.3"
+version = "0.7.19"
 name = "dtcc"
 description = "DTCC"
 readme = "README.md"
@@ -18,12 +18,12 @@ classifiers = [
   "License :: OSI Approved :: MIT License",
 ]
 dependencies = [
-  "dtcc-model@git+https://github.com/dtcc-platform/dtcc-model.git@develop",
-  "dtcc-io@git+https://github.com/dtcc-platform/dtcc-io.git@develop",
-  "dtcc-data@git+https://github.com/dtcc-platform/dtcc-data.git@develop",
-  "dtcc-builder@git+https://github.com/dtcc-platform/dtcc-builder.git@develop",
-  "dtcc-viewer@git+https://github.com/dtcc-platform/dtcc-viewer.git@develop",
-  "dtcc-wrangler@git+https://github.com/dtcc-platform/dtcc-wrangler.git@develop",
+  "dtcc-model >= 0.7.19",
+  "dtcc-io >= 0.7.19",
+  "dtcc-data >= 0.7.19",
+  "dtcc-builder >= 0.7.19",
+  "dtcc-viewer >= 0.7.19",
+  "dtcc-wrangler >= 0.7.19",
 ]
 
 [project.optional-dependencies]

@@ -28,7 +28,7 @@ jobs:
 
       - uses: actions/upload-artifact@v3
         with:
-          path: ./wheelhouse/dtcc*.whl
+          path: ./wheelhouse/dtcc-0*.whl
 
   build_sdist:
     name: Build source distribution

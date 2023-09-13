@@ -3,16 +3,62 @@
 # This script documents the workflow for Sanjay.
 # https://github.com/dtcc-platform/dtcc/issues/54
 
+# Standard library imports
+import logging
 import os
 import shutil
-import logging
-from osgeo import gdal
+
+# Third-party imports
 import fiona
 import geopandas as gpd
+from matplotlib.patches import Rectangle
+import matplotlib.pyplot as plt
+import numpy as np
+from osgeo import gdal, osr
+import rasterio
+from rasterio.features import geometry_mask, rasterize
+from rasterio.transform import from_origin
+from scipy.signal import convolve2d
 from shapely import wkt
 from shapely.geometry import box
+
+# ========== INTERNAL CONFIGURATION ==========
 gdal.DontUseExceptions()
 logging.basicConfig(level=logging.INFO)
+
+# ========== CONSTANTS ==========
+
+# Spatial constants
+CELL_RESOLUTION = 2
+VALID_UE_RESOLUTIONS = sorted([1009, 8129, 4033, 2017, 5055, 253, 127])  # Sorted for clarity
+BLUR_KERNEL = np.array([
+    [0.05, 0.1, 0.05],
+    [0.1, 0.4, 0.1],
+    [0.05, 0.1, 0.05]
+])
+
+# ========== DATA MAPPING CONFIGURATION ==========
+
+# Buffer values for specific keys
+buffer_dict = {
+    "VÄGBN.M": 10,
+    "VÄGGG.D": 5,
+    "VÄGGG.M": 5,
+    "VÄGKV.M": 5,
+    "VÄGBNU.M": 5
+}
+
+# Landuse classification mapping
+landuse_mapping = {
+    "WATER": ["VATTEN"],  # Consolidating "VATTEN" values under WATER
+    "GLACIER": ["ÖPGLAC"],
+    "BUILDINGS": ["BEBSLUT", "BEBHÖG", "BEBLÅG", "BEBIND"],
+    "FARMING": ["ODLÅKER", "ODLFRUKT"],
+    "OPEN AREAS": ["ÖPMARK", "ÖPKFJÄLL", "ÖPTORG"],
+    "FOREST": ["SKOGBARR", "SKOGLÖV", "SKOGFBJ"],
+    "UNMAPPED": ["MRKO"]  # Unused as of now
+}
+
 
 def get_bbox_from_input(input_boundary):
     """
@@ -56,7 +102,7 @@ def get_bbox_from_input(input_boundary):
                 tif_files = [f for f in os.listdir(input_boundary) if f.endswith('.tif')]
                 if not tif_files:
                     raise ValueError(f"Directory {input_boundary} does not contain .tif files.")
-                
+
                 combined_bounds = None
                 for tif_file in tif_files:
                     ds = gdal.Open(os.path.join(input_boundary, tif_file))
@@ -132,6 +178,7 @@ def validate_directory(dem_directory):
         return None
     return dem_files
 
+
 def validate_files(filepath, expected_ext):
     """
     Validate a file's existence and its extension.
@@ -156,6 +203,7 @@ def validate_files(filepath, expected_ext):
         logging.error(f"Unexpected file type. Expected {expected_ext} but got {os.path.splitext(filepath)[1]}")
         return False
     return True
+
 
 def check_attributes(filepath, required_attributes):
     """
@@ -182,6 +230,7 @@ def check_attributes(filepath, required_attributes):
                 logging.error(f"File {filepath} does not have the required {attribute} attribute")
                 return False
     return True
+
 
 def check_detaljtyp_values(landuse_path, landuse_mapping):
     """
@@ -211,9 +260,11 @@ def check_detaljtyp_values(landuse_path, landuse_mapping):
         for feature in landuse_file:
             detaljtyp_val = feature["properties"].get("DETALJTYP", "").lower()
             if detaljtyp_val not in all_valid_values_lower:
-                logging.error(f"Invalid DETALJTYP value {detaljtyp_val} in Landuse file. Expected one of {all_valid_values}")
+                logging.error(
+                    f"Invalid DETALJTYP value {detaljtyp_val} in Landuse file. Expected one of {all_valid_values}")
                 return False
     return True
+
 
 def validate_dem_resolution(dem_directory, expected_x_res, expected_y_res):
     """
@@ -248,11 +299,11 @@ def validate_dem_resolution(dem_directory, expected_x_res, expected_y_res):
         x_res, y_res = geo_transform[1], -geo_transform[5]
 
         if x_res != expected_x_res or y_res != expected_y_res:
-            logging.error(f"For file {tif_file} - Expected DEM resolution of {expected_x_res}m x {expected_y_res}m, but got {x_res}m x {y_res}m")
+            logging.error(
+                f"For file {tif_file} - Expected DEM resolution of {expected_x_res}m x {expected_y_res}m, but got {x_res}m x {y_res}m")
             return False
 
     return True
-
 
 
 def _validate_overlap(bboxes):
@@ -266,6 +317,7 @@ def _validate_overlap(bboxes):
     Returns:
     - bool: True if all bounding boxes have overlaps, False otherwise.
     """
+
     def have_overlap(bbox1, bbox2):
         bbox1_bounds = bbox1.bounds
         bbox2_bounds = bbox2.bounds
@@ -275,14 +327,15 @@ def _validate_overlap(bboxes):
                     bbox1_bounds[1] > bbox2_bounds[3])
 
     for i in range(len(bboxes)):
-        for j in range(i+1, len(bboxes)):
+        for j in range(i + 1, len(bboxes)):
             if not have_overlap(bboxes[i], bboxes[j]):
                 logging.error(f"No overlap found between bounding boxes {i} and {j}.")
                 return False
     return True
 
 
-def validate_input_data(dem_directory, landuse_path, road_path, optional_clipping_boundary=None, expected_x_res=2.0, expected_y_res=2.0):
+def validate_input_data(dem_directory, landuse_path, road_path, optional_clipping_boundary=None, expected_x_res=2.0,
+                        expected_y_res=2.0):
     """
     Comprehensive validation function that combines multiple validation steps.
 
@@ -321,25 +374,16 @@ def validate_input_data(dem_directory, landuse_path, road_path, optional_clippin
     dem_bbox = box(*get_bbox_from_input(dem_directory))
     landuse_bbox = box(*get_bbox_from_input(landuse_path))
     road_bbox = box(*get_bbox_from_input(road_path))
-    
+
     bboxes_to_check = [dem_bbox, landuse_bbox, road_bbox]
     if optional_clipping_boundary:
         bboxes_to_check.append(box(*get_bbox_from_input(optional_clipping_boundary)))
-        
+
     if not _validate_overlap(bboxes_to_check):
         return
 
     logging.info("Validation successful!")
 
-landuse_mapping = {
-    "WATER": ["VATTEN"],
-    "GLACIER": ["ÖPGLAC"],
-    "BUILDINGS": ["BEBSLUT", "BEBHÖG", "BEBLÅG", "BEBIND"],
-    "FARMING": ["ODLÅKER", "ODLFRUKT"],
-    "OPEN AREAS": ["ÖPMARK", "ÖPKFJÄLL", "ÖPTORG"],
-    "FOREST": ["SKOGBARR", "SKOGLÖV", "SKOGFBJ"],
-    "UNMAPPED": ["MRKO"]
-}
 
 # PROCESSING DEM DATA
 def merge_dem_tiles(dem_directory, output_directory):
@@ -354,10 +398,11 @@ def merge_dem_tiles(dem_directory, output_directory):
     """
     output_path = os.path.join(output_directory, 'merged_dem.tif')
     tile_list = [os.path.join(dem_directory, file) for file in os.listdir(dem_directory) if file.endswith('.tif')]
-    
+
     gdal.Warp(output_path, tile_list)
-    
+
     return output_path
+
 
 def clip_raster_with_boundary(dem_path, clipping_boundary):
     """
@@ -371,10 +416,11 @@ def clip_raster_with_boundary(dem_path, clipping_boundary):
         str: Path to the clipped DEM.
     """
     output_path = dem_path.replace('.tif', '_clipped.tif')
-    
+
     ds = gdal.Warp(output_path, dem_path, cutlineDSName=clipping_boundary, cropToCutline=True)
-    
+
     return output_path
+
 
 def divide_raster_into_tiles(dem_path, cell_resolution):
     """
@@ -385,6 +431,10 @@ def divide_raster_into_tiles(dem_path, cell_resolution):
         cell_resolution (int): Desired resolution of each cell (tile size).
     """
     ds = gdal.Open(dem_path)
+    if ds is None:
+        raise ValueError(
+            f"Cannot open raster file {dem_path}. Please check if the file exists and is a valid raster format.")
+
     width, height = ds.RasterXSize, ds.RasterYSize
 
     tile_row = 0
@@ -403,6 +453,37 @@ def divide_raster_into_tiles(dem_path, cell_resolution):
 
     ds = None  # Close dataset
 
+
+def divide_gdal_raster_into_tiles(ds, cell_resolution, output_directory):
+    """
+    Divide the provided GDAL raster dataset into tiles based on the provided cell resolution.
+    
+    Parameters:
+        ds (gdal.Dataset): Input GDAL raster dataset.
+        cell_resolution (int): Desired resolution of each cell (tile size).
+        output_directory (str): Directory where the tiles will be saved.
+    """
+    if ds is None:
+        raise ValueError("Provided GDAL raster dataset is None.")
+
+    width, height = ds.RasterXSize, ds.RasterYSize
+
+    tile_row = 0
+    for y in range(0, height, cell_resolution):
+        tile_col = 0
+        for x in range(0, width, cell_resolution):
+            output_path = os.path.join(output_directory, f'Tile_X_{tile_col}_Y_{tile_row}.png')
+            gdal.Translate(
+                output_path,
+                ds,
+                srcWin=[x, y, cell_resolution, cell_resolution],
+                format="PNG",
+                scaleParams=[[0, 1, 0, 255]]  # This line scales your values
+            )
+            tile_col += 1
+        tile_row += 1
+
+
 def calculate_z_scale(dem_path):
     """
     Calculate the Z scale for Unreal Engine based on the DEM data.
@@ -416,14 +497,15 @@ def calculate_z_scale(dem_path):
     ds = gdal.Open(dem_path)
     band = ds.GetRasterBand(1)
     min_value, max_value = band.ComputeRasterMinMax()
-    
+
     # Conversion to centimeters
     max_height_cm = max_value * 100
     z_scale = max_height_cm * 0.001953125
-    
+
     return z_scale
 
-def resample_dem(dem_path, target_resolution=2):
+
+def resample_dem(dem_path, target_resolution=CELL_RESOLUTION):
     """
     Resample DEM to the target resolution using GDAL.
     
@@ -442,10 +524,10 @@ def resample_dem(dem_path, target_resolution=2):
         raise ValueError(f"Failed to open dataset at {dem_path}")
 
     # Resample using the Warp function
-    out_ds = gdal.Warp(output_path, 
-                       ds, 
-                       xRes=target_resolution, 
-                       yRes=target_resolution, 
+    out_ds = gdal.Warp(output_path,
+                       ds,
+                       xRes=target_resolution,
+                       yRes=target_resolution,
                        resampleAlg='bilinear')
 
     # Check the result
@@ -459,14 +541,11 @@ def resample_dem(dem_path, target_resolution=2):
     return output_path
 
 
-
-
-VALID_UE_RESOLUTIONS = [1009, 8129, 4033, 2017, 5055, 253, 127]
-
 def generate_heightmap(dem_path, clipping_boundary=None, output_folder="output", ue_cell_resolution=1009):
     # Ensure the specified Unreal resolution is valid
     if ue_cell_resolution not in VALID_UE_RESOLUTIONS:
-        raise ValueError(f"Invalid UE cell resolution: {ue_cell_resolution}. Valid resolutions are {VALID_UE_RESOLUTIONS}.")
+        raise ValueError(
+            f"Invalid UE cell resolution: {ue_cell_resolution}. Valid resolutions are {VALID_UE_RESOLUTIONS}.")
 
     # Create the output directories if they don't exist
     unreal_tiles_dir = os.path.join(output_folder, "unreal_tiles")
@@ -478,7 +557,7 @@ def generate_heightmap(dem_path, clipping_boundary=None, output_folder="output",
 
     # If dem_path is a directory, merge tiles
     if os.path.isdir(dem_path):
-        dem_path = merge_dem_tiles(dem_path,dem_output_dir)
+        dem_path = merge_dem_tiles(dem_path, dem_output_dir)
 
     # Resample the merged DEM
     dem_path = resample_dem(dem_path)
@@ -496,14 +575,203 @@ def generate_heightmap(dem_path, clipping_boundary=None, output_folder="output",
     shutil.move(dem_path, new_dem_path)
     dem_path = new_dem_path
 
-
     # Divide the raster into tiles of the specified resolution and save in unreal_tiles directory
     divide_raster_into_tiles(dem_path, ue_cell_resolution)
 
-    #delete merge_dem.tif and merged_dem_resampled.tif from dem_output_dir
+    # delete merge_dem.tif and merged_dem_resampled.tif from dem_output_dir
     os.remove(os.path.join(dem_output_dir, "merged_dem.tif"))
     os.remove(os.path.join(dem_output_dir, "merged_dem_resampled.tif"))
-    
+
     # Return the Z scale value
     return z_scale
 
+
+# PROCESSING LANDUSE DATA AND ROAD DATA
+def rasterize_landuse(subtracted, cell_resolution, output_dir, category):
+    """
+    Rasterize the subtracted land use data.
+    """
+    raster_path = os.path.join(output_dir, category, f"temp_{category}_mask.tif")
+
+    bounds = subtracted.total_bounds
+    dx = dy = cell_resolution
+    width = int((bounds[2] - bounds[0]) / dx)
+    height = int((bounds[3] - bounds[1]) / dy)
+    # Create the transform
+    transform = from_origin(bounds[0], bounds[3], dx, dy)
+
+    # Rasterize the shapes into an array
+    raster = rasterize(
+        ((geom, 1) for geom in subtracted.geometry),
+        out_shape=(height, width),
+        transform=transform,
+        fill=0,
+        all_touched=True,
+        dtype=rasterio.uint8
+    )
+    return raster, transform
+
+
+def create_gdal_raster_from_array(array, transform, output_path=None, epsg=3006, nodata=None):
+    """
+    Create a GDAL raster dataset from a numpy array.
+    
+    Parameters:
+        array (numpy.ndarray): The array to be converted to a raster.
+        transform (affine.Affine): The affine transformation for the raster.
+        output_path (str, optional): The path where the raster should be saved. If None, creates an in-memory raster.
+        epsg (int, optional): The EPSG code for the raster's projection. Defaults to 4326 (WGS84).
+        nodata (int or float, optional): The NoData value for the raster. If None, no NoData value is set.
+    
+    Returns:
+        osgeo.gdal.Dataset: The GDAL raster dataset.
+    """
+
+    # Determine the driver based on whether an output_path is provided
+    driver_name = 'GTiff' if output_path else 'MEM'
+    driver = gdal.GetDriverByName(driver_name)
+    raster_ds = driver.Create(output_path if output_path else '', array.shape[1], array.shape[0], 1, gdal.GDT_Byte)
+
+    # Apply the transform to the raster dataset
+    raster_ds.SetGeoTransform(transform.to_gdal())
+
+    # Set projection based on the provided EPSG code
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(epsg)
+    raster_ds.SetProjection(srs.ExportToWkt())
+
+    # Write the numpy array to the dataset
+    raster_band = raster_ds.GetRasterBand(1)
+    raster_band.WriteArray(array)
+
+    # Set the NoData value if provided
+    if nodata is not None:
+        raster_band.SetNoDataValue(nodata)
+
+    # Properly close the dataset's band
+    raster_band = None
+
+    return raster_ds
+
+
+def blur_raster_array(raster_array, transform):
+    """
+    Blur the rasterized land use data provided as a numpy array.
+    """
+    # Create a 3x3 averaging filter
+    kernel = BLUR_KERNEL
+    """kernel = np.array([
+        [1, 1, 1],
+        [1, 1, 1],
+        [1, 1, 1]
+    ]) / 9  # Dividing by 9 to make the sum of all elements equal to 1
+    """
+    # Convolve the image with the kernel
+    blurred = convolve2d(raster_array, kernel, mode='same', boundary='symm')
+    # blurred = ndimage.gaussian_filter(raster_array, sigma=2)
+
+    # TODO EPSG code is hardcoded here
+    blurred_gdal_object = create_gdal_raster_from_array(blurred, transform)
+    return blurred_gdal_object
+
+
+def generate_land_use_mask(landuse_vector_path,
+                           road_vector_path,
+                           optional_clipping_boundary=None,
+                           landuse_mapping=landuse_mapping,
+                           road_buffer_dict=buffer_dict,
+                           cell_resolution=CELL_RESOLUTION,
+                           ue_cell_resolution=1009,
+                           output_dir="data/unreal_tiles"):
+    landuse = gpd.read_file(landuse_vector_path)
+    roads = gpd.read_file(road_vector_path)
+
+    # Clip the landuse and road data using the optional clipping boundary, if provided
+    # TODO add the same support for clipping boundary as in generate_heightmap
+    if optional_clipping_boundary:
+        landuse = gpd.clip(landuse, gpd.read_file(optional_clipping_boundary))
+        roads = gpd.clip(roads, gpd.read_file(optional_clipping_boundary))
+
+    # Buffer roads
+    roads['geometry'] = roads.apply(lambda row: row['geometry'].buffer(road_buffer_dict.get(row['DETALJTYP'], 0)),
+                                    axis=1)
+    buffered_roads = roads.dissolve()
+
+    # Write roads first
+    category_dir = os.path.join(output_dir, 'ROAD')
+    os.makedirs(category_dir, exist_ok=True)
+    raster, transform = rasterize_landuse(buffered_roads, cell_resolution, output_dir, 'ROAD')
+    blurred_raster = blur_raster_array(raster, transform)
+
+    # Tile the blurred raster
+    divide_gdal_raster_into_tiles(blurred_raster, ue_cell_resolution, category_dir)
+
+    for category, details in landuse_mapping.items():
+        combined_features = landuse[landuse['DETALJTYP'].isin(details)]
+
+        if combined_features.empty:
+            continue
+
+        # Subtract buffered road network
+        subtracted = gpd.overlay(combined_features, buffered_roads, how="difference")
+
+        # Rasterize the subtracted data
+        category_dir = os.path.join(output_dir, category)
+        os.makedirs(category_dir, exist_ok=True)
+
+        raster, transform = rasterize_landuse(subtracted, cell_resolution, output_dir, category)
+        blurred_raster = blur_raster_array(raster, transform)
+
+        # Tile the blurred raster
+        divide_gdal_raster_into_tiles(blurred_raster, ue_cell_resolution, category_dir)
+
+
+def generate_minimal_clipping_boundary(DEM_DIRECTORY, LANDUSE_PATH, ROAD_PATH):
+    """
+    Generate a minimal clipping boundary based on the bounds of DEM files, land use, and road datasets.
+    
+    Parameters:
+        DEM_DIRECTORY (str): Directory containing one or more geotif files.
+        LANDUSE_PATH (str): Path to the land use shape file.
+        ROAD_PATH (str): Path to the road shape file.
+        
+    Returns:
+        gpd.GeoDataFrame: GeoDataFrame containing the minimal clipping boundary.
+    """
+
+    # Read the bounds of the landuse and road shapefiles
+    landuse = gpd.read_file(LANDUSE_PATH)
+    roads = gpd.read_file(ROAD_PATH)
+
+    bounds_list = [landuse.total_bounds,
+                   roads.total_bounds,
+                   get_bbox_from_input(DEM_DIRECTORY)]
+
+    # Compute the overall minimal clipping boundary
+    overall_minx = max([b[0] for b in bounds_list])
+    overall_miny = max([b[1] for b in bounds_list])
+    overall_maxx = min([b[2] for b in bounds_list])
+    overall_maxy = min([b[3] for b in bounds_list])
+
+    # Create a GeoDataFrame with the clipping boundary
+
+    clipping_boundary = gpd.GeoDataFrame({
+        'geometry': [box(overall_minx, overall_miny, overall_maxx, overall_maxy)]
+    })
+    clipping_boundary.crs = landuse.crs
+
+    # plot all bounding boxes and the clipping boundary
+    fig, ax = plt.subplots(figsize=(10, 10))
+    landuse.plot(ax=ax, color='red', alpha=0.5)
+    roads.plot(ax=ax, color='blue', alpha=0.5)
+    for bounds in bounds_list:
+        ax.add_patch(Rectangle((bounds[0],
+                                bounds[1]),
+                               bounds[2] - bounds[0],
+                               bounds[3] - bounds[1],
+                               fill=False,
+                               color='black'))
+    clipping_boundary.plot(ax=ax, color='green', alpha=0.5)
+    plt.show()
+
+    return clipping_boundary

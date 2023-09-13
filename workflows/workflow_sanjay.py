@@ -4,6 +4,7 @@
 # https://github.com/dtcc-platform/dtcc/issues/54
 
 import os
+import shutil
 import logging
 from osgeo import gdal
 import fiona
@@ -339,3 +340,170 @@ landuse_mapping = {
     "FOREST": ["SKOGBARR", "SKOGLÖV", "SKOGFBJ"],
     "UNMAPPED": ["MRKO"]
 }
+
+# PROCESSING DEM DATA
+def merge_dem_tiles(dem_directory, output_directory):
+    """
+    Merge multiple DEM tiles from a directory into a single mosaic using GDAL.
+    
+    Parameters:
+        dem_directory (str): Directory containing the DEM tiles.
+        
+    Returns:
+        str: Path to the merged DEM.
+    """
+    output_path = os.path.join(output_directory, 'merged_dem.tif')
+    tile_list = [os.path.join(dem_directory, file) for file in os.listdir(dem_directory) if file.endswith('.tif')]
+    
+    gdal.Warp(output_path, tile_list)
+    
+    return output_path
+
+def clip_raster_with_boundary(dem_path, clipping_boundary):
+    """
+    Clip the DEM raster using a provided boundary.
+    
+    Parameters:
+        dem_path (str): Path to the DEM geotiff file.
+        clipping_boundary (str): Path to the shapefile used for clipping.
+        
+    Returns:
+        str: Path to the clipped DEM.
+    """
+    output_path = dem_path.replace('.tif', '_clipped.tif')
+    
+    ds = gdal.Warp(output_path, dem_path, cutlineDSName=clipping_boundary, cropToCutline=True)
+    
+    return output_path
+
+def divide_raster_into_tiles(dem_path, cell_resolution):
+    """
+    Divide the DEM raster into tiles based on the provided cell resolution.
+    
+    Parameters:
+        dem_path (str): Path to the DEM geotiff file.
+        cell_resolution (int): Desired resolution of each cell (tile size).
+    """
+    ds = gdal.Open(dem_path)
+    width, height = ds.RasterXSize, ds.RasterYSize
+
+    tile_row = 0
+    for y in range(0, height, cell_resolution):
+        tile_col = 0
+        for x in range(0, width, cell_resolution):
+            output_path = os.path.join(os.path.dirname(dem_path), f'Tile_X_{tile_col}_Y_{tile_row}.png')
+            gdal.Translate(
+                output_path,
+                dem_path,
+                srcWin=[x, y, cell_resolution, cell_resolution],
+                format="PNG"
+            )
+            tile_col += 1
+        tile_row += 1
+
+    ds = None  # Close dataset
+
+def calculate_z_scale(dem_path):
+    """
+    Calculate the Z scale for Unreal Engine based on the DEM data.
+    
+    Parameters:
+        dem_path (str): Path to the DEM geotiff file.
+        
+    Returns:
+        float: Calculated Z scale.
+    """
+    ds = gdal.Open(dem_path)
+    band = ds.GetRasterBand(1)
+    min_value, max_value = band.ComputeRasterMinMax()
+    
+    # Conversion to centimeters
+    max_height_cm = max_value * 100
+    z_scale = max_height_cm * 0.001953125
+    
+    return z_scale
+
+def resample_dem(dem_path, target_resolution=2):
+    """
+    Resample DEM to the target resolution using GDAL.
+    
+    Parameters:
+        dem_path (str): Path to the DEM geotiff file.
+        target_resolution (float): The desired resolution in ground units (e.g., 1 for 1m).
+        
+    Returns:
+        str: Path to the resampled DEM.
+    """
+    output_path = dem_path.replace('.tif', '_resampled.tif')
+
+    # Open the DEM raster
+    ds = gdal.Open(dem_path)
+    if not ds:
+        raise ValueError(f"Failed to open dataset at {dem_path}")
+
+    # Resample using the Warp function
+    out_ds = gdal.Warp(output_path, 
+                       ds, 
+                       xRes=target_resolution, 
+                       yRes=target_resolution, 
+                       resampleAlg='bilinear')
+
+    # Check the result
+    if not out_ds:
+        raise ValueError(f"Resampling failed for dataset at {dem_path}")
+
+    # Close the datasets to free up resources
+    ds = None
+    out_ds = None
+
+    return output_path
+
+
+
+
+VALID_UE_RESOLUTIONS = [1009, 8129, 4033, 2017, 5055, 253, 127]
+
+def generate_heightmap(dem_path, clipping_boundary=None, output_folder="output", ue_cell_resolution=1009):
+    # Ensure the specified Unreal resolution is valid
+    if ue_cell_resolution not in VALID_UE_RESOLUTIONS:
+        raise ValueError(f"Invalid UE cell resolution: {ue_cell_resolution}. Valid resolutions are {VALID_UE_RESOLUTIONS}.")
+
+    # Create the output directories if they don't exist
+    unreal_tiles_dir = os.path.join(output_folder, "unreal_tiles")
+    dem_output_dir = os.path.join(output_folder, "unreal_tiles/DEM")
+
+    for dir in [output_folder, unreal_tiles_dir, dem_output_dir]:
+        if not os.path.exists(dir):
+            os.makedirs(dir)
+
+    # If dem_path is a directory, merge tiles
+    if os.path.isdir(dem_path):
+        dem_path = merge_dem_tiles(dem_path,dem_output_dir)
+
+    # Resample the merged DEM
+    dem_path = resample_dem(dem_path)
+
+    # Clip the raster using the specified boundary, if provided
+    if clipping_boundary:
+        dem_path = clip_raster_with_boundary(dem_path, clipping_boundary)
+    print(f"Resampled DEM path: {dem_path}")
+
+    # Calculate the Z scale for the DEM data
+    z_scale = calculate_z_scale(dem_path)
+
+    # Move the processed DEM to DEM output directory and update dem_path to point to its new location
+    new_dem_path = os.path.join(dem_output_dir, os.path.basename(dem_path))
+    shutil.move(dem_path, new_dem_path)
+    dem_path = new_dem_path
+
+
+    # Divide the raster into tiles of the specified resolution and save in unreal_tiles directory
+    divide_raster_into_tiles(dem_path, ue_cell_resolution)
+
+    #delete merge_dem.tif and merged_dem_resampled.tif from dem_output_dir
+    os.remove(os.path.join(dem_output_dir, "merged_dem.tif"))
+    os.remove(os.path.join(dem_output_dir, "merged_dem_resampled.tif"))
+    
+    # Return the Z scale value
+    return z_scale
+

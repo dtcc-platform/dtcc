@@ -1,4 +1,4 @@
-# Copyright (C) 2023 Anestis K., George S., V. Naserentin
+# Copyright (C) 2023 Anestis Kaimakamidis, George Spaias, V. Naserentin
 # Licensed under the MIT License
 #
 # This script documents the workflow for SFPG.

@@ -7,6 +7,7 @@
 import logging
 import os
 import shutil
+import json
 
 # Third-party imports
 import fiona
@@ -30,6 +31,8 @@ logging.basicConfig(level=logging.INFO)
 # ========== CONSTANTS ==========
 
 # Spatial constants
+
+
 CELL_RESOLUTION = 2                         # TODO This is the resolution of data we get from LM, 2m per pixel
 # https://docs.unrealengine.com/4.27/en-US/BuildingWorlds/Landscape/TechnicalGuide/
 VALID_UE_RESOLUTIONS = sorted([1009,
@@ -795,3 +798,64 @@ def generate_land_use_mask(landuse_vector_path,
 
         # Tile the blurred raster
         divide_gdal_raster_into_tiles(blurred_raster, ue_cell_resolution, category_dir)
+
+def write_metadata(z_scale, expected_x_res=2.0, expected_y_res=2.0, output_folder="data/unreal_tiles/"):
+    """
+    Writes a metadata file with the given resolutions and output folder.
+
+    Args:
+    - expected_x_res (float): Expected resolution for x.
+    - expected_y_res (float): Expected resolution for y.
+    - output_folder (str): Directory to write the metadata file.
+    - z_scale (float): Scale for z. Needs to be provided if used.
+
+    Returns:
+    - None
+    """
+
+    x_scale = expected_x_res * 100
+    y_scale = expected_y_res * 100
+
+    metadata = {
+        "x_scale": x_scale,
+        "y_scale": y_scale,
+        "z_scale": z_scale
+    }
+
+    with open(os.path.join(output_folder, "metadata.json"), "w") as f:
+        json.dump(metadata, f)
+
+def generate_unreal_tiles(dem_directory, landuse_path, road_path):
+    """
+    Process and validate input data, generate heightmap and land use mask, 
+    and then write metadata.
+
+    Args:
+    - dem_directory (str): Directory for DEM.
+    - landuse_path (str): Path for land use.
+    - road_path (str): Path for roads.
+
+    Returns:
+    - None
+    """
+    
+    # Validate input data
+    clipping_bbox = validate_input_data(dem_directory, landuse_path, road_path)
+    
+    # Generate heightmap
+    z_scale = generate_heightmap(dem_directory, clipping_boundary=clipping_bbox)
+    
+    # Generate land use mask
+    generate_land_use_mask(landuse_path, road_path, optional_clipping_boundary=clipping_bbox)
+    
+    # Write metadata
+    write_metadata(z_scale)
+
+if __name__ == "__main__":
+    # Define input paths
+    DEM_DIRECTORY = "data\\dem_data"
+    LANDUSE_PATH = "data\\landuse_data\\my_south.shp"
+    ROAD_PATH = "data\\road_data\\vl_riks.shp"
+
+    # Call the function
+    generate_unreal_tiles(DEM_DIRECTORY, LANDUSE_PATH, ROAD_PATH)

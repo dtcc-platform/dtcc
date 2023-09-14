@@ -7,6 +7,16 @@ DTCC Workflows
 -   Create a new conda environment with the following command:
     `conda env create -f workflow_sanjay.yaml`
 
+    or 
+    
+    `python -m venv dtcc_fme_workflow`
+
+    `source dtcc_fme_workflow/bin/activate`
+
+    `pip install -r workflow_sanjay.txt`
+
+    `deactivate`
+
 ### 2\. Preparing the Data
 
 -   Obtain the necessary data from Lantmäteriet.
@@ -19,6 +29,11 @@ DTCC Workflows
 
 -   Activate the conda environment using:
     `conda activate dtcc_fme_workflow`
+
+    or
+
+    `source dtcc_fme_workflow/bin/activate`
+
 
 ### 4\. Navigate to the Workflows Directory
 

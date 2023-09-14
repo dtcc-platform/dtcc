@@ -5,7 +5,7 @@ DTCC Workflows
 ### 1\. Setting up the Conda Environment
 
 -   Create a new conda environment with the following command:
-    `conda env create -f workflow_sanjay.yml`
+    `conda env create -f workflow_sanjay.yaml`
 
 ### 2\. Preparing the Data
 

@@ -11,12 +11,13 @@ import shutil
 # Third-party imports
 import fiona
 import geopandas as gpd
-from matplotlib.patches import Rectangle
+from matplotlib.patches import Rectangle, Patch
 import matplotlib.pyplot as plt
 import numpy as np
 from osgeo import gdal, osr
 import rasterio
 from rasterio.features import geometry_mask, rasterize
+from rasterio.mask import mask
 from rasterio.transform import from_origin
 from scipy.signal import convolve2d
 from shapely import wkt
@@ -29,9 +30,17 @@ logging.basicConfig(level=logging.INFO)
 # ========== CONSTANTS ==========
 
 # Spatial constants
-CELL_RESOLUTION = 2
-VALID_UE_RESOLUTIONS = sorted([1009, 8129, 4033, 2017, 5055, 253, 127])  # Sorted for clarity
-BLUR_KERNEL = np.array([
+CELL_RESOLUTION = 2                         # TODO This is the resolution of data we get from LM, 2m per pixel
+# https://docs.unrealengine.com/4.27/en-US/BuildingWorlds/Landscape/TechnicalGuide/
+VALID_UE_RESOLUTIONS = sorted([1009,
+                               8129,
+                               4033,
+                               2017,
+                               5055,
+                               253,
+                               127])
+
+BLUR_KERNEL = np.array([                    # TODO requires further review
     [0.05, 0.1, 0.05],
     [0.1, 0.4, 0.1],
     [0.05, 0.1, 0.05]
@@ -39,8 +48,8 @@ BLUR_KERNEL = np.array([
 
 # ========== DATA MAPPING CONFIGURATION ==========
 
-# Buffer values for specific keys
-buffer_dict = {
+# Buffer values for specific keys           # TODO requires a comprehensive review of LM classes
+BUFFER_DICT = {
     "VÄGBN.M": 10,
     "VÄGGG.D": 5,
     "VÄGGG.M": 5,
@@ -49,14 +58,14 @@ buffer_dict = {
 }
 
 # Landuse classification mapping
-landuse_mapping = {
-    "WATER": ["VATTEN"],  # Consolidating "VATTEN" values under WATER
+LANDUSE_MAPPING = {                         # TODO Should the user decide this?
+    "WATER": ["VATTEN"],                    # Consolidating "VATTEN" values under WATER
     "GLACIER": ["ÖPGLAC"],
     "BUILDINGS": ["BEBSLUT", "BEBHÖG", "BEBLÅG", "BEBIND"],
     "FARMING": ["ODLÅKER", "ODLFRUKT"],
     "OPEN AREAS": ["ÖPMARK", "ÖPKFJÄLL", "ÖPTORG"],
     "FOREST": ["SKOGBARR", "SKOGLÖV", "SKOGFBJ"],
-    "UNMAPPED": ["MRKO"]  # Unused as of now
+    "UNMAPPED": ["MRKO"]                    # Unused as of now
 }
 
 
@@ -150,6 +159,7 @@ def get_bbox_from_input(input_boundary):
 
     else:
         raise ValueError(f"Invalid type for input_boundary. {valid_formats_message}")
+
 
 
 def validate_directory(dem_directory):
@@ -333,56 +343,100 @@ def _validate_overlap(bboxes):
                 return False
     return True
 
+def get_intersection_percentage(bounding_box, other_boxes):
+    """
+    Compute the intersection percentage between a bounding box and a list of other bounding boxes.
+    """
+    intersection_area = sum([bounding_box.intersection(b).area for b in other_boxes])
+    total_area = sum([b.area for b in other_boxes])
+    
+    return (intersection_area / total_area) * 100
 
 def validate_input_data(dem_directory, landuse_path, road_path, optional_clipping_boundary=None, expected_x_res=2.0,
                         expected_y_res=2.0):
     """
     Comprehensive validation function that combines multiple validation steps.
-
-    Parameters:
-    - dem_directory (str): Path to the DEM directory.
-    - landuse_path (str): Path to the landuse shapefile.
-    - road_path (str): Path to the road shapefile.
-    - optional_clipping_boundary (str, optional): Path to an optional clipping boundary. Defaults to None.
-    - expected_x_res (float, optional): Expected X resolution. Defaults to 2.0m.
-    - expected_y_res (float, optional): Expected Y resolution. Defaults to 2.0m.
-    
-    Returns:
-    - None: Just logs messages.
-    
-    Example:
-    ```
-    validate_input_data("path/to/dem_directory/", "path/to/landuse.shp", "path/to/road.shp")
-    ```
     """
+
     if not validate_directory(dem_directory):
         return
+    logging.info("Directory validation successful.")
 
     if not validate_files(landuse_path, '.shp') or not validate_files(road_path, '.shp'):
         return
+    logging.info("File validation successful.")
 
     required_attributes = ["DETALJTYP"]
     if not check_attributes(landuse_path, required_attributes) or not check_attributes(road_path, required_attributes):
         return
+    logging.info("Attribute validation successful.")
 
-    if not check_detaljtyp_values(landuse_path, landuse_mapping):
+    if not check_detaljtyp_values(landuse_path, LANDUSE_MAPPING):
         return
+    logging.info("Detaljtyp values validation successful.")
 
     if not validate_dem_resolution(dem_directory, expected_x_res, expected_y_res):
+        logging.info("DEM resolution validation failed.")
         return
+    logging.info("DEM resolution validation successful.")
 
     dem_bbox = box(*get_bbox_from_input(dem_directory))
     landuse_bbox = box(*get_bbox_from_input(landuse_path))
     road_bbox = box(*get_bbox_from_input(road_path))
 
     bboxes_to_check = [dem_bbox, landuse_bbox, road_bbox]
+
+    clipping_bbox = None
     if optional_clipping_boundary:
-        bboxes_to_check.append(box(*get_bbox_from_input(optional_clipping_boundary)))
-
+        optional_bbox = box(*get_bbox_from_input(optional_clipping_boundary))
+        coverage_percentage = get_intersection_percentage(optional_bbox, bboxes_to_check)
+        logging.info(f"Optional bounding box covers {coverage_percentage:.2f}% of the total intersection.")
+        clipping_bbox =  optional_bbox
+    else:
+        intersection_bbox = bboxes_to_check[0]
+        for bbox in bboxes_to_check[1:]:
+            intersection_bbox = intersection_bbox.intersection(bbox)
+        clipping_bbox = intersection_bbox
+    
+    bboxes_to_check.append(clipping_bbox)
     if not _validate_overlap(bboxes_to_check):
+        logging.info("Overlap validation failed.")
         return
-
+    logging.info("Overlap validation successful.")
+    
+    
     logging.info("Validation successful!")
+    
+    
+    landuse_crs = gpd.read_file(landuse_path).crs
+    plot_bboxes(dem_bbox, landuse_bbox, road_bbox, clipping_bbox,crs = landuse_crs)
+    
+    return clipping_bbox
+
+
+
+def plot_bboxes(dem_bbox, landuse_bbox, road_bbox, optional_bbox, crs):    
+    # Create a single GeoDataFrame with all the bounding boxes
+    data = {
+        'geometry': [dem_bbox, landuse_bbox, road_bbox, optional_bbox],
+        'label': ['DEM', 'Landuse', 'Roads', 'Clipping boundary'],
+        'color': ['red', 'green', 'blue', 'yellow'],
+        'hatch': ['/', '\\', '|', '-']
+    }
+    gdf = gpd.GeoDataFrame(data, crs=crs)
+    
+    # Plot using gdf.plot()
+    fig, ax = plt.subplots(figsize=(6, 6))
+    for _, row in gdf.iterrows():
+        gdf[gdf['label'] == row['label']].plot(ax=ax, color=row['color'], edgecolor=row['color'], hatch=row['hatch'], alpha=0.2)
+    
+    # For the legend:
+    handles = [Patch(facecolor=row['color'], edgecolor='black', hatch=row['hatch'], label=row['label'], alpha=0.5) for _, row in gdf.iterrows()]
+    ax.legend(handles=handles, loc="upper left")
+    ax.set_title("Bounding boxes")
+    
+    plt.show()
+
 
 
 # PROCESSING DEM DATA
@@ -392,6 +446,7 @@ def merge_dem_tiles(dem_directory, output_directory):
     
     Parameters:
         dem_directory (str): Directory containing the DEM tiles.
+        output_directory (str) : Directory where the merged DEM will be saved.
         
     Returns:
         str: Path to the merged DEM.
@@ -404,20 +459,36 @@ def merge_dem_tiles(dem_directory, output_directory):
     return output_path
 
 
-def clip_raster_with_boundary(dem_path, clipping_boundary):
+def clip_raster_with_boundary(dem_path, clipping_boundary_Polygon):
     """
-    Clip the DEM raster using a provided boundary.
+    Clip the DEM raster using a provided boundary WKT.
     
     Parameters:
         dem_path (str): Path to the DEM geotiff file.
-        clipping_boundary (str): Path to the shapefile used for clipping.
+        clipping_boundary_wkt (str): The WKT string representation of a geometry.
         
     Returns:
-        str: Path to the clipped DEM.
+        numpy.ndarray: Clipped DEM data.
+        rasterio.transform.Affine: Transformation matrix for the clipped data.
     """
-    output_path = dem_path.replace('.tif', '_clipped.tif')
+    # Convert the WKT string into a shapely geometry
+    geom = clipping_boundary_Polygon
+    # Convert the geometry into GeoJSON format
+    geoms = [geom.__geo_interface__]
+    
+    with rasterio.open(dem_path) as src:
+        out_image, out_transform = mask(src, geoms, crop=True)
+        out_meta = src.meta
 
-    ds = gdal.Warp(output_path, dem_path, cutlineDSName=clipping_boundary, cropToCutline=True)
+    out_meta.update({"driver": "GTiff",
+                     "height": out_image.shape[1],
+                     "width": out_image.shape[2],
+                     "transform": out_transform})
+    
+    output_path = dem_path.replace('.tif', '_clipped.tif')
+    
+    with rasterio.open(output_path, "w", **out_meta) as dest:
+        dest.write(out_image)
 
     return output_path
 
@@ -541,7 +612,7 @@ def resample_dem(dem_path, target_resolution=CELL_RESOLUTION):
     return output_path
 
 
-def generate_heightmap(dem_path, clipping_boundary=None, output_folder="output", ue_cell_resolution=1009):
+def generate_heightmap(dem_path, clipping_boundary=None, output_folder="data", ue_cell_resolution=1009):
     # Ensure the specified Unreal resolution is valid
     if ue_cell_resolution not in VALID_UE_RESOLUTIONS:
         raise ValueError(
@@ -551,9 +622,9 @@ def generate_heightmap(dem_path, clipping_boundary=None, output_folder="output",
     unreal_tiles_dir = os.path.join(output_folder, "unreal_tiles")
     dem_output_dir = os.path.join(output_folder, "unreal_tiles/DEM")
 
-    for dir in [output_folder, unreal_tiles_dir, dem_output_dir]:
-        if not os.path.exists(dir):
-            os.makedirs(dir)
+    for directory in [output_folder, unreal_tiles_dir, dem_output_dir]:
+        if not os.path.exists(directory):
+            os.makedirs(directory)
 
     # If dem_path is a directory, merge tiles
     if os.path.isdir(dem_path):
@@ -565,7 +636,6 @@ def generate_heightmap(dem_path, clipping_boundary=None, output_folder="output",
     # Clip the raster using the specified boundary, if provided
     if clipping_boundary:
         dem_path = clip_raster_with_boundary(dem_path, clipping_boundary)
-    print(f"Resampled DEM path: {dem_path}")
 
     # Calculate the Z scale for the DEM data
     z_scale = calculate_z_scale(dem_path)
@@ -591,7 +661,7 @@ def rasterize_landuse(subtracted, cell_resolution, output_dir, category):
     """
     Rasterize the subtracted land use data.
     """
-    raster_path = os.path.join(output_dir, category, f"temp_{category}_mask.tif")
+    # raster_path = os.path.join(output_dir, category, f"temp_{category}_mask.tif")
 
     bounds = subtracted.total_bounds
     dx = dy = cell_resolution
@@ -678,8 +748,8 @@ def blur_raster_array(raster_array, transform):
 def generate_land_use_mask(landuse_vector_path,
                            road_vector_path,
                            optional_clipping_boundary=None,
-                           landuse_mapping=landuse_mapping,
-                           road_buffer_dict=buffer_dict,
+                           landuse_mapping=LANDUSE_MAPPING,
+                           road_buffer_dict=BUFFER_DICT,
                            cell_resolution=CELL_RESOLUTION,
                            ue_cell_resolution=1009,
                            output_dir="data/unreal_tiles"):
@@ -689,8 +759,10 @@ def generate_land_use_mask(landuse_vector_path,
     # Clip the landuse and road data using the optional clipping boundary, if provided
     # TODO add the same support for clipping boundary as in generate_heightmap
     if optional_clipping_boundary:
-        landuse = gpd.clip(landuse, gpd.read_file(optional_clipping_boundary))
-        roads = gpd.clip(roads, gpd.read_file(optional_clipping_boundary))
+        clipping_gdf = gpd.GeoDataFrame({'geometry': [optional_clipping_boundary]})
+        clipping_gdf.set_crs(landuse.crs, inplace=True)
+        landuse = gpd.clip(landuse, clipping_gdf)
+        roads = gpd.clip(roads, clipping_gdf)
 
     # Buffer roads
     roads['geometry'] = roads.apply(lambda row: row['geometry'].buffer(road_buffer_dict.get(row['DETALJTYP'], 0)),
@@ -724,54 +796,3 @@ def generate_land_use_mask(landuse_vector_path,
 
         # Tile the blurred raster
         divide_gdal_raster_into_tiles(blurred_raster, ue_cell_resolution, category_dir)
-
-
-def generate_minimal_clipping_boundary(DEM_DIRECTORY, LANDUSE_PATH, ROAD_PATH):
-    """
-    Generate a minimal clipping boundary based on the bounds of DEM files, land use, and road datasets.
-    
-    Parameters:
-        DEM_DIRECTORY (str): Directory containing one or more geotif files.
-        LANDUSE_PATH (str): Path to the land use shape file.
-        ROAD_PATH (str): Path to the road shape file.
-        
-    Returns:
-        gpd.GeoDataFrame: GeoDataFrame containing the minimal clipping boundary.
-    """
-
-    # Read the bounds of the landuse and road shapefiles
-    landuse = gpd.read_file(LANDUSE_PATH)
-    roads = gpd.read_file(ROAD_PATH)
-
-    bounds_list = [landuse.total_bounds,
-                   roads.total_bounds,
-                   get_bbox_from_input(DEM_DIRECTORY)]
-
-    # Compute the overall minimal clipping boundary
-    overall_minx = max([b[0] for b in bounds_list])
-    overall_miny = max([b[1] for b in bounds_list])
-    overall_maxx = min([b[2] for b in bounds_list])
-    overall_maxy = min([b[3] for b in bounds_list])
-
-    # Create a GeoDataFrame with the clipping boundary
-
-    clipping_boundary = gpd.GeoDataFrame({
-        'geometry': [box(overall_minx, overall_miny, overall_maxx, overall_maxy)]
-    })
-    clipping_boundary.crs = landuse.crs
-
-    # plot all bounding boxes and the clipping boundary
-    fig, ax = plt.subplots(figsize=(10, 10))
-    landuse.plot(ax=ax, color='red', alpha=0.5)
-    roads.plot(ax=ax, color='blue', alpha=0.5)
-    for bounds in bounds_list:
-        ax.add_patch(Rectangle((bounds[0],
-                                bounds[1]),
-                               bounds[2] - bounds[0],
-                               bounds[3] - bounds[1],
-                               fill=False,
-                               color='black'))
-    clipping_boundary.plot(ax=ax, color='green', alpha=0.5)
-    plt.show()
-
-    return clipping_boundary

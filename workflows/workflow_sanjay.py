@@ -1,4 +1,4 @@
-# Copyright (C) 2023 Firstname Lastname
+# Copyright (C) 2023 Sanjay Somanath
 # Licensed under the MIT License
 #
 # This script documents the workflow for Sanjay.

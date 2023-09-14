@@ -48,7 +48,7 @@ BLUR_KERNEL = np.array([                    # TODO requires further review
 
 # ========== DATA MAPPING CONFIGURATION ==========
 
-# Buffer values for specific keys           # TODO requires a comprehensive review of LM classes
+# Buffer values for specific keys           # TODO requires a review of LM classes
 BUFFER_DICT = {
     "VÄGBN.M": 10,
     "VÄGGG.D": 5,
@@ -681,7 +681,7 @@ def rasterize_landuse(subtracted, cell_resolution, output_dir, category):
     )
     return raster, transform
 
-
+# TODO Hardcoded crs
 def create_gdal_raster_from_array(array, transform, output_path=None, epsg=3006, nodata=None):
     """
     Create a GDAL raster dataset from a numpy array.
@@ -740,7 +740,6 @@ def blur_raster_array(raster_array, transform):
     blurred = convolve2d(raster_array, kernel, mode='same', boundary='symm')
     # blurred = ndimage.gaussian_filter(raster_array, sigma=2)
 
-    # TODO EPSG code is hardcoded here
     blurred_gdal_object = create_gdal_raster_from_array(blurred, transform)
     return blurred_gdal_object
 
@@ -757,7 +756,7 @@ def generate_land_use_mask(landuse_vector_path,
     roads = gpd.read_file(road_vector_path)
 
     # Clip the landuse and road data using the optional clipping boundary, if provided
-    # TODO add the same support for clipping boundary as in generate_heightmap
+
     if optional_clipping_boundary:
         clipping_gdf = gpd.GeoDataFrame({'geometry': [optional_clipping_boundary]})
         clipping_gdf.set_crs(landuse.crs, inplace=True)

@@ -24,6 +24,9 @@ DTCC Workflows
     -   `data/dem_data` for DEM data (.tif)
     -   `data/landuse_data` for land use data (.shp)
     -   `data/road_data` for road data (.shp)
+    -   `data/overlay_data` for road data (.zip) (hardcoded for TV noise data by SWECO) 
+    
+    Note: Noise data can be found at : `GIS-data Buller\Buller_ljudutbredning\ <select one scenario>`
 
 ### 3\. Activating the Conda Environment
 

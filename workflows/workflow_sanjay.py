@@ -8,6 +8,9 @@ import logging
 import os
 import shutil
 import json
+import zipfile
+import tempfile
+import re
 
 # Third-party imports
 import fiona
@@ -23,6 +26,12 @@ from rasterio.transform import from_origin
 from scipy.signal import convolve2d
 from shapely import wkt
 from shapely.geometry import box
+from shapely.geometry.polygon import Polygon
+
+
+
+
+
 
 # ========== INTERNAL CONFIGURATION ==========
 gdal.DontUseExceptions()
@@ -71,6 +80,23 @@ LANDUSE_MAPPING = {                         # TODO Should the user decide this?
     "UNMAPPED": ["MRKO"]                    # Unused as of now
 }
 
+def check_and_clear_data():
+    path = 'data/unreal_tiles'
+    
+    if os.path.exists(path):
+        logging.warning(f"Data is already present at {path}. It will be cleared.")
+        
+        try:
+            shutil.rmtree(path)
+            logging.info(f"Data cleared from {path}.")
+        except Exception as e:
+            logging.error(f"An error occurred while trying to clear data from {path}. Error: {e}")
+
+    else:
+        logging.info(f"No data found at {path}.")
+
+# To test the function, simply call it:
+# check_and_clear_data()
 
 def get_bbox_from_input(input_boundary):
     """
@@ -825,6 +851,92 @@ def write_metadata(z_scale, expected_x_res=2.0, expected_y_res=2.0, output_folde
     with open(os.path.join(output_folder, "metadata.json"), "w") as f:
         json.dump(metadata, f)
 
+def generate_overlay_data(overlay_data_directory, clipping_boundary):
+
+    logging.info("Generating overlay data...")
+
+    # Check if overlay_data_directory exists
+    if not os.path.exists(overlay_data_directory):
+        logging.error(f"Directory {overlay_data_directory} not found.")
+        return
+
+    # Check if overlay_data_directory is not empty
+    if not os.listdir(overlay_data_directory):
+        logging.error("Overlay data directory is empty.")
+        return
+
+    # Check if clipping_boundary is a Shapely Polygon
+    if not isinstance(clipping_boundary, Polygon):
+        logging.error("Invalid clipping boundary provided. It should be a Shapely Polygon.")
+        return
+
+    all_gdfs = []
+    zip_file_names = []
+
+    pattern = r'(\d+)_dBA'
+    regex_found = False
+
+    for filename in os.listdir(overlay_data_directory):
+        if filename.endswith('.zip'):
+            zip_file_names.append(filename)
+
+            match = re.search(pattern, filename)
+            if match:
+                db_value = match.group(1)
+                regex_found = True
+            else:
+                db_value = 'unknown'
+
+            with tempfile.TemporaryDirectory() as tempdir:
+                with zipfile.ZipFile(os.path.join(overlay_data_directory, filename), 'r') as zip_ref:
+                    zip_ref.extractall(tempdir)
+
+                for root, _, files in os.walk(tempdir):                
+                    for file in files:
+                        if file.endswith('.shp'):
+                            gdf = gpd.read_file(os.path.join(root, file))
+                            gdf['db'] = db_value
+                            all_gdfs.append(gdf)
+                            break
+
+    if not regex_found:
+        logging.error("Regex pattern not found in the directory filenames.")
+        return
+
+    merged_gdf = gpd.pd.concat(all_gdfs, ignore_index=True)
+
+    if not merged_gdf.geometry.intersects(clipping_boundary).any():
+        logging.error("Clipping boundary does not intersect with the GeoDataFrame.")
+        return
+
+    merged_gdf = merged_gdf[merged_gdf.geometry.intersects(clipping_boundary)]
+    logging.info(f"Number of loaded shapefiles: {len(all_gdfs)}")
+
+    bbox = merged_gdf.total_bounds
+    width = bbox[2] - bbox[0]
+    height = bbox[3] - bbox[1]
+    aspect_ratio = width / height
+
+    fig_height = 20
+    fig_width = fig_height * aspect_ratio
+
+    fig, ax = plt.subplots(figsize=(fig_width, fig_height))
+    merged_gdf.plot(column='db', ax=ax, cmap='gray')
+
+    ax.axis('off')
+    ax.set_facecolor('black')
+    fig.set_facecolor('black')
+
+    output_directory = os.path.join('data', 'unreal_tiles', 'OVERLAY')
+    if not os.path.exists(output_directory):
+        os.makedirs(output_directory)
+
+    output_path = os.path.join(output_directory, 'output_plot.png')
+    plt.savefig(output_path, dpi=300, bbox_inches='tight', pad_inches=0, facecolor=fig.get_facecolor())
+    plt.close()
+
+    logging.info(f"Plot saved to {output_path}")
+
 def generate_unreal_tiles(dem_directory, landuse_path, road_path):
     """
     Process and validate input data, generate heightmap and land use mask, 
@@ -838,6 +950,8 @@ def generate_unreal_tiles(dem_directory, landuse_path, road_path):
     Returns:
     - None
     """
+    # Check if data directory exists
+    check_and_clear_data()
     
     # Validate input data
     clipping_bbox = validate_input_data(dem_directory, landuse_path, road_path)
@@ -847,6 +961,10 @@ def generate_unreal_tiles(dem_directory, landuse_path, road_path):
     
     # Generate land use mask
     generate_land_use_mask(landuse_path, road_path, optional_clipping_boundary=clipping_bbox)
+
+    # Generate overlay data
+    overlay_data_directory = "data\\overlay_data"
+    generate_overlay_data(overlay_data_directory, clipping_bbox)
     
     # Write metadata
     write_metadata(z_scale)

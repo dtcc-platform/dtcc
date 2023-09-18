@@ -91,12 +91,13 @@ To save the city model and the meshes to file, we may call the ``save`` method o
     volume_mesh.save(data_directory / "volume_mesh.pb")
     volume_mesh_boundary.save(data_directory / "volume_mesh_boundary.pb")
 
-We may also view the city model and the point cloud data in the 3D viewer. To view the data, we call the ``.view`` method on each object.
+We may also view the generated data in the 3D viewer. To view the data, we call the ``.view`` method on each object.
 
 .. code:: python
 
     city.view()
     pointcloud.view()
+    volume_mesh_boundary.view()
 
 Complete code
 -------------

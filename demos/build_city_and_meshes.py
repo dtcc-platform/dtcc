@@ -43,3 +43,4 @@ volume_mesh_boundary.save(data_directory / "volume_mesh_boundary.pb")
 # View data
 city.view()
 pointcloud.view()
+volume_mesh_boundary.view()

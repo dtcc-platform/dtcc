@@ -17,3 +17,4 @@ scratch/
 workflows/data/*
 workflows/workflow_sanjay.ipynb
 !/data/download-demo*
+*.ipynb

@@ -22,13 +22,5 @@ city = city.terrain_from_pointcloud(
     ground_only=True,
 )
 
-
-builder_city = builder.model.create_builder_city(city)
-builder_dem = builder.model.raster_to_builder_gridfield(city.terrain)
-
-ground_mesh = builder._dtcc_builder.build_mesh(builder_city, builder_dem, 2.0, True)
-ground_mesh = ground_mesh[0]
-
-ground_mesh = builder.model.builder_mesh_to_mesh(ground_mesh)
-
+ground_mesh = builder.meshing.terrain_mesh(city, mesh_resolution=2.0)
 ground_mesh.view(pc=pointcloud)

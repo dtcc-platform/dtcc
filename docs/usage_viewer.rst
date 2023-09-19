@@ -2,9 +2,9 @@ Visualizing data
 ================
 
 The DTCC platform provides an integrated viewer which has the capability
-to display large quatities of geometry, including meshes and point clouds.
+to display large quantities of geometry, including meshes and point clouds.
 
-The first example shows how to visualize a point cloud colored by the x-position 
+The first example demonstrates how to visualize a point cloud colored by the x-position 
 of the points:
 
 .. code:: python
@@ -15,11 +15,11 @@ of the points:
     color_data = pc.points[:,0]
     pc.view(pc_data = color_data)
 
-The second example shows how to build a city from raw data and view the building mesh 
-with three different coloring options. The first option is the default colors calculated 
-from vertex z-coordinates. In the second option colors are calculated based on appended 
-data. In the third option the colors as [r, g, b] values in the range [0, 1] are 
-appended directly.   
+The second example demonstrates how to build a city from raw data and view the building 
+mesh with three different coloring options. The first option is the default colors 
+calculated from vertex z-coordinates. In the second option colors are are determined 
+based on appended data. In the third option the colors as [r, g, b] values in the range 
+[0, 1] are appended directly.   
 
 .. code:: python
 
@@ -74,7 +74,7 @@ appended directly.
         # View the building mesh and appedn colors 
         building_mesh.view(colors=colors)
 
-The third example shows how to build a city from raw data and view its the ground mesh 
+The third example shows how to build a city from raw data and view its ground mesh 
 together with the pointcloud:
 
 .. code:: python
@@ -113,14 +113,14 @@ together with the pointcloud:
     # Alternatively the pointcloud can be viewed with the mesh as agument
     # pointcloud.view(mesh=ground_mesh)
 
-The forth example shows how to visualise a range of meshes and/or pointclouds. A Scene 
-object is then created to which meshes and pointclouds are added. This example shows how 
+The fourth example shows how to visualise a range of meshes and/or pointclouds. A Scene 
+object is then created to which meshes and point clouds are added. This example shows how 
 to build a city from raw data and how to visualise the ground mesh, the building mesh
 and the boundary mesh together with the pointcloud that was used as input. The boundary 
 mesh will encapsulate the entire model in visually a solid box. The clipping planes 
-under the apperance tab in the GUI can be used to cut the boundary_mesh open to see 
-inside. The shading mode for the boundary mesh can also be set to wireframe to see 
-thought the box. 
+under the appearance tab in the GUI can be used to cut the boundary_mesh open to see 
+inside. The shading mode for the boundary mesh can also be set to wireframe to make the 
+'box' see-through. 
 
 .. code:: python
 
@@ -175,8 +175,8 @@ thought the box.
 Viewer controls
 ---------------
 
-Once the DTCC Viewer is running and a graphics window is the viewport
-navigation is done with the mouse according to:
+Once the DTCC Viewer is running and a graphics window has appeard, the viewport can be
+navigated with the mouse according to::
 
 - `Left mouse button` - Rotate the view around the camera target
 - `Right mouse button` - Panning the view, thus moving the camera target
@@ -186,5 +186,5 @@ A GUI is also created with global controls for the whole scene under
 apperance which includes things like (background color and clipping planes etc). 
 Individual GUI components are also created for each Mesh and Point Cloud that is 
 added to the scene. To close the viewer click the regular closing symbol in the 
-upper left corner of the window or press ESC. 
+upper left corner of the window or press the ESC key. 
 

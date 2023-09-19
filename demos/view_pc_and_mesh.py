@@ -11,7 +11,6 @@ import dtcc
 data_directory = Path("../data/helsingborg-residential-2022")
 p = dtcc.builder.parameters.default()
 p["data_directory"] = data_directory
-p["domain_height"] = 75.0
 dtcc.builder.build(p)
 
 buildings_path = data_directory / "footprints.shp"
@@ -25,21 +24,16 @@ pointcloud = dtcc.io.load_pointcloud(pointcloud_path, bounds=bounds)
 city = dtcc.builder.build_city(city, pointcloud, bounds, p)
 
 # From the city build meshes
-volume_mesh, boundary_mesh = dtcc.builder.build_volume_mesh(city)
+ground_mesh, building_mesh = dtcc.builder.build_mesh(city, p)
 
 # From the city build meshes
-ground_mesh, building_mesh = dtcc.builder.build_mesh(city, p)
+volume_mesh, boundary_mesh = dtcc.builder.build_volume_mesh(city)
 
 # Remove unwanted outliers from the point cloud
 pc = pointcloud.remove_global_outliers(3)
 
-# Create a scene and window. Add geometry to scene
-scene = dtcc.viewer.Scene()
-window = dtcc.viewer.Window(1200, 800)
-scene.add_mesh("Building mesh", building_mesh)
-scene.add_mesh("Ground mesh", ground_mesh)
-scene.add_mesh("Boundary mesh", boundary_mesh)
-scene.add_pointcloud("Point cloud", pc)
+# View the gorund mesh togheter with the pointcloud
+ground_mesh.view(pc=pc)
 
-# Render geometry
-window.render(scene)
+# Alternatively the pointcloud can be viewed with the mesh as agument
+# pointcloud.view(mesh=ground_mesh)

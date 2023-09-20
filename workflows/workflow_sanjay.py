@@ -541,7 +541,7 @@ def divide_raster_into_tiles(dem_path, cell_resolution):
     for y in range(0, height, cell_resolution):
         tile_col = 0
         for x in range(0, width, cell_resolution):
-            output_path = os.path.join(os.path.dirname(dem_path), f'Tile_X_{tile_col}_Y_{tile_row}.png')
+            output_path = os.path.join(os.path.dirname(dem_path), f'Tile_X{tile_col}_Y{tile_row}.png')
             gdal.Translate(
                 output_path,
                 dem_path,
@@ -953,6 +953,7 @@ def generate_unreal_tiles(dem_directory, landuse_path, road_path):
     # Check if data directory exists
     check_and_clear_data()
     
+    logging.info("Generating Unreal tiles...")
     # Validate input data
     clipping_bbox = validate_input_data(dem_directory, landuse_path, road_path)
     

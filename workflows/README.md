@@ -7,11 +7,12 @@ DTCC Workflows
 -   Create a new conda environment with the following command:
     `conda env create -f workflow_sanjay.yaml`
 
-    or 
+    or (venv is not supported at the moment)
     
     `python -m venv dtcc_fme_workflow`
 
     `source dtcc_fme_workflow/bin/activate`
+   
 
     `pip install -r workflow_sanjay.txt`
 

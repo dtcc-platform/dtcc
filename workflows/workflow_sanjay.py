@@ -28,10 +28,7 @@ from scipy.signal import convolve2d
 from shapely import wkt
 from shapely.geometry import box
 from shapely.geometry.polygon import Polygon
-
-
-
-
+gdal.SetConfigOption('CPL_LOG_ERRORS', 'OFF')
 
 
 # ========== INTERNAL CONFIGURATION ==========
@@ -53,10 +50,18 @@ VALID_UE_RESOLUTIONS = sorted([1009,
                                253,
                                127])
 
-BLUR_KERNEL = np.array([                    # TODO requires further review
-    [0.05, 0.1, 0.05],
-    [0.1, 0.4, 0.1],
-    [0.05, 0.1, 0.05]
+BLUR_KERNEL = np.array([
+    [1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1],
+    [1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1],
+    [1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1],
+    [1,  1,  1,  1,  4,  6,  4,  1,  1,  1,  1],
+    [1,  1,  1,  4, 16, 24, 16,  4,  1,  1,  1],
+    [1,  1,  1,  6, 24, 36, 24,  6,  1,  1,  1],
+    [1,  1,  1,  4, 16, 24, 16,  4,  1,  1,  1],
+    [1,  1,  1,  1,  4,  6,  4,  1,  1,  1,  1],
+    [1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1],
+    [1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1],
+    [1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1]
 ])
 
 # ========== DATA MAPPING CONFIGURATION ==========
@@ -574,7 +579,7 @@ def divide_gdal_raster_into_tiles(ds, cell_resolution, output_directory):
     min_val, max_val = band.ComputeRasterMinMax()
 
     # Define the target min and max based on Unreal's range
-    target_min, target_max = -256, 255.992
+    target_min, target_max = 0, 255
 
     # Now loop over the raster to divide it into tiles and rescale the values
     tile_row = 0

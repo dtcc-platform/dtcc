@@ -19,6 +19,54 @@ from honeybee_energy.simulation.parameter import SimulationParameter
 from honeybee_energy.writer import energyplus_idf_version
 import xml.etree.ElementTree as ET
 import re
+
+"""
+# Optional - You can add a bunch of these properties to the geojson to begin with
+# This is just an example of how to add properties to the geojson
+# Details of the entire supported geojson schema is missing
+from math import ceil
+import json
+FLOOR_TO_FLOOR_HEIGHT = 3
+WINDOW_TO_WALL_RATIO = 0.4
+PROJECT_NAME = "Uddevala"
+
+# Load city.geojson as json object
+
+with open(data_directory / 'city.geojson') as f:
+    city_json = json.load(f)
+city_json.keys()
+
+# get bottom left corner of city as latitude_value_for_origin, longitude_value_for_origin
+latitude_value_for_project_origin = city_json['features'][0]['geometry']['coordinates'][0][0][1]
+longitude_value_for_project_origin = city_json['features'][0]['geometry']['coordinates'][0][0][0]
+project = {"project": {
+    "id": PROJECT_NAME,
+    "name": PROJECT_NAME,
+    "latitude": latitude_value_for_project_origin,
+    "longitude": longitude_value_for_project_origin
+  }}
+
+# Add project to city_json
+city_json.update(project)
+
+for i, building in enumerate(city_json["features"]):
+    properties = building["properties"]
+    height = properties["height"]
+    number_of_stories = ceil(height/FLOOR_TO_FLOOR_HEIGHT)
+    properties["id"] = "Building{}".format(i)
+    properties["name"] = "Building{}".format(i)
+    properties["building_status"] = "Existing"
+    properties["type"] = "Building"
+    properties["maximum_roof_height"] = height
+    properties["number_of_stories"] = number_of_stories
+    properties["window_to_wall_ratio"] = WINDOW_TO_WALL_RATIO
+
+# Write city_json to file
+with open( data_directory / "city.geojson", "w") as f:
+    json.dump(city_json, f)
+
+"""
+
 # Constants
 PROJECT_NAME = 'Uddevala'
 FLOOR_TO_FLOOR_HEIGHT = 3
@@ -143,11 +191,13 @@ def extract_building_types(data):
     building_use_list = data["ANDAMAL_1T"].to_list()
     return building_use_list
 
+# This should not be recreated
 def clean_room_id(room_id):
     # Remove '_Space' or '_Space_1' or '_1' from the end
     cleaned_id = re.sub(r'(_Space(_\d+)?)|(_\d+)$', '', room_id)
     return cleaned_id
 
+# This should not be recreated
 def add_gbxml_space_boundaries(base_gbxml, honeybee_model, new_gbxml=None):
     """Add the SpaceBoundary and ShellGeometry to a base_gbxml of a Honeybee model.
 
@@ -211,6 +261,7 @@ def add_gbxml_space_boundaries(base_gbxml, honeybee_model, new_gbxml=None):
     tree.write(new_xml, xml_declaration=True)
     return new_xml
 
+# This can be avoided for the most part
 def adjust_building_properties(model, building_heights, building_type, floor_to_floor_height=FLOOR_TO_FLOOR_HEIGHT):
     """
     Adjust properties of buildings in the model using provided building heights.
@@ -278,6 +329,7 @@ def adjust_building_properties(model, building_heights, building_type, floor_to_
 
 _logger = logging.getLogger(__name__)
 
+# This should not be recreated - available in cli
 def model_to_hb_models(model, multiplier=False, no_plenum=True, no_ceil_adjacency=True):
     """Translate a Model DFJSON to a Honeybee Model."""
 
@@ -291,6 +343,7 @@ def model_to_hb_models(model, multiplier=False, no_plenum=True, no_ceil_adjacenc
         add_plenum=add_plenum, solve_ceiling_adjacencies=ceil_adjacency)
     return hb_models
 
+# This should not be recreated - available in cli
 def models_to_idf(hb_models, additional_str = '', compact_schedules = True, 
                   hvac_to_ideal_air = True, output_file_path= None):
     """Translate a Honeybee model to an IDF file."""
@@ -323,6 +376,7 @@ def models_to_idf(hb_models, additional_str = '', compact_schedules = True,
 
     return output_file_path
 
+# This should not be recreated - available in cli
 def models_to_gbxml(hb_models,no_plenum=True,
                    no_ceil_adjacency=True, osw_folder=None, output_file_path=None):
     out_directory = PROJECT_DIRECTORY  # assuming you want to use the default folder
@@ -384,6 +438,7 @@ def generate_EP_assets(geojson_file_path):
     models_to_idf(hb_models, output_file_path = PROJECT_DIRECTORY + 'city.idf')
 
     #TODO Replicate CLI commands for running the IDF file
+    #This part is experimental
     logging.info("Converting Honeybee Models to GBXML...")
     models_to_gbxml(hb_models, output_file_path=PROJECT_DIRECTORY + 'city.gbxml')
 

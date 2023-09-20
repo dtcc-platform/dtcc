@@ -16,6 +16,7 @@ import re
 import fiona
 import geopandas as gpd
 from matplotlib.patches import Rectangle, Patch
+import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import numpy as np
 from osgeo import gdal, osr
@@ -63,10 +64,10 @@ BLUR_KERNEL = np.array([                    # TODO requires further review
 # Buffer values for specific keys           # TODO requires a review of LM classes
 BUFFER_DICT = {
     "VÄGBN.M": 10,
-    "VÄGGG.D": 5,
-    "VÄGGG.M": 5,
-    "VÄGKV.M": 5,
-    "VÄGBNU.M": 5
+    "VÄGGG.D": 10,
+    "VÄGGG.M": 10,
+    "VÄGKV.M": 10,
+    "VÄGBNU.M": 10
 }
 
 # Landuse classification mapping
@@ -434,7 +435,7 @@ def validate_input_data(dem_directory, landuse_path, road_path, optional_clippin
     logging.info("Overlap validation successful.")
     
     
-    logging.info("Validation successful!")
+    logging.info("Validation successful! Please close the map to continue...")
     
     
     landuse_crs = gpd.read_file(landuse_path).crs
@@ -462,9 +463,9 @@ def plot_bboxes(dem_bbox, landuse_bbox, road_bbox, optional_bbox, crs):
     # For the legend:
     handles = [Patch(facecolor=row['color'], edgecolor='black', hatch=row['hatch'], label=row['label'], alpha=0.5) for _, row in gdf.iterrows()]
     ax.legend(handles=handles, loc="upper left")
-    ax.set_title("Bounding boxes")
+    ax.set_title("Bounding boxes. Please close this window to continue.")
     
-    plt.show()
+    plt.show(block=True)
 
 
 
@@ -568,20 +569,29 @@ def divide_gdal_raster_into_tiles(ds, cell_resolution, output_directory):
 
     width, height = ds.RasterXSize, ds.RasterYSize
 
+    # Determine the minimum and maximum values of the raster
+    band = ds.GetRasterBand(1)
+    min_val, max_val = band.ComputeRasterMinMax()
+
+    # Define the target min and max based on Unreal's range
+    target_min, target_max = -256, 255.992
+
+    # Now loop over the raster to divide it into tiles and rescale the values
     tile_row = 0
     for y in range(0, height, cell_resolution):
         tile_col = 0
         for x in range(0, width, cell_resolution):
-            output_path = os.path.join(output_directory, f'Tile_X_{tile_col}_Y_{tile_row}.png')
+            output_path = os.path.join(output_directory, f'Tile_X{tile_col}_Y{tile_row}.png')
             gdal.Translate(
                 output_path,
                 ds,
                 srcWin=[x, y, cell_resolution, cell_resolution],
                 format="PNG",
-                scaleParams=[[0, 1, 0, 255]]  # This line scales your values
+                scaleParams=[[min_val, max_val, target_min, target_max]]  # Rescale values
             )
             tile_col += 1
         tile_row += 1
+
 
 
 def calculate_z_scale(dem_path):
@@ -595,14 +605,24 @@ def calculate_z_scale(dem_path):
         float: Calculated Z scale.
     """
     ds = gdal.Open(dem_path)
+    if ds is None:
+        raise ValueError(f"Unable to open the DEM file at {dem_path}")
+
     band = ds.GetRasterBand(1)
     min_value, max_value = band.ComputeRasterMinMax()
 
+    # Taking the highest absolute elevation difference (in case of depressions)
+    max_abs_difference = max(abs(min_value), abs(max_value))
+
     # Conversion to centimeters
-    max_height_cm = max_value * 100
+    max_height_cm = max_abs_difference * 100
     z_scale = max_height_cm * 0.001953125
 
+    # Cleanup
+    ds = None
+
     return z_scale
+
 
 
 def resample_dem(dem_path, target_resolution=CELL_RESOLUTION):
@@ -810,10 +830,38 @@ def generate_land_use_mask(landuse_vector_path,
         combined_features = landuse[landuse['DETALJTYP'].isin(details)]
 
         if combined_features.empty:
+            logging.info(f"No features found for category {category}. Skipping...")
             continue
 
         # Subtract buffered road network
         subtracted = gpd.overlay(combined_features, buffered_roads, how="difference")
+        # Set the bbox for the subtracted data as the clipping boundary
+        subtracted = gpd.clip(subtracted, optional_clipping_boundary)
+
+        # Plot the GeoDataFrame
+        fig, ax = plt.subplots(figsize=(6, 6))
+
+        # Plot the 'subtracted' GeoDataFrame
+        subtracted.plot(ax=ax, color='lightgray', label='Subtracted Data')
+
+        # Plot the 'optional_clipping_boundary' polygon with a different color
+        gpd.GeoSeries([optional_clipping_boundary], crs=subtracted.crs).plot(ax=ax, color='none', edgecolor='blue', label='Clipping Boundary')
+
+        # Create proxy artists for legend
+        subtracted_patch = mpatches.Patch(color='lightgray', label='Subtracted Data')
+        boundary_patch = mpatches.Patch(edgecolor='blue', facecolor='none', label='Clipping Boundary')
+
+        # Set title, labels, and legend
+        
+        ax.set_title(f"Category: {category}. Please close this window to continue.")
+        ax.set_xlabel("Longitude")
+        ax.set_ylabel("Latitude")
+        ax.legend(handles=[subtracted_patch, boundary_patch])
+
+        plt.show(block=True)
+
+
+        logging.info(f"Processing category {category} with {len(subtracted)} features.")
 
         # Rasterize the subtracted data
         category_dir = os.path.join(output_dir, category)
@@ -847,7 +895,7 @@ def write_metadata(z_scale, expected_x_res=2.0, expected_y_res=2.0, output_folde
         "y_scale": y_scale,
         "z_scale": z_scale
     }
-
+    logging.info("Metadata generated successfully!")
     with open(os.path.join(output_folder, "metadata.json"), "w") as f:
         json.dump(metadata, f)
 
@@ -857,7 +905,7 @@ def generate_overlay_data(overlay_data_directory, clipping_boundary):
 
     # Check if overlay_data_directory exists
     if not os.path.exists(overlay_data_directory):
-        logging.error(f"Directory {overlay_data_directory} not found.")
+        logging.warning(f"Directory {overlay_data_directory} not found. Continuing without generating overlay data...")
         return
 
     # Check if overlay_data_directory is not empty
@@ -895,6 +943,8 @@ def generate_overlay_data(overlay_data_directory, clipping_boundary):
                     for file in files:
                         if file.endswith('.shp'):
                             gdf = gpd.read_file(os.path.join(root, file))
+                            #set crs
+                            gdf.to_crs(epsg=3006, inplace=True)
                             gdf['db'] = db_value
                             all_gdfs.append(gdf)
                             break
@@ -905,13 +955,17 @@ def generate_overlay_data(overlay_data_directory, clipping_boundary):
 
     merged_gdf = gpd.pd.concat(all_gdfs, ignore_index=True)
 
-    if not merged_gdf.geometry.intersects(clipping_boundary).any():
-        logging.error("Clipping boundary does not intersect with the GeoDataFrame.")
-        return
+    fig, ax = plt.subplots(figsize=(6, 6))
+    merged_gdf.plot(column='db', ax=ax, cmap='gray')
 
-    merged_gdf = merged_gdf[merged_gdf.geometry.intersects(clipping_boundary)]
+
+    #if not merged_gdf.geometry.intersects(clipping_boundary).any():
+    #    logging.error("Clipping boundary does not intersect with the GeoDataFrame. Exiting...")
+    #    return
+
+    merged_gdf = merged_gdf[merged_gdf.geometry.within(clipping_boundary)]
     logging.info(f"Number of loaded shapefiles: {len(all_gdfs)}")
-
+    #TODO BBOX is returning nan
     bbox = merged_gdf.total_bounds
     width = bbox[2] - bbox[0]
     height = bbox[3] - bbox[1]
@@ -919,7 +973,6 @@ def generate_overlay_data(overlay_data_directory, clipping_boundary):
 
     fig_height = 20
     fig_width = fig_height * aspect_ratio
-
     fig, ax = plt.subplots(figsize=(fig_width, fig_height))
     merged_gdf.plot(column='db', ax=ax, cmap='gray')
 
@@ -933,6 +986,7 @@ def generate_overlay_data(overlay_data_directory, clipping_boundary):
 
     output_path = os.path.join(output_directory, 'output_plot.png')
     plt.savefig(output_path, dpi=300, bbox_inches='tight', pad_inches=0, facecolor=fig.get_facecolor())
+    plt.show(block=True)
     plt.close()
 
     logging.info(f"Plot saved to {output_path}")
@@ -969,6 +1023,7 @@ def generate_unreal_tiles(dem_directory, landuse_path, road_path):
     
     # Write metadata
     write_metadata(z_scale)
+    
 
 if __name__ == "__main__":
     # Define input paths

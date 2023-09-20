@@ -832,18 +832,24 @@ def generate_land_use_mask(landuse_vector_path,
     # Tile the blurred raster
     divide_gdal_raster_into_tiles(blurred_raster, ue_cell_resolution, category_dir)
 
-    # NEW PLOTTING
     # Initialize the plotting area outside the loop
     fig, ax = plt.subplots(figsize=(12, 12))
     legend_patches = []
 
     # If you have a predefined set of categories, you can manually specify colors:
     # colors = {"CATEGORY1": "red", "CATEGORY2": "green", "CATEGORY3": "blue", ...}
-    # Otherwise, automatically generate colors using a colormap
-    cmap = plt.get_cmap("tab10")  # 10 distinct colors
-    colors = {category: cmap(i) for i, category in enumerate(landuse_mapping.keys())}
+    colors = {
+    "WATER": "#a5bfdd",      # Pastel turquoise
+    "BUILDINGS": "#707070",  # Pastel red/pink
+    "FARMING": "#739268",       # Pastel orange
+    "OPEN AREAS": "#8fb583", # Pastel purple/lavender
+    "FOREST": "#94d180"      # Pastel green
+    }   
+
+    #cmap = plt.get_cmap("tab10")  # 10 distinct colors
+    #colors = {category: cmap(i) for i, category in enumerate(landuse_mapping.keys())}
     # Alpha value for transparency
-    alpha_value = 0.5
+    alpha_value = 0.8
 
 
 
@@ -859,7 +865,7 @@ def generate_land_use_mask(landuse_vector_path,
         
         # Plot the subtracted data
         color_for_this_category = colors[category]
-        subtracted.plot(ax=ax, color=color_for_this_category)
+        subtracted.plot(ax=ax, color=color_for_this_category, alpha=alpha_value)
         # Create a custom patch for the legend and add to the list
         legend_patches.append(mpatches.Patch(color=color_for_this_category, label=f'{category} Subtracted Data', alpha=alpha_value))
 

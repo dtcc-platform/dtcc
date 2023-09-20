@@ -15,12 +15,15 @@ pointcloud_path = data_directory / "pointcloud.las"
 city = load_city(buildings_path)
 pointcloud = load_pointcloud(pointcloud_path)
 
+pointcloud = pointcloud.remove_global_outliers(3.0)
+
 city = city.terrain_from_pointcloud(
     pointcloud,
     cell_size=1.0,
     window_size=5,
     ground_only=True,
 )
+
 
 ground_mesh = builder.meshing.terrain_mesh(city, mesh_resolution=2.0)
 ground_mesh.view(pc=pointcloud)

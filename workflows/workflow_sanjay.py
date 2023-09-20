@@ -834,7 +834,7 @@ def generate_land_use_mask(landuse_vector_path,
 
     # NEW PLOTTING
     # Initialize the plotting area outside the loop
-    fig, ax = plt.subplots(figsize=(8, 8))
+    fig, ax = plt.subplots(figsize=(12, 12))
     legend_patches = []
 
     # If you have a predefined set of categories, you can manually specify colors:
@@ -876,7 +876,7 @@ def generate_land_use_mask(landuse_vector_path,
         divide_gdal_raster_into_tiles(blurred_raster, ue_cell_resolution, category_dir)
     
     # Plot the clipping boundary once, outside the loop
-    gpd.GeoSeries([clipping_boundary], crs=landuse.crs).plot(ax=ax, color='none', edgecolor='blue', alpha=alpha_value)
+    gpd.GeoSeries([clipping_boundary], crs=landuse.crs).plot(ax=ax, color='none', edgecolor='blue')
 
     # Add the clipping boundary to the legend
     legend_patches.append(mpatches.Patch(edgecolor='blue', facecolor='none', label='Clipping Boundary', alpha=alpha_value))
@@ -886,7 +886,6 @@ def generate_land_use_mask(landuse_vector_path,
     ax.set_xlabel("Longitude")
     ax.set_ylabel("Latitude")
     ax.legend(handles=legend_patches, loc="upper left", bbox_to_anchor=(1,1), borderaxespad=0.)
-
     plt.tight_layout()
     plt.show()
 

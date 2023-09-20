@@ -74,7 +74,7 @@ BUFFER_DICT = {
     "VÄGKV.M": 10,
     "VÄGBNU.M": 10
 }
-
+DEFAULT_ROAD_BUFFER = 5
 # Landuse classification mapping
 LANDUSE_MAPPING = {                         # TODO Should the user decide this?
     "WATER": ["VATTEN"],                    # Consolidating "VATTEN" values under WATER
@@ -461,7 +461,7 @@ def plot_bboxes(dem_bbox, landuse_bbox, road_bbox, optional_bbox, crs):
     gdf = gpd.GeoDataFrame(data, crs=crs)
     
     # Plot using gdf.plot()
-    fig, ax = plt.subplots(figsize=(6, 6))
+    fig, ax = plt.subplots(figsize=(8, 8))
     for _, row in gdf.iterrows():
         gdf[gdf['label'] == row['label']].plot(ax=ax, color=row['color'], edgecolor=row['color'], hatch=row['hatch'], alpha=0.2)
     
@@ -470,7 +470,7 @@ def plot_bboxes(dem_bbox, landuse_bbox, road_bbox, optional_bbox, crs):
     ax.legend(handles=handles, loc="upper left")
     ax.set_title("Bounding boxes. Please close this window to continue.")
     
-    plt.show(block=True)
+    plt.show()
 
 
 
@@ -711,13 +711,15 @@ def generate_heightmap(dem_path, clipping_boundary=None, output_folder="data", u
 
 
 # PROCESSING LANDUSE DATA AND ROAD DATA
-def rasterize_landuse(subtracted, cell_resolution, output_dir, category):
+def rasterize_landuse(subtracted, cell_resolution, output_dir, category, clipping_boundary=None):
     """
     Rasterize the subtracted land use data.
     """
-    # raster_path = os.path.join(output_dir, category, f"temp_{category}_mask.tif")
+    if clipping_boundary:
+        bounds = clipping_boundary.bounds
+    else:
+        bounds = subtracted.total_bounds
 
-    bounds = subtracted.total_bounds
     dx = dy = cell_resolution
     width = int((bounds[2] - bounds[0]) / dx)
     height = int((bounds[3] - bounds[1]) / dy)
@@ -734,6 +736,7 @@ def rasterize_landuse(subtracted, cell_resolution, output_dir, category):
         dtype=rasterio.uint8
     )
     return raster, transform
+
 
 # TODO Hardcoded crs
 def create_gdal_raster_from_array(array, transform, output_path=None, epsg=3006, nodata=None):
@@ -800,7 +803,7 @@ def blur_raster_array(raster_array, transform):
 
 def generate_land_use_mask(landuse_vector_path,
                            road_vector_path,
-                           optional_clipping_boundary=None,
+                           clipping_boundary,
                            landuse_mapping=LANDUSE_MAPPING,
                            road_buffer_dict=BUFFER_DICT,
                            cell_resolution=CELL_RESOLUTION,
@@ -811,25 +814,38 @@ def generate_land_use_mask(landuse_vector_path,
 
     # Clip the landuse and road data using the optional clipping boundary, if provided
 
-    if optional_clipping_boundary:
-        clipping_gdf = gpd.GeoDataFrame({'geometry': [optional_clipping_boundary]})
-        clipping_gdf.set_crs(landuse.crs, inplace=True)
-        landuse = gpd.clip(landuse, clipping_gdf)
-        roads = gpd.clip(roads, clipping_gdf)
+    clipping_gdf = gpd.GeoDataFrame({'geometry': [clipping_boundary]})
+    clipping_gdf.set_crs(landuse.crs, inplace=True)
+    landuse = gpd.clip(landuse, clipping_gdf)
+    roads = gpd.clip(roads, clipping_gdf)
 
     # Buffer roads
-    roads['geometry'] = roads.apply(lambda row: row['geometry'].buffer(road_buffer_dict.get(row['DETALJTYP'], 0)),
-                                    axis=1)
+    roads['geometry'] = roads.apply(lambda row: row['geometry'].buffer(road_buffer_dict.get(row['DETALJTYP'], DEFAULT_ROAD_BUFFER)), axis=1)
     buffered_roads = roads.dissolve()
 
     # Write roads first
     category_dir = os.path.join(output_dir, 'ROAD')
     os.makedirs(category_dir, exist_ok=True)
-    raster, transform = rasterize_landuse(buffered_roads, cell_resolution, output_dir, 'ROAD')
+    raster, transform = rasterize_landuse(buffered_roads, cell_resolution, output_dir, 'ROAD',clipping_boundary)
     blurred_raster = blur_raster_array(raster, transform)
 
     # Tile the blurred raster
     divide_gdal_raster_into_tiles(blurred_raster, ue_cell_resolution, category_dir)
+
+    # NEW PLOTTING
+    # Initialize the plotting area outside the loop
+    fig, ax = plt.subplots(figsize=(8, 8))
+    legend_patches = []
+
+    # If you have a predefined set of categories, you can manually specify colors:
+    # colors = {"CATEGORY1": "red", "CATEGORY2": "green", "CATEGORY3": "blue", ...}
+    # Otherwise, automatically generate colors using a colormap
+    cmap = plt.get_cmap("tab10")  # 10 distinct colors
+    colors = {category: cmap(i) for i, category in enumerate(landuse_mapping.keys())}
+    # Alpha value for transparency
+    alpha_value = 0.5
+
+
 
     for category, details in landuse_mapping.items():
         combined_features = landuse[landuse['DETALJTYP'].isin(details)]
@@ -840,31 +856,12 @@ def generate_land_use_mask(landuse_vector_path,
 
         # Subtract buffered road network
         subtracted = gpd.overlay(combined_features, buffered_roads, how="difference")
-        # Set the bbox for the subtracted data as the clipping boundary
-        subtracted = gpd.clip(subtracted, optional_clipping_boundary)
-
-        # Plot the GeoDataFrame
-        fig, ax = plt.subplots(figsize=(6, 6))
-
-        # Plot the 'subtracted' GeoDataFrame
-        subtracted.plot(ax=ax, color='lightgray', label='Subtracted Data')
-
-        # Plot the 'optional_clipping_boundary' polygon with a different color
-        gpd.GeoSeries([optional_clipping_boundary], crs=subtracted.crs).plot(ax=ax, color='none', edgecolor='blue', label='Clipping Boundary')
-
-        # Create proxy artists for legend
-        subtracted_patch = mpatches.Patch(color='lightgray', label='Subtracted Data')
-        boundary_patch = mpatches.Patch(edgecolor='blue', facecolor='none', label='Clipping Boundary')
-
-        # Set title, labels, and legend
         
-        ax.set_title(f"Category: {category}. Please close this window to continue.")
-        ax.set_xlabel("Longitude")
-        ax.set_ylabel("Latitude")
-        ax.legend(handles=[subtracted_patch, boundary_patch])
-
-        plt.show(block=True)
-
+        # Plot the subtracted data
+        color_for_this_category = colors[category]
+        subtracted.plot(ax=ax, color=color_for_this_category)
+        # Create a custom patch for the legend and add to the list
+        legend_patches.append(mpatches.Patch(color=color_for_this_category, label=f'{category} Subtracted Data', alpha=alpha_value))
 
         logging.info(f"Processing category {category} with {len(subtracted)} features.")
 
@@ -872,11 +869,26 @@ def generate_land_use_mask(landuse_vector_path,
         category_dir = os.path.join(output_dir, category)
         os.makedirs(category_dir, exist_ok=True)
 
-        raster, transform = rasterize_landuse(subtracted, cell_resolution, output_dir, category)
+        raster, transform = rasterize_landuse(subtracted, cell_resolution, output_dir, category,clipping_boundary)
         blurred_raster = blur_raster_array(raster, transform)
 
         # Tile the blurred raster
         divide_gdal_raster_into_tiles(blurred_raster, ue_cell_resolution, category_dir)
+    
+    # Plot the clipping boundary once, outside the loop
+    gpd.GeoSeries([clipping_boundary], crs=landuse.crs).plot(ax=ax, color='none', edgecolor='blue')
+
+    # Add the clipping boundary to the legend
+    legend_patches.append(mpatches.Patch(edgecolor='blue', facecolor='none', label='Clipping Boundary'))
+
+    # Set title, labels, and add the legend using the custom patches
+    ax.set_title(f"Land Use Categories. Please close this window to continue.")
+    ax.set_xlabel("Longitude")
+    ax.set_ylabel("Latitude")
+    ax.legend(handles=legend_patches, loc="upper left", bbox_to_anchor=(1,1), borderaxespad=0.)
+
+    plt.tight_layout()
+    plt.show()
 
 def write_metadata(z_scale, expected_x_res=2.0, expected_y_res=2.0, output_folder="data/unreal_tiles/"):
     """
@@ -960,7 +972,7 @@ def generate_overlay_data(overlay_data_directory, clipping_boundary):
 
     merged_gdf = gpd.pd.concat(all_gdfs, ignore_index=True)
 
-    fig, ax = plt.subplots(figsize=(6, 6))
+    fig, ax = plt.subplots(figsize=(8, 8))
     merged_gdf.plot(column='db', ax=ax, cmap='gray')
 
 
@@ -991,7 +1003,7 @@ def generate_overlay_data(overlay_data_directory, clipping_boundary):
 
     output_path = os.path.join(output_directory, 'output_plot.png')
     plt.savefig(output_path, dpi=300, bbox_inches='tight', pad_inches=0, facecolor=fig.get_facecolor())
-    plt.show(block=True)
+    plt.show()
     plt.close()
 
     logging.info(f"Plot saved to {output_path}")
@@ -1020,7 +1032,7 @@ def generate_unreal_tiles(dem_directory, landuse_path, road_path):
     z_scale = generate_heightmap(dem_directory, clipping_boundary=clipping_bbox)
     
     # Generate land use mask
-    generate_land_use_mask(landuse_path, road_path, optional_clipping_boundary=clipping_bbox)
+    generate_land_use_mask(landuse_path, road_path, clipping_boundary=clipping_bbox)
 
     # Generate overlay data
     overlay_data_directory = "data\\overlay_data"

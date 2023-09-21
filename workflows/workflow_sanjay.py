@@ -1035,7 +1035,7 @@ def generate_unreal_tiles(dem_directory, landuse_path, road_path):
     
     # Generate heightmap
     z_scale = generate_heightmap(dem_directory, clipping_boundary=clipping_bbox)
-    
+    print(clipping_bbox)
     # Generate land use mask
     generate_land_use_mask(landuse_path, road_path, clipping_boundary=clipping_bbox)
 
@@ -1045,6 +1045,15 @@ def generate_unreal_tiles(dem_directory, landuse_path, road_path):
     
     # Write metadata
     write_metadata(z_scale)
+
+    # Print bounds
+    print(f"Clipping boundary bounds:")
+    tile_xmin, tile_ymin, tile_xmax, tile_ymax = clipping_bbox.bounds
+    # Printtile_xmin, tile_ymin, tile_xmax, tile_ymax
+    print(f"tile_xmin: {tile_xmin}")
+    print(f"tile_ymin: {tile_ymin}")
+    print(f"tile_xmax: {tile_xmax}")
+    print(f"tile_ymax: {tile_ymax}")
     
 
 if __name__ == "__main__":

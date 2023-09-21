@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+#
+# Copyright (C) 2023 Anders Logg
+# Licensed under the MIT License
+#
+# Simple script for pip installing all core repos.
+
+for p in `cat utils/projects.csv`; do
+    echo "Pip installing in $p"
+    echo "---------------------------------------------------"
+    cd ../$p
+    pip install --upgrade --no-deps --force-reinstall .
+    cd ../dtcc
+    echo ""
+done

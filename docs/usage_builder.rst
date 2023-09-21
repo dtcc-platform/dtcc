@@ -87,7 +87,9 @@ these commands, we must first calculate the domain bounds and load the raw data:
     city = load_city(buildings_path, bounds=bounds)
     pointcloud = load_pointcloud(pointcloud_path, bounds=bounds)
 
-where ``buildings_path`` and ``pointcloud_path`` are the paths to the raw data files.
+where ``buildings_path`` is the path to the data file with building footprints 
+(.shp) and ``pointcloud_path`` is the path to the folder where the 
+pointcloud/pointclouds are stored.
 
 We can then build the city model by calling the ``build_city`` function:
 

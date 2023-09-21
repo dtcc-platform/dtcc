@@ -24,6 +24,17 @@ To load data from file, use the ``load_*`` functions, for example:
 
     pointcloud = load_pointcloud("data/helsingborg-residential-2022/pointcloud.las")
 
+the ``load_city`` and ``load_pointcloud`` functions also take an optional ``bounds`` argument 
+which limits the function to only load geometry within that bounds
+
+.. code:: python
+
+    from dtcc.model.geometry import Bounds
+    bounds = Bouds(0,0,100,100)
+    pointcloud = load_pointcloud("pointcloud.las", bounds=bounds)
+    
+
+
 To save data to file, use the ``.save`` method, for example:
 
 .. code:: python

@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+#
+# Copyright (C) 2023 Anders Logg
+# Licensed under the MIT License
+#
+# Simple script for pip installing all core repos.
+
+for p in `cat utils/projects.csv`; do
+    echo "Pip uninstall $p"
+    echo "---------------------------------------------------"
+    pip uninstall -y $p
+    echo ""
+done

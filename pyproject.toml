@@ -3,13 +3,16 @@ requires = ["setuptools>=61.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-version = "0.7.3"
+version = "0.7.20"
 name = "dtcc"
 description = "DTCC"
 readme = "README.md"
 authors = [
   { name = "Dag Wästberg", email = "dwastberg@gmail.com" },
   { name = "Anders Logg", email = "logg@chalmers.se" },
+  { name = "Vasilis Naserentin", email = "vasilis.naserentin@chalmers.se" },
+  { name = "George Spaias" , email= "gspaiasa@ece.auth.gr" },
+  { name = "Jens Olsson" , email= "jens.olsson@chalmersindustriteknik.se" },
 ]
 requires-python = ">=3.10"
 classifiers = [

@@ -1,3 +1,7 @@
+# Copyright (C) 2023 Sanjay Somanath
+# Licensed under the MIT License
+# This script documents the workflow for dtcc builder geojson to IDF/GBXML/DFJSON.
+
 import json
 import logging
 import os

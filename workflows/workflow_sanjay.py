@@ -974,7 +974,9 @@ def generate_overlay_data(overlay_data_directory, clipping_boundary):
     width = bbox[2] - bbox[0]
     height = bbox[3] - bbox[1]
     aspect_ratio = width / height
-
+    if aspect_ration == np.nan:
+        logging.error("Aspect ratio is NaN. Try commenting out line #968 and try again to plot without any clipping")
+        return
     fig_height = 20
     fig_width = fig_height * aspect_ratio
     fig, ax = plt.subplots(figsize=(fig_width, fig_height))

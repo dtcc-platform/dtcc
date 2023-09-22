@@ -964,8 +964,12 @@ def generate_overlay_data(overlay_data_directory, clipping_boundary):
     value_column = [col for col in gdf.columns if col != 'geometry'][0]
     gdf.plot(column=value_column, ax=ax, cmap='gray')
 
-    gdf = gdf[gdf.geometry.within(clipping_boundary)]
-    #TODO BBOX is returning nan
+    # TODO If clipping fails then comment this line
+    gdf = gpd.clip(gdf, clipping_boundary)
+
+    #TODO If clipping fails then try this.
+    #gdf = gdf[gdf.geometry.within(clipping_boundary)]
+
     bbox = gdf.total_bounds
     width = bbox[2] - bbox[0]
     height = bbox[3] - bbox[1]

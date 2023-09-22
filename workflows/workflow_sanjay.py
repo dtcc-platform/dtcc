@@ -38,7 +38,7 @@ logging.basicConfig(level=logging.INFO)
 # ========== CONSTANTS ==========
 
 # Spatial constants
-
+DEFAULT_EPSG = 3006                        # TODO This is the default EPSG for Sweden
 
 CELL_RESOLUTION = 2                         # TODO This is the resolution of data we get from LM, 2m per pixel
 # https://docs.unrealengine.com/4.27/en-US/BuildingWorlds/Landscape/TechnicalGuide/
@@ -739,7 +739,7 @@ def rasterize_landuse(subtracted, cell_resolution, output_dir, category, clippin
 
 
 # TODO Hardcoded crs
-def create_gdal_raster_from_array(array, transform, output_path=None, epsg=3006, nodata=None):
+def create_gdal_raster_from_array(array, transform, output_path=None, epsg=None, nodata=None):
     """
     Create a GDAL raster dataset from a numpy array.
     
@@ -781,7 +781,7 @@ def create_gdal_raster_from_array(array, transform, output_path=None, epsg=3006,
     return raster_ds
 
 
-def blur_raster_array(raster_array, transform):
+def blur_raster_array(raster_array, transform,epsg = None):
     """
     Blur the rasterized land use data provided as a numpy array.
     """
@@ -797,7 +797,7 @@ def blur_raster_array(raster_array, transform):
     blurred = convolve2d(raster_array, kernel, mode='same', boundary='symm')
     # blurred = ndimage.gaussian_filter(raster_array, sigma=2)
 
-    blurred_gdal_object = create_gdal_raster_from_array(blurred, transform)
+    blurred_gdal_object = create_gdal_raster_from_array(blurred, transform, epsg = epsg)
     return blurred_gdal_object
 
 
@@ -811,6 +811,7 @@ def generate_land_use_mask(landuse_vector_path,
                            output_dir="data/unreal_tiles"):
     landuse = gpd.read_file(landuse_vector_path)
     roads = gpd.read_file(road_vector_path)
+    epsg = DEFAULT_EPSG if landuse.crs.to_epsg() is None else landuse.crs.to_epsg()
 
     # Clip the landuse and road data using the optional clipping boundary, if provided
 
@@ -827,7 +828,7 @@ def generate_land_use_mask(landuse_vector_path,
     category_dir = os.path.join(output_dir, 'ROAD')
     os.makedirs(category_dir, exist_ok=True)
     raster, transform = rasterize_landuse(buffered_roads, cell_resolution, output_dir, 'ROAD',clipping_boundary)
-    blurred_raster = blur_raster_array(raster, transform)
+    blurred_raster = blur_raster_array(raster, transform, epsg)
 
     # Tile the blurred raster
     divide_gdal_raster_into_tiles(blurred_raster, ue_cell_resolution, category_dir)
@@ -876,7 +877,7 @@ def generate_land_use_mask(landuse_vector_path,
         os.makedirs(category_dir, exist_ok=True)
 
         raster, transform = rasterize_landuse(subtracted, cell_resolution, output_dir, category,clipping_boundary)
-        blurred_raster = blur_raster_array(raster, transform)
+        blurred_raster = blur_raster_array(raster, transform,epsg)
 
         # Tile the blurred raster
         divide_gdal_raster_into_tiles(blurred_raster, ue_cell_resolution, category_dir)
@@ -923,7 +924,7 @@ def write_metadata(z_scale, expected_x_res=2.0, expected_y_res=2.0, output_folde
 
 def generate_overlay_data(overlay_data_directory, clipping_boundary):
 
-    logging.info("Generating overlay data...")
+    logging.info("Checking for overlay data...")
 
     # Check if overlay_data_directory exists
     if not os.path.exists(overlay_data_directory):
@@ -940,55 +941,32 @@ def generate_overlay_data(overlay_data_directory, clipping_boundary):
         logging.error("Invalid clipping boundary provided. It should be a Shapely Polygon.")
         return
 
-    all_gdfs = []
-    zip_file_names = []
+    # check if there is more than one shapefile in the directory
+    all_files = os.listdir(overlay_data_directory)
+    # Filter for shapefiles either .SHP or .shp
+    shapefiles = [f for f in all_files if f.endswith('.shp') or f.endswith('.SHP')]
+    if len(shapefiles) == 0:
+        logging.error("No shapefiles found in the directory.")
+        return
+    elif len(shapefiles) > 1:
+        logging.error("More than one shapefile found in the directory.")
+        return
+    
+    gdf = gpd.read_file(os.path.join(overlay_data_directory, shapefiles[0]))
 
-    pattern = r'(\d+)_dBA'
-    regex_found = False
-
-    for filename in os.listdir(overlay_data_directory):
-        if filename.endswith('.zip'):
-            zip_file_names.append(filename)
-
-            match = re.search(pattern, filename)
-            if match:
-                db_value = match.group(1)
-                regex_found = True
-            else:
-                db_value = 'unknown'
-
-            with tempfile.TemporaryDirectory() as tempdir:
-                with zipfile.ZipFile(os.path.join(overlay_data_directory, filename), 'r') as zip_ref:
-                    zip_ref.extractall(tempdir)
-
-                for root, _, files in os.walk(tempdir):                
-                    for file in files:
-                        if file.endswith('.shp'):
-                            gdf = gpd.read_file(os.path.join(root, file))
-                            #set crs
-                            gdf.to_crs(epsg=3006, inplace=True)
-                            gdf['db'] = db_value
-                            all_gdfs.append(gdf)
-                            break
-
-    if not regex_found:
-        logging.error("Regex pattern not found in the directory filenames.")
+    # Check if overlay data bounds intersect with clipping boundary
+    if not gdf.geometry.intersects(clipping_boundary).any():
+        logging.error("Overlay data does not intersect with clipping boundary.")
         return
 
-    merged_gdf = gpd.pd.concat(all_gdfs, ignore_index=True)
 
     fig, ax = plt.subplots(figsize=(8, 8))
-    merged_gdf.plot(column='db', ax=ax, cmap='gray')
+    value_column = [col for col in gdf.columns if col != 'geometry'][0]
+    gdf.plot(column=value_column, ax=ax, cmap='gray')
 
-
-    #if not merged_gdf.geometry.intersects(clipping_boundary).any():
-    #    logging.error("Clipping boundary does not intersect with the GeoDataFrame. Exiting...")
-    #    return
-
-    merged_gdf = merged_gdf[merged_gdf.geometry.within(clipping_boundary)]
-    logging.info(f"Number of loaded shapefiles: {len(all_gdfs)}")
+    gdf = gdf[gdf.geometry.within(clipping_boundary)]
     #TODO BBOX is returning nan
-    bbox = merged_gdf.total_bounds
+    bbox = gdf.total_bounds
     width = bbox[2] - bbox[0]
     height = bbox[3] - bbox[1]
     aspect_ratio = width / height
@@ -996,7 +974,7 @@ def generate_overlay_data(overlay_data_directory, clipping_boundary):
     fig_height = 20
     fig_width = fig_height * aspect_ratio
     fig, ax = plt.subplots(figsize=(fig_width, fig_height))
-    merged_gdf.plot(column='db', ax=ax, cmap='gray')
+    gdf.plot(column=value_column, ax=ax, cmap='gray')
 
     ax.axis('off')
     ax.set_facecolor('black')
@@ -1013,7 +991,7 @@ def generate_overlay_data(overlay_data_directory, clipping_boundary):
 
     logging.info(f"Plot saved to {output_path}")
 
-def generate_unreal_tiles(dem_directory, landuse_path, road_path):
+def generate_unreal_tiles(dem_directory, landuse_path, road_path,overlay_data_directory = None):
     """
     Process and validate input data, generate heightmap and land use mask, 
     and then write metadata.
@@ -1035,12 +1013,10 @@ def generate_unreal_tiles(dem_directory, landuse_path, road_path):
     
     # Generate heightmap
     z_scale = generate_heightmap(dem_directory, clipping_boundary=clipping_bbox)
-    print(clipping_bbox)
     # Generate land use mask
     generate_land_use_mask(landuse_path, road_path, clipping_boundary=clipping_bbox)
 
     # Generate overlay data
-    overlay_data_directory = "data\\overlay_data"
     generate_overlay_data(overlay_data_directory, clipping_bbox)
     
     # Write metadata
@@ -1061,6 +1037,6 @@ if __name__ == "__main__":
     DEM_DIRECTORY = "data\\dem_data"
     LANDUSE_PATH = "data\\landuse_data\\my_south.shp"
     ROAD_PATH = "data\\road_data\\vl_riks.shp"
-
+    OVERLAY_PATH = "data\\overlay_data\\" 
     # Call the function
-    generate_unreal_tiles(DEM_DIRECTORY, LANDUSE_PATH, ROAD_PATH)
+    generate_unreal_tiles(DEM_DIRECTORY, LANDUSE_PATH, ROAD_PATH, OVERLAY_PATH)

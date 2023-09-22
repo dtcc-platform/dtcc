@@ -7,8 +7,9 @@ import logging
 import os
 from math import ceil
 import geopandas as gpd
+from ladybug.futil import preparedir
 from ladybug_geometry.geometry2d.pointvector import Point2D
-from ladybug_geometry.geometry3d.pointvector import Point3D
+from ladybug_geometry.geometry3d.pointvector import Point3D, Vector3D
 from ladybug_geometry.geometry3d.face import Face3D
 from dragonfly.model import Model
 from dragonfly.building import Building
@@ -16,63 +17,20 @@ from dragonfly.story import Story
 from dragonfly.room2d import Room2D
 from dragonfly.windowparameter import SimpleWindowRatio, RepeatingWindowRatio
 from honeybee_energy.lib.programtypes import office_program, ProgramType
-from honeybee_energy.run import to_openstudio_osw, to_gbxml_osw, run_osw,_face_to_gbxml_geo
+from honeybee_energy.run import add_gbxml_space_boundaries, to_openstudio_osw, to_gbxml_osw, run_osw,_face_to_gbxml_geo
 from honeybee.model import Model as HBModel
 from honeybee.config import folders as hb_folders
 from honeybee_energy.simulation.parameter import SimulationParameter
 from honeybee_energy.writer import energyplus_idf_version
 import xml.etree.ElementTree as ET
 import re
+import shutil
 
-"""
-# Optional - You can add a bunch of these properties to the geojson to begin with
-# This is just an example of how to add properties to the geojson
-# Details of the entire supported geojson schema is missing
-from math import ceil
-import json
-FLOOR_TO_FLOOR_HEIGHT = 3
-WINDOW_TO_WALL_RATIO = 0.4
-PROJECT_NAME = "Uddevala"
-
-# Load city.geojson as json object
-
-with open(data_directory / 'city.geojson') as f:
-    city_json = json.load(f)
-city_json.keys()
-
-# get bottom left corner of city as latitude_value_for_origin, longitude_value_for_origin
-latitude_value_for_project_origin = city_json['features'][0]['geometry']['coordinates'][0][0][1]
-longitude_value_for_project_origin = city_json['features'][0]['geometry']['coordinates'][0][0][0]
-project = {"project": {
-    "id": PROJECT_NAME,
-    "name": PROJECT_NAME,
-    "latitude": latitude_value_for_project_origin,
-    "longitude": longitude_value_for_project_origin
-  }}
-
-# Add project to city_json
-city_json.update(project)
-
-for i, building in enumerate(city_json["features"]):
-    properties = building["properties"]
-    height = properties["height"]
-    number_of_stories = ceil(height/FLOOR_TO_FLOOR_HEIGHT)
-    properties["id"] = "Building{}".format(i)
-    properties["name"] = "Building{}".format(i)
-    properties["building_status"] = "Existing"
-    properties["type"] = "Building"
-    properties["maximum_roof_height"] = height
-    properties["number_of_stories"] = number_of_stories
-    properties["window_to_wall_ratio"] = WINDOW_TO_WALL_RATIO
-
-# Write city_json to file
-with open( data_directory / "city.geojson", "w") as f:
-    json.dump(city_json, f)
-
-"""
-
+# Set up the logger
+logging.basicConfig(level=logging.INFO)
+_logger = logging.getLogger(__name__)
 # Constants
-PROJECT_NAME = 'Uddevala'
+PROJECT_NAME = 'City'
 FLOOR_TO_FLOOR_HEIGHT = 3
 WINDOW_TO_WALL_RATIO = 0.1
 WINDOW_HEIGHT = 1.6
@@ -80,7 +38,6 @@ WINDOW_SILL_HEIGHT = 0.7
 WINDOW_TO_WINDOW_HORIZONTAL_SPACING = 3
 ADD_DEFAULT_IDEAL_AIR = True
 DEFAULT_PROGRAM = ProgramType('HighriseApartment')
-PROJECT_DIRECTORY = 'data/uddevala/'
 BUILDING_PROGRAM_DICT = {
     "Bostad; Småhus friliggande": "HighriseApartment",
     "Bostad; Småhus kedjehus": "MidriseApartment",
@@ -170,189 +127,126 @@ def load_geojson_data(filepath):
     :param filepath: Path to the geojson file.
     :return: Loaded GeoJSON data.
     """
-    data = gpd.read_file(filepath)
+    with open(filepath, 'r', encoding='utf-8') as file:
+        data = json.load(file)
     return data
 
-# 2. Extract building heights from the GeoJSON data
-def extract_building_heights(data):
-    """
-    Extract building heights from the GeoJSON data.
+def filter_buildings(city_geojson_path, new_city_geojson_path):
+    # Copy the original geojson file to the new path
+    shutil.copyfile(city_geojson_path, new_city_geojson_path)
 
-    :param data: Loaded GeoJSON data.
-    :return: A list of building heights.
-    """
-    height_list = data["height"].to_list()
-    return height_list
+    # Load the GeoDataFrame
+    gdf = gpd.read_file(new_city_geojson_path)
 
-# 2.5 Extract building types from GeoJSON data
-def extract_building_types(data):
-    """
-    Extract building types from the GeoJSON data.
+    features_before = len(gdf)
 
-    :param data: Loaded GeoJSON data.
-    :return: A list of building types.
-    """
-    building_use_list = data["ANDAMAL_1T"].to_list()
-    return building_use_list
+    # Filter out buildings with height less than 3 meters or more than 100 meters
+    gdf = gdf[(gdf['height'] > 3) & (gdf['height'] < 100)]
 
-# This should not be recreated
-def clean_room_id(room_id):
-    # Remove '_Space' or '_Space_1' or '_1' from the end
-    cleaned_id = re.sub(r'(_Space(_\d+)?)|(_\d+)$', '', room_id)
-    return cleaned_id
+    # Convert CRS to EPSG 3006 to calculate area in square meters
+    gdf = gdf.to_crs(crs='3006')
+    gdf["area_sqm"] = gdf.geometry.area
 
-# This should not be recreated
-def add_gbxml_space_boundaries(base_gbxml, honeybee_model, new_gbxml=None):
-    """Add the SpaceBoundary and ShellGeometry to a base_gbxml of a Honeybee model.
+    # Filter out buildings with area less than 100 square meters 
+    gdf = gdf[gdf['area_sqm'] >= 100]
 
-    Note that these space boundary geometry definitions are optional within gbXML and
-    are essentially a duplication of the required non-manifold geometry within a
-    valid gbXML. The OpenStudio Forward Translator does not include such duplicated
-    geometries (hence, the reason for this method). However, these closed-volume
-    boundary geometries are used by certain interfaces and gbXML viewers.
+    # Convert CRS back to EPSG 4326
+    gdf = gdf.to_crs(crs='4326')
 
-    Args:
-        base_gbxml: A file path to a gbXML file that has been exported from the
-            OpenStudio Forward Translator.
-        honeybee_model: The honeybee Model object that was used to create the
-            exported base_gbxml.
-        new_gbxml: Optional path to where the new gbXML will be written. If None,
-            the original base_gbxml will be overwritten with a version that has
-            the SpaceBoundary included within it.
-    """
-    # get a dictionary of rooms in the model
-    logging.info('Preparing room_dict...')
-    room_dict = {room.identifier: room for room in honeybee_model.rooms}
+    # Drop the 'area_sqm' column
+    gdf = gdf.drop(columns=['area_sqm'])
 
-    # register all of the namespaces within the OpenStudio-exported XML
-    ET.register_namespace('', 'http://www.gbxml.org/schema')
-    ET.register_namespace('xhtml', 'http://www.w3.org/1999/xhtml')
-    ET.register_namespace('xsi', 'http://www.w3.org/2001/XMLSchema-instance')
-    ET.register_namespace('xsd', 'http://www.w3.org/2001/XMLSchema')
-    logging.info('Parsing gbXML...')
-    # parse the XML and get the building definition
-    tree = ET.parse(base_gbxml)
-    root = tree.getroot()
-    gbxml_header = r'{http://www.gbxml.org/schema}'
-    building = root[0][1]
+    # Save the GeoDataFrame to a new GeoJSON file
+    gdf.to_file(new_city_geojson_path, driver='GeoJSON')
+    features_after = len(gdf)
+    logging.info(f"Filtered out {features_before - features_after} buildings")
 
-    # loop through surfaces in the gbXML so that we know the name of the interior ones
-    logging.info('Getting surface names...')
-    surface_set = set()
-    for room_element in root[0].findall(gbxml_header + 'Surface'):
-        surface_set.add(room_element.get('id'))
 
-    # loop through the rooms in the XML and add them as space boundaries to the room
-    logging.info('Parsing rooms with Spaces...')
-    for room_element in building.findall(gbxml_header + 'Space'):
-        room_id = room_element.get('zoneIdRef')
-        if room_id:
-            room_id = room_element.get('id')
-            shell_element = ET.Element('ShellGeometry')
-            shell_element.set('id', '{}Shell'.format(room_id))
-            shell_geo_element = ET.SubElement(shell_element, 'ClosedShell')
-            # Remove _Space* from the end of the room_id            
-            hb_room = room_dict[clean_room_id(room_id)]  # remove '_Space' from the end
-            for face in hb_room:
-                face_xml, face_geo_xml = _face_to_gbxml_geo(face, surface_set)
-                if face_xml is not None:
-                    room_element.append(face_xml)
-                    shell_geo_element.append(face_geo_xml)
-            room_element.append(shell_element)
-    logging.info('Writing out the new XML...')
-    # write out the new XML
-    new_xml = base_gbxml if new_gbxml is None else new_gbxml
-    tree.write(new_xml, xml_declaration=True)
-    return new_xml
+def enrich_city_geojson(city_geojson_path):
+    with open(city_geojson_path, 'r', encoding='utf-8') as file:
+        city_geojson = json.load(file)
+    # Get the bounding box of the city
+    city_gdf = gpd.read_file(city_geojson_path)
+    city_bounds = city_gdf.bounds
+    lat_min, lon_min = city_bounds.minx.min(), city_bounds.miny.min()
+    project = {"project": {
+        "id": PROJECT_NAME,
+        "name": PROJECT_NAME,
+        "latitude": lat_min,
+        "longitude": lon_min
+    }}
 
-# This can be avoided for the most part
-def adjust_building_properties(model, building_heights, building_type, floor_to_floor_height=FLOOR_TO_FLOOR_HEIGHT):
+    # Add project to city_json
+    city_geojson.update(project)
+    # Create the project object
+    
+    # Add project to city_json
+    city_geojson.update(project)
+    # Adding building properties
+    for i, building in enumerate(city_geojson['features']):
+        properties = building["properties"]
+        height = properties["height"]
+        number_of_stories = ceil(height/FLOOR_TO_FLOOR_HEIGHT)
+        properties["id"] = "Building{}".format(i)
+        properties["name"] = "Building{}".format(i)
+        properties["building_status"] = "Existing"
+        properties["type"] = "Building"
+        properties["maximum_roof_height"] = height
+        properties["number_of_stories"] = number_of_stories
+        properties["window_to_wall_ratio"] = WINDOW_TO_WALL_RATIO
+    # Write city_json to file
+    # Write city_json to file using UTF-8 encoding with indentation
+    with open(city_geojson_path, "w", encoding='utf-8') as f:
+        json.dump(city_geojson, f, ensure_ascii=False, indent=4)
+    return city_geojson_path
+
+def adjust_building_properties(model, geojson_object):
     """
     Adjust properties of buildings in the model using provided building heights.
 
-    :param model: Dragonfly model.
-    :param building_heights: List of building heights.
-    :param floor_to_floor_height: Height for each floor. Default is 3.
-    :return: New Dragonfly model with adjusted buildings.
     """
-    new_buildings = []
-
-    for index, building in enumerate(model.buildings):
-        ground_height = building_heights[index]  # get the building height from the list
-        new_story_set = []
-
-        for story in building._unique_stories:
-            new_room2d_set = []
-
-            for room in story.room_2ds:
-                # Adjust the coordinates for ground height
-                adjusted_coords = [Point3D(pt.x, pt.y, ground_height) for pt in room.floor_geometry.boundary]
-                face3d = Face3D(adjusted_coords)
-
-                # Create a new Room2D
-                new_room = Room2D(
-                    room.identifier, face3d, floor_to_floor_height
-                )
-                # assign energy properties
-                #TODO Assign a vintage to the buildings based on year of construction
-                #TODO Assign a climate zone to the building based on location
-                building_program = BUILDING_PROGRAM_DICT.get(building_type[index])
+    # Move buildings above ground
+    for i, building  in enumerate(model.buildings):
+        ground_height = geojson_object['features'][i]["properties"]['ground_height']
+        building_type = geojson_object['features'][i]["properties"]['ANDAMAL_1T']
+        for storey in building:
+            # TODO Move the storey to the ground height
+            #m_vec = Vector3D(0, 0, ground_height)
+            #storey.move(m_vec)
+            for room in storey.room_2ds:
+                building_program = BUILDING_PROGRAM_DICT.get(building_type)
+                if building_program is None:
+                    print(f"No program found for building type: {building_type}")
                 program = ProgramType(building_program)
-                new_room.properties.energy.program_type = program
+                room.properties.energy.program_type = program
                 if ADD_DEFAULT_IDEAL_AIR:
-                    new_room.properties.energy.add_default_ideal_air()
-                new_room2d_set.append(new_room)
-
-            # Create a new Story with adjusted Room2Ds
-            new_story = Story(story.identifier, new_room2d_set)
-            new_story.solve_room_2d_adjacency(0.01)
-            
-            
-            # Set window parameters for the new story
-            new_story.set_outdoor_window_parameters(RepeatingWindowRatio(
-                WINDOW_TO_WALL_RATIO,
-                WINDOW_HEIGHT,
-                WINDOW_SILL_HEIGHT,
-                WINDOW_TO_WINDOW_HORIZONTAL_SPACING
-            ))
-            # Calculate and set the multiplier for the new story
-            multiplier = ceil(ground_height / floor_to_floor_height)
-            new_story.multiplier = multiplier
-
-            new_story_set.append(new_story)
-
-        # Create a new Building with adjusted stories
-        new_building = Building("{}_{}".format(building.identifier,index), new_story_set)
-        new_buildings.append(new_building)
-
-    # Create a new Dragonfly Model with adjusted buildings
-    new_model = Model(model.identifier, new_buildings)
-
-    return new_model
-
-
-_logger = logging.getLogger(__name__)
+                    room.properties.energy.add_default_ideal_air()
+                # Set window parameters for the new storey
+                storey.set_outdoor_window_parameters(RepeatingWindowRatio(
+                    WINDOW_TO_WALL_RATIO,
+                    WINDOW_HEIGHT,
+                    WINDOW_SILL_HEIGHT,
+                    WINDOW_TO_WINDOW_HORIZONTAL_SPACING
+                ))
+    return model
 
 # This should not be recreated - available in cli
-def model_to_hb_models(model, multiplier=False, no_plenum=True, no_ceil_adjacency=True):
+def model_to_hb_models(model,add_plenum=False,use_multiplier = True):
     """Translate a Model DFJSON to a Honeybee Model."""
 
     model.convert_to_units('Meters')
 
     # convert Dragonfly Model to Honeybee
-    add_plenum = not no_plenum
-    ceil_adjacency = not no_ceil_adjacency
-    hb_models = model.to_honeybee(
-        object_per_model='District', use_multiplier=multiplier,
-        add_plenum=add_plenum, solve_ceiling_adjacencies=ceil_adjacency)
-    return hb_models
+    hb_models = model.to_honeybee(object_per_model='District', shade_distance=None,
+                    use_multiplier=use_multiplier, add_plenum=add_plenum, cap=False,
+                    solve_ceiling_adjacencies=True, tolerance=None, enforce_adj=False)
+    return hb_models[0]
 
 # This should not be recreated - available in cli
-def models_to_idf(hb_models, additional_str = '', compact_schedules = True, 
+def hb_model_to_idf(hb_model, additional_str = '', compact_schedules = True, 
                   hvac_to_ideal_air = True, output_file_path= None):
     """Translate a Honeybee model to an IDF file."""
-    
-    hb_model = hb_models[0]
+
 
     # set the schedule directory in case it is needed
     sch_directory = None
@@ -375,78 +269,115 @@ def models_to_idf(hb_models, additional_str = '', compact_schedules = True,
         with open(output_file_path, 'w') as output_file:
             output_file.write(idf_str)
     except Exception as e:
-        _logger.exception('Model translation failed.\n{}'.format(e))
+        logger.exception('Model translation failed.\n{}'.format(e))
         raise e
-
+    # If no errors, log the success
+    logging.info('Successfully wrote IDF file to: {}'.format(output_file_path))
     return output_file_path
 
-# This should not be recreated - available in cli
-def models_to_gbxml(hb_models,no_plenum=True,
-                   no_ceil_adjacency=True, osw_folder=None, output_file_path=None):
-    out_directory = PROJECT_DIRECTORY  # assuming you want to use the default folder
-    hb_model = hb_models[0]
-    logging.info('Writing gbXML file to: {}'.format(out_directory))
-    # create the dictionary of the HBJSON for input to OpenStudio CLI
-    for room in hb_model.rooms:
-        room.remove_colinear_vertices_envelope(0.01, delete_degenerate=True)
-    model_dict = hb_model.to_dict(triangulate_sub_faces=True)
-    hb_model.properties.energy.add_autocal_properties_to_dict(model_dict)
-    hb_model_json = os.path.abspath(os.path.join(out_directory, 'city.hbjson'))
-    with open(hb_model_json, 'w') as fp:
-        json.dump(model_dict, fp)
-    logging.info('Wrote HBJSON file to: {}'.format(hb_model_json))
-    # Write the osw file and translate the model to gbXML
-    output_file_path = os.path.abspath(os.path.join(out_directory, 'city.gbxml'))
-    osw = to_gbxml_osw(hb_model_json, output_file_path, PROJECT_DIRECTORY)
-    logging.info('Wrote OSW file to: {}'.format(osw))
+def model_to_gbxml(model_file = None, multiplier = True, no_plenum = True, no_ceil_adjacency= False,
+                   osw_folder = None, minimal = False, output_file = None):
+    """Translate a Model DFJSON to a gbXML file.
+
+    \b
+    Args:
+        model_file: Path to either a DFJSON or DFpkl file. This can also be a
+            HBJSON or a HBpkl from which a Dragonfly model should be derived.
+    """
     try:
-        logging.info('Running OpenStudio CLI to translate to gbXML...')
-        _, idf = run_osw(osw, silent=False)
+        # set the default folder if it's not specified
+        out_path = None
 
-        if idf is not None and os.path.isfile(idf):
-            hb_model = HBModel.from_hbjson(hb_model_json)
-            logging.info('Adding space boundaries to gbXML file: {}'.format(output_file_path))
-            add_gbxml_space_boundaries(output_file_path, hb_model)
-            logging.info('Added space boundaries to gbXML file: {}'.format(output_file_path))
-            #if output_file_path is not None:
-                #with open(output_file_path) as json_file:
-                    #print(json_file.read())
+        out_directory = os.path.join(
+            hb_folders.default_simulation_folder, 'temp_translate')
+        f_name = output_file
+        f_name = f_name.replace('.gbxml', '.xml')
+        preparedir(out_directory)
+
+        # re-serialize the Dragonfly Model
+        model = Model.from_dfjson(model_file)
+        model.convert_to_units('Meters')
+
+        # convert Dragonfly Model to Honeybee
+        add_plenum = not no_plenum
+        ceil_adjacency = not no_ceil_adjacency
+        hb_models = model.to_honeybee(
+            object_per_model='District', use_multiplier=multiplier,
+            add_plenum=add_plenum, solve_ceiling_adjacencies=ceil_adjacency)
+        hb_model = hb_models[0]
+
+        # create the dictionary of the HBJSON for input to OpenStudio CLI
+        for room in hb_model.rooms:
+            room.remove_colinear_vertices_envelope(0.01, delete_degenerate=True)
+        model_dict = hb_model.to_dict(triangulate_sub_faces=True)
+        hb_model.properties.energy.add_autocal_properties_to_dict(model_dict)
+        hb_model_json = os.path.abspath(os.path.join(out_directory, 'in.hbjson'))
+        with open(hb_model_json, 'w') as fp:
+            json.dump(model_dict, fp)
+        logging.info('Successfully wrote HBJSON file to: {}'.format(hb_model_json))
+        # Write the osw file and translate the model to gbXML
+        out_f = out_path if output_file.endswith('-') else output_file
+        #make outfile path absolute relative to current directory
+        out_f = os.path.abspath(out_f)
+        
+        osw = to_gbxml_osw(hb_model_json, out_f, osw_folder)
+        logging.info('Successfully wrote OSW file to: {}'.format(osw))
+        if minimal:
+            _run_translation_osw(osw, out_path)
+        else:
+            _, idf = run_osw(osw, silent=True)
+            if idf is not None and os.path.isfile(idf):
+                hb_model = HBModel.from_hbjson(hb_model_json)
+
+                add_gbxml_space_boundaries(out_f, hb_model)
+                logging.info('Successfully wrote gbXML file to: {}'.format(out_f))
+                if out_path is not None:  # load the JSON string to stdout
+                    with open(out_path) as json_file:
+                        print(json_file.read())
+            else:
+                raise Exception('Running OpenStudio CLI failed.')
     except Exception as e:
-        _logger.exception('Model translation failed.\n{}'.format(e))
-        raise e
+        logging.exception('Model translation failed.\n{}'.format(e))
 
-    return output_file_path
+
 
 # Main execution
-def generate_EP_assets(geojson_file_path):
+def generate_EP_assets(geojson_file_path,use_multiplier = False):
     logging.info("Starting script execution...")
-
-    geojson_file_path = PROJECT_DIRECTORY + 'city.geojson'
+    # Copy the geojson file
+    new_geojson_file_path =  'city_enriched.geojson'
+    # Copy the geojson file using shutil.copyfile(src, dst)
+    filter_buildings(geojson_file_path, new_geojson_file_path)
+    enrich_city_geojson(new_geojson_file_path)
     logging.info(f"Loading data from {geojson_file_path}")
-    data = load_geojson_data(geojson_file_path)
-    building_heights = extract_building_heights(data)
-    building_types = extract_building_types(data)
+    data = load_geojson_data(new_geojson_file_path)
     logging.info("Creating Dragonfly model from GeoJSON...")
 
-    model, _ = Model.from_geojson(geojson_file_path, point=Point2D(0, 0), units='Meters', all_polygons_to_buildings=True)
-    #model.identifier = PROJECT_NAME
+    model, location = Model.from_geojson(new_geojson_file_path, location=None, point=Point2D(0, 0),
+                     all_polygons_to_buildings=False, existing_to_context=False,
+                     units='Meters', tolerance=None, angle_tolerance=1.0)
     logging.info("Adjusting building properties in the model...")
-    adjusted_model = adjust_building_properties(model, building_heights, building_types)
-    adjusted_model.to_dfjson('city', PROJECT_DIRECTORY)
+    adjusted_model = adjust_building_properties(model, data)
+    current_directory = os.getcwd()
+    adjusted_model.to_dfjson('city',current_directory, 2,None)
 
     logging.info("Serializing the Dragonfly Model to Honeybee Models...")
-    hb_models = model_to_hb_models(adjusted_model, multiplier = False, no_plenum=True, no_ceil_adjacency=True)
+    hb_model = model_to_hb_models(adjusted_model, add_plenum=False, use_multiplier=use_multiplier)
 
     logging.info("Converting Honeybee Models to IDF...")
-    #idfs = [hb_model.to.idf(hb_model) for hb_model in hb_models]
-    models_to_idf(hb_models, output_file_path = PROJECT_DIRECTORY + 'city.idf')
+    hb_model_to_idf(hb_model, output_file_path =  'city.idf')
 
     #TODO Replicate CLI commands for running the IDF file
     #This part is experimental
     logging.info("Converting Honeybee Models to GBXML...")
-    models_to_gbxml(hb_models, output_file_path=PROJECT_DIRECTORY + 'city.gbxml')
+    model_to_gbxml('city.dfjson',multiplier=use_multiplier, output_file='city.gbxml')
 
     logging.info("Script execution completed!")
 
 if __name__ == '__main__':
-    generate_EP_assets(PROJECT_DIRECTORY + 'city.geojson')
+    file_path = geojson_files[0] if geojson_files else None
+    if file_path:
+        print(file_path)
+    else:
+        logging.error("No geojson file found in the current directory.")
+    generate_EP_assets(file_path)

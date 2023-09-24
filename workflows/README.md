@@ -65,7 +65,7 @@ Upon successful execution, this will produce a new folder named `unreal_tiles` w
 ## Workflow geojson to DF
 
 ### 1\. Install dependencies
-`pip install -U dragonfly-core`
+`pip install -U dragonfly-core`  
 `pip install dragonfly-energy`
 
 ### 2\. Preparing the data

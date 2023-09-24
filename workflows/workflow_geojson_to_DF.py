@@ -32,6 +32,11 @@ import xml.etree.ElementTree as ET
 import re
 import shutil
 import traceback
+import honeybee_energy_standards # To check that the standards are installed
+from honeybee_energy.lib.constructionsets import construction_set_by_identifier
+from honeybee_energy.lib._loadprogramtypes import _program_types_standards_registry as STANDARDS_REGISTRY
+
+
 #import pdb; pdb.set_trace()
 
 #__name__ = 'workflow_geojson_to_DF'
@@ -40,6 +45,10 @@ logging.basicConfig(level=logging.INFO)
 # Create a custom logger with name 'geojson_to_DF'
 logger = logging.getLogger('geojson_to_DF')
 # Constants
+
+DEFAULT_CLIMATE_ZONE = 'ClimateZone6'  # 'ClimateZone1', 'ClimateZone2', 'ClimateZone3', 'ClimateZone4', 'ClimateZone5', 'ClimateZone6', 'ClimateZone7'
+DEFAULT_CONSTRUCTION_TYPE = 'Mass' #'SteelFramed', 'WoodFramed', 'Mass', 'Metal Building'
+DEFAULT_YEAR = 2000
 PROJECT_NAME = 'City'
 FLOOR_TO_FLOOR_HEIGHT = 3
 WINDOW_TO_WALL_RATIO = 0.1
@@ -219,7 +228,53 @@ def enrich_city_geojson(city_geojson_path):
     with open(city_geojson_path, "w", encoding='utf-8') as f:
         json.dump(city_geojson, f, ensure_ascii=False, indent=4)
     return city_geojson_path
+def get_closest_standard_year(input_year):
+    """
+    Return the closest year or range from STANDARDS_REGISTRY for the given input year.
+    """
+    
+    # Convert the input_year to an integer
+    input_year = int(input_year)
+    
+    # Check if the input year is less than 1900
+    if input_year < 1900:
+        raise ValueError("Year must be 1900 or later.")
+    
+    # A dictionary to convert special values in STANDARDS_REGISTRY to representative numbers for comparison
+    conversion = {
+        'pre_1980': 1979,
+        '1980_2004': 1980
+    }
+    
+    # Convert years in STANDARDS_REGISTRY to integers for comparison
+    years = []
+    for yr in STANDARDS_REGISTRY.keys():
+        if yr in conversion:
+            years.append(conversion[yr])
+        else:
+            try:
+                years.append(int(yr))
+            except ValueError:
+                pass  # ignore if cannot be converted
+    
+    # Get the difference between input_year and each year in STANDARDS_REGISTRY
+    differences = [abs(input_year - yr) for yr in years]
+    
+    # Get the closest year
+    closest_year_key = list(STANDARDS_REGISTRY.keys())[differences.index(min(differences))]
 
+    return closest_year_key
+def get_construction_identifier(construction_type, climate_zone, year):
+    """
+    Return the construction identifier for the given construction type, climate zone, and year.
+    """
+        
+    # Get the closest year from STANDARDS_REGISTRY
+    closest_year = get_closest_standard_year(year)
+    
+    construction_identifier = f"{closest_year}::{climate_zone}::{construction_type}"
+    
+    return construction_identifier
 def adjust_building_properties(model, geojson_object):
     """
     Adjust properties of buildings in the model using provided building heights.
@@ -229,10 +284,15 @@ def adjust_building_properties(model, geojson_object):
     for i, building  in enumerate(model.buildings):
         ground_height = geojson_object['features'][i]["properties"]['ground_height']
         building_type = geojson_object['features'][i]["properties"]['ANDAMAL_1T']
+        # Fetch the default construction set, this can be set to any year, construction type and climate zone
+        construction_identifier = get_construction_identifier(DEFAULT_CONSTRUCTION_TYPE, DEFAULT_CLIMATE_ZONE, DEFAULT_YEAR)
+        construction_set = construction_set_by_identifier(construction_identifier)
         m_vec = Vector3D(0, 0, ground_height)
         building.move(m_vec)
         for storey in building:
             for room in storey.room_2ds:
+                #logger.info(f"Setting construction set to {construction_identifier} for building type: {building_type}")
+                room.properties.energy.construction_set = construction_set
                 building_program = BUILDING_PROGRAM_DICT.get(building_type)
                 if building_program is None:
                     print(f"No program found for building type: {building_type}")

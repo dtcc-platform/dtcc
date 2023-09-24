@@ -98,6 +98,7 @@ Honeybee-energy leverages the EnergyPlus simulation engine and the OpenStudio SD
 2. `--generate_DFenriched_geojson`:
     - Use this flag to generate DF enriched geojson.
     - Default is `False` (enriched geojson generation is off).
+    - Use this to get material quantities as geojson.
 
 3. `--filter_height_less_than`: 
     - Filter out buildings with a height less than the specified value.

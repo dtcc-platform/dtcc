@@ -13,6 +13,9 @@ Table of Contents
 
 
 ## Workflow Generate Unreal Tiles
+![Alt text](media/workflow_unreal_tiles_1.png)
+
+![Alt text](media/workflow_unreal_tiles_2.png)
 ### 1\. Setting up the Conda Environment
 
 -   Create a new conda environment with the following command:
@@ -63,7 +66,7 @@ Table of Contents
 Upon successful execution, this will produce a new folder named `unreal_tiles` within the `workflows` directory.
 
 ## Workflow geojson to DF
-
+![Alt text](media/workflow_gbxml_1.png)
 ### 1\. Install dependencies
 `pip install -U dragonfly-core`  
 `pip install dragonfly-energy`

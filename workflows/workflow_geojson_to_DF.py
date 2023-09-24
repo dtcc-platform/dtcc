@@ -1,6 +1,12 @@
 # Copyright (C) 2023 Sanjay Somanath
-# Licensed under the MIT License
+# Licensed under the GPL License # TODO: Double check this with DTCC
 # This script documents the workflow for dtcc builder geojson to IDF/GBXML/DFJSON.
+
+# Attribution
+# This work incorporates code from the Ladybug Tools project (https://github.com/ladybug-tools), 
+# which is licensed under the GNU General Public License (GPL) Version 3. 
+# Any derivative works must also be released under an open source GPL license.
+
 
 import json
 import logging
@@ -132,6 +138,10 @@ def load_geojson_data(filepath):
     return data
 
 def filter_buildings(city_geojson_path, new_city_geojson_path):
+    """ Filter out buildings with height less than 3 meters or more than 100 meters
+        and area less than 100 square meters. 
+    """
+    logging.info("Copying the geojson file...")
     # Copy the original geojson file to the new path
     shutil.copyfile(city_geojson_path, new_city_geojson_path)
 
@@ -139,14 +149,14 @@ def filter_buildings(city_geojson_path, new_city_geojson_path):
     gdf = gpd.read_file(new_city_geojson_path)
 
     features_before = len(gdf)
-
+    logging.info(f"Filtering out buildings with height less than 3 meters or more than 100 meters...")
     # Filter out buildings with height less than 3 meters or more than 100 meters
     gdf = gdf[(gdf['height'] > 3) & (gdf['height'] < 100)]
 
     # Convert CRS to EPSG 3006 to calculate area in square meters
     gdf = gdf.to_crs(crs='3006')
     gdf["area_sqm"] = gdf.geometry.area
-
+    logging.info(f"Filtering out buildings with area less than 100 square meters...")
     # Filter out buildings with area less than 100 square meters 
     gdf = gdf[gdf['area_sqm'] >= 100]
 

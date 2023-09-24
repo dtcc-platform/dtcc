@@ -33,7 +33,10 @@ gdal.SetConfigOption('CPL_LOG_ERRORS', 'OFF')
 
 # ========== INTERNAL CONFIGURATION ==========
 gdal.DontUseExceptions()
+__name__ = 'workflow_generate_Unreal_Tiles'
+# Set up the logger
 logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # ========== CONSTANTS ==========
 
@@ -90,16 +93,16 @@ def check_and_clear_data():
     path = 'data/unreal_tiles'
     
     if os.path.exists(path):
-        logging.warning(f"Data is already present at {path}. It will be cleared.")
+        logger.warning(f"Data is already present at {path}. It will be cleared.")
         
         try:
             shutil.rmtree(path)
-            logging.info(f"Data cleared from {path}.")
+            logger.info(f"Data cleared from {path}.")
         except Exception as e:
-            logging.error(f"An error occurred while trying to clear data from {path}. Error: {e}")
+            logger.error(f"An error occurred while trying to clear data from {path}. Error: {e}")
 
     else:
-        logging.info(f"No data found at {path}.")
+        logger.info(f"No data found at {path}.")
 
 # To test the function, simply call it:
 # check_and_clear_data()
@@ -214,12 +217,12 @@ def validate_directory(dem_directory):
     ```
     """
     if not os.path.exists(dem_directory) or not os.path.isdir(dem_directory):
-        logging.error(f"DEM directory not found or not a directory: {dem_directory}")
+        logger.error(f"DEM directory not found or not a directory: {dem_directory}")
         return None
 
     dem_files = [file for file in os.listdir(dem_directory) if file.endswith('.tif')]
     if not dem_files:
-        logging.error(f"No files found inside the DEM directory: {dem_directory}")
+        logger.error(f"No files found inside the DEM directory: {dem_directory}")
         return None
     return dem_files
 
@@ -242,10 +245,10 @@ def validate_files(filepath, expected_ext):
     ```
     """
     if not os.path.exists(filepath):
-        logging.error(f"File not found: {filepath}")
+        logger.error(f"File not found: {filepath}")
         return False
     elif not filepath.endswith(expected_ext):
-        logging.error(f"Unexpected file type. Expected {expected_ext} but got {os.path.splitext(filepath)[1]}")
+        logger.error(f"Unexpected file type. Expected {expected_ext} but got {os.path.splitext(filepath)[1]}")
         return False
     return True
 
@@ -272,7 +275,7 @@ def check_attributes(filepath, required_attributes):
         schema_properties = set(attr.lower() for attr in file.schema["properties"].keys())
         for attribute in required_attributes:
             if attribute.lower() not in schema_properties:
-                logging.error(f"File {filepath} does not have the required {attribute} attribute")
+                logger.error(f"File {filepath} does not have the required {attribute} attribute")
                 return False
     return True
 
@@ -305,7 +308,7 @@ def check_detaljtyp_values(landuse_path, landuse_mapping):
         for feature in landuse_file:
             detaljtyp_val = feature["properties"].get("DETALJTYP", "").lower()
             if detaljtyp_val not in all_valid_values_lower:
-                logging.error(
+                logger.error(
                     f"Invalid DETALJTYP value {detaljtyp_val} in Landuse file. Expected one of {all_valid_values}")
                 return False
     return True
@@ -337,14 +340,14 @@ def validate_dem_resolution(dem_directory, expected_x_res, expected_y_res):
         dem_dataset = gdal.Open(dem_file_path)
 
         if dem_dataset is None:
-            logging.error(f"Failed to open DEM file: {dem_file_path}. Ensure it's a valid and accessible GeoTIFF file.")
+            logger.error(f"Failed to open DEM file: {dem_file_path}. Ensure it's a valid and accessible GeoTIFF file.")
             return False
 
         geo_transform = dem_dataset.GetGeoTransform()
         x_res, y_res = geo_transform[1], -geo_transform[5]
 
         if x_res != expected_x_res or y_res != expected_y_res:
-            logging.error(
+            logger.error(
                 f"For file {tif_file} - Expected DEM resolution of {expected_x_res}m x {expected_y_res}m, but got {x_res}m x {y_res}m")
             return False
 
@@ -374,7 +377,7 @@ def _validate_overlap(bboxes):
     for i in range(len(bboxes)):
         for j in range(i + 1, len(bboxes)):
             if not have_overlap(bboxes[i], bboxes[j]):
-                logging.error(f"No overlap found between bounding boxes {i} and {j}.")
+                logger.error(f"No overlap found between bounding boxes {i} and {j}.")
                 return False
     return True
 
@@ -395,25 +398,25 @@ def validate_input_data(dem_directory, landuse_path, road_path, optional_clippin
 
     if not validate_directory(dem_directory):
         return
-    logging.info("Directory validation successful.")
+    logger.info("Directory validation successful.")
 
     if not validate_files(landuse_path, '.shp') or not validate_files(road_path, '.shp'):
         return
-    logging.info("File validation successful.")
+    logger.info("File validation successful.")
 
     required_attributes = ["DETALJTYP"]
     if not check_attributes(landuse_path, required_attributes) or not check_attributes(road_path, required_attributes):
         return
-    logging.info("Attribute validation successful.")
+    logger.info("Attribute validation successful.")
 
     if not check_detaljtyp_values(landuse_path, LANDUSE_MAPPING):
         return
-    logging.info("Detaljtyp values validation successful.")
+    logger.info("Detaljtyp values validation successful.")
 
     if not validate_dem_resolution(dem_directory, expected_x_res, expected_y_res):
-        logging.info("DEM resolution validation failed.")
+        logger.info("DEM resolution validation failed.")
         return
-    logging.info("DEM resolution validation successful.")
+    logger.info("DEM resolution validation successful.")
 
     dem_bbox = box(*get_bbox_from_input(dem_directory))
     landuse_bbox = box(*get_bbox_from_input(landuse_path))
@@ -425,7 +428,7 @@ def validate_input_data(dem_directory, landuse_path, road_path, optional_clippin
     if optional_clipping_boundary:
         optional_bbox = box(*get_bbox_from_input(optional_clipping_boundary))
         coverage_percentage = get_intersection_percentage(optional_bbox, bboxes_to_check)
-        logging.info(f"Optional bounding box covers {coverage_percentage:.2f}% of the total intersection.")
+        logger.info(f"Optional bounding box covers {coverage_percentage:.2f}% of the total intersection.")
         clipping_bbox =  optional_bbox
     else:
         intersection_bbox = bboxes_to_check[0]
@@ -435,12 +438,12 @@ def validate_input_data(dem_directory, landuse_path, road_path, optional_clippin
     
     bboxes_to_check.append(clipping_bbox)
     if not _validate_overlap(bboxes_to_check):
-        logging.info("Overlap validation failed.")
+        logger.info("Overlap validation failed.")
         return
-    logging.info("Overlap validation successful.")
+    logger.info("Overlap validation successful.")
     
     
-    logging.info("Validation successful! Please close the map to continue...")
+    logger.info("Validation successful! Please close the map to continue...")
     
     
     landuse_crs = gpd.read_file(landuse_path).crs
@@ -609,6 +612,7 @@ def calculate_z_scale(dem_path):
     Returns:
         float: Calculated Z scale.
     """
+    logging.info("Calculating Z scale...")
     ds = gdal.Open(dem_path)
     if ds is None:
         raise ValueError(f"Unable to open the DEM file at {dem_path}")
@@ -641,6 +645,7 @@ def resample_dem(dem_path, target_resolution=CELL_RESOLUTION):
     Returns:
         str: Path to the resampled DEM.
     """
+    logging.info("Resampling DEM...")
     output_path = dem_path.replace('.tif', '_resampled.tif')
 
     # Open the DEM raster
@@ -667,6 +672,7 @@ def resample_dem(dem_path, target_resolution=CELL_RESOLUTION):
 
 
 def generate_heightmap(dem_path, clipping_boundary=None, output_folder="data", ue_cell_resolution=1009):
+    logging.info(f"Generating heightmap using DEM at {dem_path} and ue_cell_resolution {ue_cell_resolution}...")
     # Ensure the specified Unreal resolution is valid
     if ue_cell_resolution not in VALID_UE_RESOLUTIONS:
         raise ValueError(
@@ -715,6 +721,7 @@ def rasterize_landuse(subtracted, cell_resolution, output_dir, category, clippin
     """
     Rasterize the subtracted land use data.
     """
+    logging.info(f"Rasterizing landuse data for category {category}...")
     if clipping_boundary:
         bounds = clipping_boundary.bounds
     else:
@@ -753,7 +760,7 @@ def create_gdal_raster_from_array(array, transform, output_path=None, epsg=None,
     Returns:
         osgeo.gdal.Dataset: The GDAL raster dataset.
     """
-
+    logging.info("Creating GDAL raster from array...")
     # Determine the driver based on whether an output_path is provided
     driver_name = 'GTiff' if output_path else 'MEM'
     driver = gdal.GetDriverByName(driver_name)
@@ -785,6 +792,7 @@ def blur_raster_array(raster_array, transform,epsg = None):
     """
     Blur the rasterized land use data provided as a numpy array.
     """
+    logging.info("Blurring raster array...")
     # Create a 3x3 averaging filter
     kernel = BLUR_KERNEL
     """kernel = np.array([
@@ -809,6 +817,7 @@ def generate_land_use_mask(landuse_vector_path,
                            cell_resolution=CELL_RESOLUTION,
                            ue_cell_resolution=1009,
                            output_dir="data/unreal_tiles"):
+    logging.info("Generating land use mask...")
     landuse = gpd.read_file(landuse_vector_path)
     roads = gpd.read_file(road_vector_path)
     epsg = DEFAULT_EPSG if landuse.crs.to_epsg() is None else landuse.crs.to_epsg()
@@ -858,7 +867,7 @@ def generate_land_use_mask(landuse_vector_path,
         combined_features = landuse[landuse['DETALJTYP'].isin(details)]
 
         if combined_features.empty:
-            logging.info(f"No features found for category {category}. Skipping...")
+            logger.info(f"No features found for category {category}. Skipping...")
             continue
 
         # Subtract buffered road network
@@ -870,7 +879,7 @@ def generate_land_use_mask(landuse_vector_path,
         # Create a custom patch for the legend and add to the list
         legend_patches.append(mpatches.Patch(color=color_for_this_category, label=f'{category} Subtracted Data', alpha=alpha_value))
 
-        logging.info(f"Processing category {category} with {len(subtracted)} features.")
+        logger.info(f"Processing category {category} with {len(subtracted)} features.")
 
         # Rasterize the subtracted data
         category_dir = os.path.join(output_dir, category)
@@ -909,7 +918,7 @@ def write_metadata(z_scale, expected_x_res=2.0, expected_y_res=2.0, output_folde
     Returns:
     - None
     """
-
+    logger.info("Writing metadata...")
     x_scale = expected_x_res * 100
     y_scale = expected_y_res * 100
 
@@ -918,27 +927,27 @@ def write_metadata(z_scale, expected_x_res=2.0, expected_y_res=2.0, output_folde
         "y_scale": y_scale,
         "z_scale": z_scale
     }
-    logging.info("Metadata generated successfully!")
+    logger.info("Metadata generated successfully!")
     with open(os.path.join(output_folder, "metadata.json"), "w") as f:
         json.dump(metadata, f)
 
 def generate_overlay_data(overlay_data_directory, clipping_boundary):
-
-    logging.info("Checking for overlay data...")
+    logging.info("Generating overlay data...")
+    logger.info("Checking for overlay data...")
 
     # Check if overlay_data_directory exists
     if not os.path.exists(overlay_data_directory):
-        logging.warning(f"Directory {overlay_data_directory} not found. Continuing without generating overlay data...")
+        logger.warning(f"Directory {overlay_data_directory} not found. Continuing without generating overlay data...")
         return
 
     # Check if overlay_data_directory is not empty
     if not os.listdir(overlay_data_directory):
-        logging.error("Overlay data directory is empty.")
+        logger.error("Overlay data directory is empty.")
         return
 
     # Check if clipping_boundary is a Shapely Polygon
     if not isinstance(clipping_boundary, Polygon):
-        logging.error("Invalid clipping boundary provided. It should be a Shapely Polygon.")
+        logger.error("Invalid clipping boundary provided. It should be a Shapely Polygon.")
         return
 
     # check if there is more than one shapefile in the directory
@@ -946,17 +955,17 @@ def generate_overlay_data(overlay_data_directory, clipping_boundary):
     # Filter for shapefiles either .SHP or .shp
     shapefiles = [f for f in all_files if f.endswith('.shp') or f.endswith('.SHP')]
     if len(shapefiles) == 0:
-        logging.error("No shapefiles found in the directory.")
+        logger.error("No shapefiles found in the directory.")
         return
     elif len(shapefiles) > 1:
-        logging.error("More than one shapefile found in the directory.")
+        logger.error("More than one shapefile found in the directory.")
         return
     
     gdf = gpd.read_file(os.path.join(overlay_data_directory, shapefiles[0]))
 
     # Check if overlay data bounds intersect with clipping boundary
     if not gdf.geometry.intersects(clipping_boundary).any():
-        logging.error("Overlay data does not intersect with clipping boundary.")
+        logger.error("Overlay data does not intersect with clipping boundary.")
         return
 
 
@@ -975,7 +984,7 @@ def generate_overlay_data(overlay_data_directory, clipping_boundary):
     height = bbox[3] - bbox[1]
     aspect_ratio = width / height
     if aspect_ration == np.nan:
-        logging.error("Aspect ratio is NaN. Try commenting out line #968 and try again to plot without any clipping")
+        logger.error("Aspect ratio is NaN. Try commenting out line #968 and try again to plot without any clipping")
         return
     fig_height = 20
     fig_width = fig_height * aspect_ratio
@@ -995,7 +1004,7 @@ def generate_overlay_data(overlay_data_directory, clipping_boundary):
     plt.show()
     plt.close()
 
-    logging.info(f"Plot saved to {output_path}")
+    logger.info(f"Plot saved to {output_path}")
 
 def generate_unreal_tiles(dem_directory, landuse_path, road_path,overlay_data_directory = None):
     """
@@ -1013,7 +1022,7 @@ def generate_unreal_tiles(dem_directory, landuse_path, road_path,overlay_data_di
     # Check if data directory exists
     check_and_clear_data()
     
-    logging.info("Generating Unreal tiles...")
+    logger.info("Generating Unreal tiles...")
     # Validate input data
     clipping_bbox = validate_input_data(dem_directory, landuse_path, road_path)
     

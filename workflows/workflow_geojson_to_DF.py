@@ -7,7 +7,7 @@
 # which is licensed under the GNU General Public License (GPL) Version 3. 
 # Any derivative works must also be released under an open source GPL license.
 
-
+import argparse
 import json
 import logging
 import os
@@ -31,10 +31,14 @@ from honeybee_energy.writer import energyplus_idf_version
 import xml.etree.ElementTree as ET
 import re
 import shutil
+import traceback
+#import pdb; pdb.set_trace()
 
+#__name__ = 'workflow_geojson_to_DF'
 # Set up the logger
 logging.basicConfig(level=logging.INFO)
-_logger = logging.getLogger(__name__)
+# Create a custom logger with name 'geojson_to_DF'
+logger = logging.getLogger('geojson_to_DF')
 # Constants
 PROJECT_NAME = 'City'
 FLOOR_TO_FLOOR_HEIGHT = 3
@@ -122,8 +126,7 @@ BUILDING_PROGRAM_DICT = {
  #'SecondarySchool',
  #'FullServiceRestaurant'
 
-# Initialize the logger
-logging.basicConfig(level=logging.INFO)
+
 
 # 1. Load the GeoJSON Data
 def load_geojson_data(filepath):
@@ -137,11 +140,17 @@ def load_geojson_data(filepath):
         data = json.load(file)
     return data
 
-def filter_buildings(city_geojson_path, new_city_geojson_path):
+def filter_buildings(city_geojson_path, new_city_geojson_path, filter_height_less_than = 3, filter_height_greater_than = 100, filter_area_less_than = 100 ):
     """ Filter out buildings with height less than 3 meters or more than 100 meters
         and area less than 100 square meters. 
     """
-    logging.info("Copying the geojson file...")
+    print(f"city_geojson_path: {city_geojson_path}")
+    print(f"new_city_geojson_path: {new_city_geojson_path}")
+    print(f"filter_height_less_than: {filter_height_less_than}")
+    print(f"filter_height_greater_than: {filter_height_greater_than}")
+    print(f"filter_area_less_than: {filter_area_less_than}")
+
+    logger.info("Copying the geojson file...")
     # Copy the original geojson file to the new path
     shutil.copyfile(city_geojson_path, new_city_geojson_path)
 
@@ -149,16 +158,16 @@ def filter_buildings(city_geojson_path, new_city_geojson_path):
     gdf = gpd.read_file(new_city_geojson_path)
 
     features_before = len(gdf)
-    logging.info(f"Filtering out buildings with height less than 3 meters or more than 100 meters...")
+    logger.info(f"Filtering out buildings with height less than 3 meters or more than 100 meters...")
     # Filter out buildings with height less than 3 meters or more than 100 meters
-    gdf = gdf[(gdf['height'] > 3) & (gdf['height'] < 100)]
+    gdf = gdf[(gdf['height'] > filter_height_less_than) & (gdf['height'] < filter_height_greater_than)]
 
     # Convert CRS to EPSG 3006 to calculate area in square meters
     gdf = gdf.to_crs(crs='3006')
     gdf["area_sqm"] = gdf.geometry.area
-    logging.info(f"Filtering out buildings with area less than 100 square meters...")
+    logger.info(f"Filtering out buildings with area less than 100 square meters...")
     # Filter out buildings with area less than 100 square meters 
-    gdf = gdf[gdf['area_sqm'] >= 100]
+    gdf = gdf[gdf['area_sqm'] >= filter_area_less_than]
 
     # Convert CRS back to EPSG 4326
     gdf = gdf.to_crs(crs='4326')
@@ -169,7 +178,8 @@ def filter_buildings(city_geojson_path, new_city_geojson_path):
     # Save the GeoDataFrame to a new GeoJSON file
     gdf.to_file(new_city_geojson_path, driver='GeoJSON')
     features_after = len(gdf)
-    logging.info(f"Filtered out {features_before - features_after} buildings")
+    logger.info(f"Filtered out {features_before - features_after} buildings")
+
 
 
 def enrich_city_geojson(city_geojson_path):
@@ -219,10 +229,9 @@ def adjust_building_properties(model, geojson_object):
     for i, building  in enumerate(model.buildings):
         ground_height = geojson_object['features'][i]["properties"]['ground_height']
         building_type = geojson_object['features'][i]["properties"]['ANDAMAL_1T']
+        m_vec = Vector3D(0, 0, ground_height)
+        building.move(m_vec)
         for storey in building:
-            # TODO Move the storey to the ground height
-            #m_vec = Vector3D(0, 0, ground_height)
-            #storey.move(m_vec)
             for room in storey.room_2ds:
                 building_program = BUILDING_PROGRAM_DICT.get(building_type)
                 if building_program is None:
@@ -282,7 +291,7 @@ def hb_model_to_idf(hb_model, additional_str = '', compact_schedules = True,
         logger.exception('Model translation failed.\n{}'.format(e))
         raise e
     # If no errors, log the success
-    logging.info('Successfully wrote IDF file to: {}'.format(output_file_path))
+    logger.info('Successfully wrote IDF file to: {}'.format(output_file_path))
     return output_file_path
 
 def model_to_gbxml(model_file = None, multiplier = True, no_plenum = True, no_ceil_adjacency= False,
@@ -324,70 +333,135 @@ def model_to_gbxml(model_file = None, multiplier = True, no_plenum = True, no_ce
         hb_model_json = os.path.abspath(os.path.join(out_directory, 'in.hbjson'))
         with open(hb_model_json, 'w') as fp:
             json.dump(model_dict, fp)
-        logging.info('Successfully wrote HBJSON file to: {}'.format(hb_model_json))
+        logger.info('Successfully wrote HBJSON file to: {}'.format(hb_model_json))
         # Write the osw file and translate the model to gbXML
         out_f = out_path if output_file.endswith('-') else output_file
         #make outfile path absolute relative to current directory
         out_f = os.path.abspath(out_f)
         
         osw = to_gbxml_osw(hb_model_json, out_f, osw_folder)
-        logging.info('Successfully wrote OSW file to: {}'.format(osw))
+        logger.info('Successfully wrote OSW file to: {}'.format(osw))
         if minimal:
             _run_translation_osw(osw, out_path)
         else:
             _, idf = run_osw(osw, silent=True)
             if idf is not None and os.path.isfile(idf):
                 hb_model = HBModel.from_hbjson(hb_model_json)
-
+                logger.info('Writing gbXML file...')
                 add_gbxml_space_boundaries(out_f, hb_model)
-                logging.info('Successfully wrote gbXML file to: {}'.format(out_f))
+                logger.info('Successfully wrote gbXML file to: {}'.format(out_f))
                 if out_path is not None:  # load the JSON string to stdout
                     with open(out_path) as json_file:
                         print(json_file.read())
             else:
                 raise Exception('Running OpenStudio CLI failed.')
     except Exception as e:
-        logging.exception('Model translation failed.\n{}'.format(e))
+        logger.exception('Model translation failed.\n{}'.format(e))
+
+
+def generate_DF_enriched_geojson(enriched_city_geojson_path,dfModel):
+    """height
+        * height_above_ground
+        * height_from_first_floor
+        * footprint_area
+        * floor_area
+        * exterior_wall_area
+        * exterior_aperture_area
+        * volume
+    """
+    # Open geojson file
+    with open(enriched_city_geojson_path, 'r', encoding='utf-8') as file:
+        city_geojson = json.load(file)
+    # Iterate over buildings
+    for i, bldg_object in enumerate(city_geojson['features']):
+        building = dfModel.buildings[i]
+        # Add building properties to the geojson file
+        bldg_object["properties"]["height"] = round(building.height,2)
+        bldg_object["properties"]["height_above_ground"] = round(building.height_above_ground,2)
+        bldg_object["properties"]["height_from_first_floor"] = round(building.height_from_first_floor,2)
+        bldg_object["properties"]["footprint_area"] = round(building.footprint_area,2)
+        bldg_object["properties"]["floor_area"] = round(building.floor_area,2)
+        bldg_object["properties"]["exterior_wall_area"] = round(building.exterior_wall_area,2)
+        bldg_object["properties"]["exterior_aperture_area"] = round(building.exterior_aperture_area,2)
+        bldg_object["properties"]["volume"] = round(building.volume,2)
+
+    
+    # Write city_json to file
+    new_city_geojson_path =  'city_enriched_DF.geojson'
+    # Write city_json to file using UTF-8 encoding with indentation
+    with open(new_city_geojson_path, "w", encoding='utf-8') as f:
+        json.dump(city_geojson, f, ensure_ascii=False, indent=4)
+
 
 
 
 # Main execution
-def generate_EP_assets(geojson_file_path,use_multiplier = False):
-    logging.info("Starting script execution...")
+def generate_EP_assets(geojson_file_path,use_multiplier = False, generate_DFenriched_geojson = False, filter_height_less_than=3, filter_height_greater_than=100, filter_area_less_than=100):
+    logger.info("Starting script execution...")
     # Copy the geojson file
     new_geojson_file_path =  'city_enriched.geojson'
     # Copy the geojson file using shutil.copyfile(src, dst)
-    filter_buildings(geojson_file_path, new_geojson_file_path)
+    filter_buildings(geojson_file_path, new_geojson_file_path, filter_height_less_than = filter_height_less_than, filter_height_greater_than = filter_height_greater_than, filter_area_less_than = filter_area_less_than)
     enrich_city_geojson(new_geojson_file_path)
-    logging.info(f"Loading data from {geojson_file_path}")
+    logger.info(f"Loading data from {geojson_file_path}")
     data = load_geojson_data(new_geojson_file_path)
-    logging.info("Creating Dragonfly model from GeoJSON...")
+    logger.info("Creating Dragonfly model from GeoJSON...")
 
     model, location = Model.from_geojson(new_geojson_file_path, location=None, point=Point2D(0, 0),
                      all_polygons_to_buildings=False, existing_to_context=False,
                      units='Meters', tolerance=None, angle_tolerance=1.0)
-    logging.info("Adjusting building properties in the model...")
+    logger.info("Adjusting building properties in the model...")
     adjusted_model = adjust_building_properties(model, data)
+    
+    if generate_DFenriched_geojson:
+        generate_DF_enriched_geojson(new_geojson_file_path,adjusted_model)
     current_directory = os.getcwd()
     adjusted_model.to_dfjson('city',current_directory, 2,None)
 
-    logging.info("Serializing the Dragonfly Model to Honeybee Models...")
+    logger.info("Serializing the Dragonfly Model to Honeybee Models...")
     hb_model = model_to_hb_models(adjusted_model, add_plenum=False, use_multiplier=use_multiplier)
 
-    logging.info("Converting Honeybee Models to IDF...")
+    logger.info("Converting Honeybee Models to IDF...")
     hb_model_to_idf(hb_model, output_file_path =  'city.idf')
-
-    #TODO Replicate CLI commands for running the IDF file
-    #This part is experimental
-    logging.info("Converting Honeybee Models to GBXML...")
+    logger.info("Converting Honeybee Models to GBXML...")
     model_to_gbxml('city.dfjson',multiplier=use_multiplier, output_file='city.gbxml')
 
-    logging.info("Script execution completed!")
+    logger.info("Script execution completed!")
+
+import argparse
 
 if __name__ == '__main__':
+    # Set up argument parsing
+    parser = argparse.ArgumentParser(description="Process geojson files in a directory")
+    parser.add_argument('--directory_path', type=str, required=True, help='Path to the directory containing geojson file(s)')
+    
+    parser.add_argument('--multiplier', default=False, action='store_true', help='Flag to use multiplier')
+    parser.add_argument('--generate_DFenriched_geojson', default=False, action='store_true', help='Flag to generate DF enriched geojson')
+    parser.add_argument('--filter_height_less_than', default = 3,  type=float, help='Filter by height less than specified value')
+    parser.add_argument('--filter_height_greater_than', default = 100, type=float, help='Filter by height greater than specified value')
+    parser.add_argument('--filter_area_less_than', default = 100, type=float, help='Filter by area less than specified value')
+    
+    # Parse the arguments
+    args = parser.parse_args()
+    logger.info(f"Changing directory to {args.directory_path}")
+    os.chdir(args.directory_path)
+    # Log the arguments
+    logger.info(f"generate_DFenriched_geojson: {args.generate_DFenriched_geojson}")
+    logger.info(f"filter_height_less_than: {args.filter_height_less_than}")
+    logger.info(f"filter_height_greater_than: {args.filter_height_greater_than}")
+    logger.info(f"filter_area_less_than: {args.filter_area_less_than}")
+    
+    # Get the geojson file path
+    city_geojson_file_path = os.path.join(args.directory_path, 'city.geojson')
+    logger.info(f"city_geojson_file_path: {city_geojson_file_path}")
+    # Check for geojson files in current working directory
+    cwd = os.getcwd()
+    geojson_files = [f for f in os.listdir(cwd) if f.endswith('.geojson')]
+
     file_path = geojson_files[0] if geojson_files else None
     if file_path:
         print(file_path)
     else:
-        logging.error("No geojson file found in the current directory.")
-    generate_EP_assets(file_path)
+        logger.error("No geojson file found in the current directory.")
+    # Call your function with the parsed arguments
+    generate_EP_assets(file_path,args.multiplier, args.generate_DFenriched_geojson, args.filter_height_less_than, args.filter_height_greater_than, args.filter_area_less_than)

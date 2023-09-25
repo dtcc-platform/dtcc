@@ -12,7 +12,7 @@ Table of Contents
 6. [Workflow table](#workflow-table)
 
 
-## Workflow Generate Unreal Tiles
+# Workflow Generate Unreal Tiles
 ![Alt text](media/workflow_unreal_tiles_1.png)
 
 ![Alt text](media/workflow_unreal_tiles_2.png)
@@ -65,7 +65,37 @@ Table of Contents
 
 Upon successful execution, this will produce a new folder named `unreal_tiles` within the `workflows` directory.
 
-## Workflow geojson to DF
+## Data requirements
+- Digital Elevation Model (DEM) in geotiff format. This is used for the terrain. Multiple tiles are fine. Specify the cell resolution (meters per pixel)
+- Road centerline data as .shp
+    - If the road centerline data contains an attribute with different road widths, then include a json on how to do the road width mapping such that we can replace it here
+    ``` JSON
+    BUFFER_DICT = {
+    "VÄGBN.M": 10,
+    "VÄGGG.D": 10,
+    "VÄGGG.M": 10,
+    "VÄGKV.M": 10,
+    "VÄGBNU.M": 10
+    }
+    ```
+- Landuse data as .shp. 
+    - Make sure the landuse features include the following along with a mapping of attributes.
+    ``` JSON
+    LANDUSE_MAPPING = {                         
+    "GLACIER": ["ÖPGLAC"],
+    "BUILDINGS": ["BEBSLUT", "BEBHÖG", "BEBLÅG", "BEBIND"],
+    "FARMING": ["ODLÅKER", "ODLFRUKT"],
+    "OPEN AREAS": ["ÖPMARK", "ÖPKFJÄLL", "ÖPTORG"],
+    "FOREST": ["SKOGBARR", "SKOGLÖV", "SKOGFBJ"],
+    "UNMAPPED": ["MRKO"]                    
+    }
+    ```
+- Overlay data as .shp. 
+    - Ensure that there is only one other column in the dataset with values that will map to coloured isolines.
+- Finally, ensure that all the data is in the same crs, or else the code will throw an error.
+
+
+# Workflow geojson to DF
 ![Alt text](media/workflow_gbxml_1.png)
 ### 1\. Install dependencies
 `pip install -U dragonfly-core`  

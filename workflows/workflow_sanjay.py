@@ -930,7 +930,7 @@ def write_metadata(z_scale, expected_x_res=2.0, expected_y_res=2.0, output_folde
     with open(os.path.join(output_folder, "metadata.json"), "w") as f:
         json.dump(metadata, f)
 
-def generate_overlay_data(overlay_data_directory, clipping_boundary):
+def generate_overlay_data(overlay_data_directory, clipping_boundary,landuse_path):
     logging.info("Generating overlay data...")
     logger.info("Checking for overlay data...")
 
@@ -942,11 +942,6 @@ def generate_overlay_data(overlay_data_directory, clipping_boundary):
     # Check if overlay_data_directory is not empty
     if not os.listdir(overlay_data_directory):
         logger.error("Overlay data directory is empty.")
-        return
-
-    # Check if clipping_boundary is a Shapely Polygon
-    if not isinstance(clipping_boundary, Polygon):
-        logger.error("Invalid clipping boundary provided. It should be a Shapely Polygon.")
         return
 
     # check if there is more than one shapefile in the directory
@@ -962,34 +957,28 @@ def generate_overlay_data(overlay_data_directory, clipping_boundary):
     
     gdf = gpd.read_file(os.path.join(overlay_data_directory, shapefiles[0]))
 
+    # Check if overlay_data crs is same as landuse crs if not then reproject
+    landuse_crs = gpd.read_file(landuse_path).crs
+    if not gdf.crs == landuse_crs:
+        logger.warning("Overlay data crs is not same as landuse crs. Reprojecting...")
+        gdf = gdf.to_crs(gpd.read_file(landuse_path).crs)
+        logger.info("Reprojection successful!")
+
+
     # Check if overlay data bounds intersect with clipping boundary
     if not gdf.geometry.intersects(clipping_boundary).any():
         logger.error("Overlay data does not intersect with clipping boundary.")
         return
-
-
-    fig, ax = plt.subplots(figsize=(8, 8))
-    value_column = [col for col in gdf.columns if col != 'geometry'][0]
-    gdf.plot(column=value_column, ax=ax, cmap='gray')
-
-    # TODO If clipping fails then comment this line
     gdf = gpd.clip(gdf, clipping_boundary)
-
-    #TODO If clipping fails then try this.
-    #gdf = gdf[gdf.geometry.within(clipping_boundary)]
-
+    value_column = [col for col in gdf.columns if col != 'geometry'][0]
     bbox = gdf.total_bounds
     width = bbox[2] - bbox[0]
     height = bbox[3] - bbox[1]
     aspect_ratio = width / height
-    if aspect_ration == np.nan:
-        logger.error("Aspect ratio is NaN. Try commenting out line #968 and try again to plot without any clipping")
-        return
-    fig_height = 20
+    fig_height = 8
     fig_width = fig_height * aspect_ratio
     fig, ax = plt.subplots(figsize=(fig_width, fig_height))
     gdf.plot(column=value_column, ax=ax, cmap='gray')
-
     ax.axis('off')
     ax.set_facecolor('black')
     fig.set_facecolor('black')
@@ -1000,7 +989,7 @@ def generate_overlay_data(overlay_data_directory, clipping_boundary):
 
     output_path = os.path.join(output_directory, 'output_plot.png')
     plt.savefig(output_path, dpi=300, bbox_inches='tight', pad_inches=0, facecolor=fig.get_facecolor())
-    plt.show()
+    logger.info(f"Overlay data saved to {output_path}")
     plt.close()
 
     logger.info(f"Plot saved to {output_path}")
@@ -1031,7 +1020,7 @@ def generate_unreal_tiles(dem_directory, landuse_path, road_path,overlay_data_di
     generate_land_use_mask(landuse_path, road_path, clipping_boundary=clipping_bbox)
 
     # Generate overlay data
-    generate_overlay_data(overlay_data_directory, clipping_bbox)
+    generate_overlay_data(overlay_data_directory, clipping_bbox, landuse_path)
     
     # Write metadata
     write_metadata(z_scale)

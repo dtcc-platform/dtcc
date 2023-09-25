@@ -930,69 +930,89 @@ def write_metadata(z_scale, expected_x_res=2.0, expected_y_res=2.0, output_folde
     with open(os.path.join(output_folder, "metadata.json"), "w") as f:
         json.dump(metadata, f)
 
-def generate_overlay_data(overlay_data_directory, clipping_boundary,landuse_path):
-    logging.info("Generating overlay data...")
-    logger.info("Checking for overlay data...")
-
-    # Check if overlay_data_directory exists
+def check_overlay_directory(overlay_data_directory):
     if not os.path.exists(overlay_data_directory):
         logger.warning(f"Directory {overlay_data_directory} not found. Continuing without generating overlay data...")
-        return
+        return False
 
-    # Check if overlay_data_directory is not empty
     if not os.listdir(overlay_data_directory):
         logger.error("Overlay data directory is empty.")
-        return
-
-    # check if there is more than one shapefile in the directory
+        return False
+    
     all_files = os.listdir(overlay_data_directory)
-    # Filter for shapefiles either .SHP or .shp
     shapefiles = [f for f in all_files if f.endswith('.shp') or f.endswith('.SHP')]
+
     if len(shapefiles) == 0:
         logger.error("No shapefiles found in the directory.")
-        return
+        return False
     elif len(shapefiles) > 1:
         logger.error("More than one shapefile found in the directory.")
-        return
-    
-    gdf = gpd.read_file(os.path.join(overlay_data_directory, shapefiles[0]))
+        return False
 
-    # Check if overlay_data crs is same as landuse crs if not then reproject
+    return shapefiles[0]
+
+def load_and_reproject_data(overlay_data_directory, shapefile_name, landuse_path):
+    gdf = gpd.read_file(os.path.join(overlay_data_directory, shapefile_name))
+
     landuse_crs = gpd.read_file(landuse_path).crs
     if not gdf.crs == landuse_crs:
         logger.warning("Overlay data crs is not same as landuse crs. Reprojecting...")
-        gdf = gdf.to_crs(gpd.read_file(landuse_path).crs)
+        gdf = gdf.to_crs(landuse_crs)
         logger.info("Reprojection successful!")
+    
+    return gdf
 
+def plot_and_save_overlay(gdf, clipping_boundary, value_column):
+    clipping_bbox = clipping_boundary.bounds
+    clipping_width = clipping_bbox[2] - clipping_bbox[0]
+    clipping_height = clipping_bbox[3] - clipping_bbox[1]
+    clipping_aspect_ratio = clipping_width / clipping_height
 
-    # Check if overlay data bounds intersect with clipping boundary
-    if not gdf.geometry.intersects(clipping_boundary).any():
-        logger.error("Overlay data does not intersect with clipping boundary.")
-        return
-    gdf = gpd.clip(gdf, clipping_boundary)
-    value_column = [col for col in gdf.columns if col != 'geometry'][0]
-    bbox = gdf.total_bounds
-    width = bbox[2] - bbox[0]
-    height = bbox[3] - bbox[1]
-    aspect_ratio = width / height
     fig_height = 8
-    fig_width = fig_height * aspect_ratio
+    fig_width = fig_height * clipping_aspect_ratio
     fig, ax = plt.subplots(figsize=(fig_width, fig_height))
+    
+    ax.set_aspect('equal')
+    ax.set_xlim(clipping_bbox[0], clipping_bbox[2])
+    ax.set_ylim(clipping_bbox[1], clipping_bbox[3])
     gdf.plot(column=value_column, ax=ax, cmap='gray')
     ax.axis('off')
+    plt.tight_layout(pad=0)
     ax.set_facecolor('black')
     fig.set_facecolor('black')
-
+    ax.margins(0)
     output_directory = os.path.join('data', 'unreal_tiles', 'OVERLAY')
     if not os.path.exists(output_directory):
         os.makedirs(output_directory)
-
+    
     output_path = os.path.join(output_directory, 'output_plot.png')
-    plt.savefig(output_path, dpi=300, bbox_inches='tight', pad_inches=0, facecolor=fig.get_facecolor())
-    logger.info(f"Overlay data saved to {output_path}")
+    plt.savefig(output_path, dpi=300, pad_inches=0, facecolor=fig.get_facecolor())
+    
     plt.close()
 
+    return output_path
+
+def generate_overlay_data(overlay_data_directory, clipping_boundary, landuse_path):
+    plt.close('all')  # Close previous plots
+    logger.info("Generating overlay data...")
+
+    shapefile_name = check_overlay_directory(overlay_data_directory)
+    if not shapefile_name:
+        return
+
+    gdf = load_and_reproject_data(overlay_data_directory, shapefile_name, landuse_path)
+    if not gdf.geometry.intersects(clipping_boundary).any():
+        logger.error("Overlay data does not intersect with clipping boundary.")
+        return
+    
+    gdf = gpd.clip(gdf, clipping_boundary)
+    value_column = [col for col in gdf.columns if col != 'geometry'][0]
+    output_path = plot_and_save_overlay(gdf, clipping_boundary, value_column)
+    
+    logger.info(f"Overlay data saved to {output_path}")
     logger.info(f"Plot saved to {output_path}")
+
+
 
 def generate_unreal_tiles(dem_directory, landuse_path, road_path,overlay_data_directory = None):
     """

@@ -33,10 +33,9 @@ gdal.SetConfigOption('CPL_LOG_ERRORS', 'OFF')
 
 # ========== INTERNAL CONFIGURATION ==========
 gdal.DontUseExceptions()
-__name__ = 'workflow_generate_Unreal_Tiles'
 # Set up the logger
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('workflow_generate_Unreal_Tiles')
 
 # ========== CONSTANTS ==========
 

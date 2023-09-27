@@ -101,9 +101,9 @@ Upon successful execution, this will produce a new folder named `unreal_tiles` w
 `pip install -U dragonfly-core`  
 `pip install dragonfly-energy`
 
-Ensure other dependencies for Honeybee-energy are met.  
-Honeybee-energy leverages the EnergyPlus simulation engine and the OpenStudio SDK in order to add energy simulation properties and capabilities to honeybee-core.
-
+Ensure other dependencies for Honeybee-energy are met.   
+Honeybee-energy leverages the EnergyPlus simulation engine and the OpenStudio SDK in order to add energy simulation properties and capabilities to honeybee-core.  
+You can use the ladybug tools pollination installer to make sure the simulation dependencies are installed.  
 [Honebee-energy](https://github.com/ladybug-tools/honeybee-energy#honeybee-energy)
 
 ### 2\. Preparing the data

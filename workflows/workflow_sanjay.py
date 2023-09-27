@@ -35,7 +35,7 @@ gdal.SetConfigOption('CPL_LOG_ERRORS', 'OFF')
 gdal.DontUseExceptions()
 # Set up the logger
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger('workflow_generate_Unreal_Tiles')
+logger = logging.getLogger('Unreal_Tile_Generator')
 
 # ========== CONSTANTS ==========
 
@@ -562,7 +562,7 @@ def divide_raster_into_tiles(dem_path, cell_resolution):
     ds = None  # Close dataset
 
 
-def divide_gdal_raster_into_tiles(ds, cell_resolution, output_directory):
+def divide_gdal_raster_into_tiles(ds, cell_resolution, output_directory, return_bbox=False):
     """
     Divide the provided GDAL raster dataset into tiles based on the provided cell resolution.
     
@@ -570,6 +570,10 @@ def divide_gdal_raster_into_tiles(ds, cell_resolution, output_directory):
         ds (gdal.Dataset): Input GDAL raster dataset.
         cell_resolution (int): Desired resolution of each cell (tile size).
         output_directory (str): Directory where the tiles will be saved.
+        return_bbox (bool, optional): If set to True, returns the bounding box of the tiles.
+    
+    Returns:
+        Polygon or None: Bounding box of the full tiles if return_bbox is True, otherwise None.
     """
     if ds is None:
         raise ValueError("Provided GDAL raster dataset is None.")
@@ -599,6 +603,19 @@ def divide_gdal_raster_into_tiles(ds, cell_resolution, output_directory):
             tile_col += 1
         tile_row += 1
 
+    if return_bbox:
+        # Get the geographic coordinates of the raster dataset's extent
+        gt = ds.GetGeoTransform()
+        minx = gt[0]
+        miny = gt[3] + height * gt[5]
+        maxx = gt[0] + width * gt[1]
+        maxy = gt[3]
+
+        # Return the bounding box as a shapely Polygon
+        return Polygon([(minx, miny), (minx, maxy), (maxx, maxy), (maxx, miny), (minx, miny)])
+    
+    return None
+
 
 
 def calculate_z_scale(dem_path):
@@ -611,7 +628,7 @@ def calculate_z_scale(dem_path):
     Returns:
         float: Calculated Z scale.
     """
-    logging.info("Calculating Z scale...")
+    logger.info("Calculating Z scale...")
     ds = gdal.Open(dem_path)
     if ds is None:
         raise ValueError(f"Unable to open the DEM file at {dem_path}")
@@ -644,7 +661,7 @@ def resample_dem(dem_path, target_resolution=CELL_RESOLUTION):
     Returns:
         str: Path to the resampled DEM.
     """
-    logging.info("Resampling DEM...")
+    logger.info("Resampling DEM...")
     output_path = dem_path.replace('.tif', '_resampled.tif')
 
     # Open the DEM raster
@@ -671,7 +688,7 @@ def resample_dem(dem_path, target_resolution=CELL_RESOLUTION):
 
 
 def generate_heightmap(dem_path, clipping_boundary=None, output_folder="data", ue_cell_resolution=1009):
-    logging.info(f"Generating heightmap using DEM at {dem_path} and ue_cell_resolution {ue_cell_resolution}...")
+    logger.info(f"Generating heightmap using DEM at {dem_path} and ue_cell_resolution {ue_cell_resolution}...")
     # Ensure the specified Unreal resolution is valid
     if ue_cell_resolution not in VALID_UE_RESOLUTIONS:
         raise ValueError(
@@ -720,7 +737,7 @@ def rasterize_landuse(subtracted, cell_resolution, output_dir, category, clippin
     """
     Rasterize the subtracted land use data.
     """
-    logging.info(f"Rasterizing landuse data for category {category}...")
+    logger.info(f"Rasterizing landuse data for category {category}...")
     if clipping_boundary:
         bounds = clipping_boundary.bounds
     else:
@@ -759,7 +776,7 @@ def create_gdal_raster_from_array(array, transform, output_path=None, epsg=None,
     Returns:
         osgeo.gdal.Dataset: The GDAL raster dataset.
     """
-    logging.info("Creating GDAL raster from array...")
+    logger.info("Creating GDAL raster from array...")
     # Determine the driver based on whether an output_path is provided
     driver_name = 'GTiff' if output_path else 'MEM'
     driver = gdal.GetDriverByName(driver_name)
@@ -791,7 +808,7 @@ def blur_raster_array(raster_array, transform,epsg = None):
     """
     Blur the rasterized land use data provided as a numpy array.
     """
-    logging.info("Blurring raster array...")
+    logger.info("Blurring raster array...")
     # Create a 3x3 averaging filter
     kernel = BLUR_KERNEL
     """kernel = np.array([
@@ -816,7 +833,7 @@ def generate_land_use_mask(landuse_vector_path,
                            cell_resolution=CELL_RESOLUTION,
                            ue_cell_resolution=1009,
                            output_dir="data/unreal_tiles"):
-    logging.info("Generating land use mask...")
+    logger.info("Generating land use mask...")
     landuse = gpd.read_file(landuse_vector_path)
     roads = gpd.read_file(road_vector_path)
     epsg = DEFAULT_EPSG if landuse.crs.to_epsg() is None else landuse.crs.to_epsg()
@@ -839,7 +856,7 @@ def generate_land_use_mask(landuse_vector_path,
     blurred_raster = blur_raster_array(raster, transform, epsg)
 
     # Tile the blurred raster
-    divide_gdal_raster_into_tiles(blurred_raster, ue_cell_resolution, category_dir)
+    landuse_clipping_bbox = divide_gdal_raster_into_tiles(blurred_raster, ue_cell_resolution, category_dir, return_bbox = True)
 
     # Initialize the plotting area outside the loop
     fig, ax = plt.subplots(figsize=(12, 12))
@@ -903,6 +920,7 @@ def generate_land_use_mask(landuse_vector_path,
     ax.legend(handles=legend_patches, loc="upper left", bbox_to_anchor=(1,1), borderaxespad=0.)
     plt.tight_layout()
     plt.show()
+    return landuse_clipping_bbox
 
 def write_metadata(z_scale, expected_x_res=2.0, expected_y_res=2.0, output_folder="data/unreal_tiles/"):
     """
@@ -962,6 +980,8 @@ def load_and_reproject_data(overlay_data_directory, shapefile_name, landuse_path
     
     return gdf
 
+import matplotlib.colors as mcolors
+
 def plot_and_save_overlay(gdf, clipping_boundary, value_column):
     clipping_bbox = clipping_boundary.bounds
     clipping_width = clipping_bbox[2] - clipping_bbox[0]
@@ -975,12 +995,23 @@ def plot_and_save_overlay(gdf, clipping_boundary, value_column):
     ax.set_aspect('equal')
     ax.set_xlim(clipping_bbox[0], clipping_bbox[2])
     ax.set_ylim(clipping_bbox[1], clipping_bbox[3])
-    gdf.plot(column=value_column, ax=ax, cmap='gray')
+
+    # Determine the color range
+    min_val = gdf[value_column].min()
+    max_val = gdf[value_column].max()
+    
+    if min_val >= 0:
+        norm = mcolors.Normalize(vmin=0, vmax=max_val)
+    else:
+        norm = mcolors.Normalize(vmin=min_val, vmax=max_val)
+
+    gdf.plot(column=value_column, ax=ax, cmap='gray', norm=norm)
     ax.axis('off')
     plt.tight_layout(pad=0)
     ax.set_facecolor('black')
     fig.set_facecolor('black')
     ax.margins(0)
+
     output_directory = os.path.join('data', 'unreal_tiles', 'OVERLAY')
     if not os.path.exists(output_directory):
         os.makedirs(output_directory)
@@ -989,6 +1020,9 @@ def plot_and_save_overlay(gdf, clipping_boundary, value_column):
     plt.savefig(output_path, dpi=300, pad_inches=0, facecolor=fig.get_facecolor())
     
     plt.close()
+
+    return output_path
+
 
     return output_path
 
@@ -1037,7 +1071,7 @@ def generate_unreal_tiles(dem_directory, landuse_path, road_path,overlay_data_di
     # Generate heightmap
     z_scale = generate_heightmap(dem_directory, clipping_boundary=clipping_bbox)
     # Generate land use mask
-    generate_land_use_mask(landuse_path, road_path, clipping_boundary=clipping_bbox)
+    landuse_clipping_bbox = generate_land_use_mask(landuse_path, road_path, clipping_boundary=clipping_bbox)
 
     # Generate overlay data
     generate_overlay_data(overlay_data_directory, clipping_bbox, landuse_path)

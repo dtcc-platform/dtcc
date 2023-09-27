@@ -108,6 +108,7 @@ Honeybee-energy leverages the EnergyPlus simulation engine and the OpenStudio SD
 
 ### 2\. Preparing the data
 - Ensure that city.geojson exists inside the data folder.
+- An optional `clip.geojson` boundary can be provided to set the buildings outside the boundary as `context_shade`
 
 ### 3\. Running the script
 

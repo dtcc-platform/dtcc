@@ -149,7 +149,12 @@ def load_geojson_data(filepath):
     # Check if clip.geojson exists
     if os.path.isfile('clip.geojson'):
         logger.info("clip.geojson found. Setting the buildings outside the clip area as context...")
+        
         clip_gdf = gpd.read_file('clip.geojson')
+        # Ensure there is only one feature in the clip.geojson file
+        if len(clip_gdf) > 1:
+            raise ValueError("The clip.geojson file contains more than one feature. Please ensure there is only one feature in the clip.geojson file.")
+            
         # load the geojson file at filepath
         gdf = gpd.read_file(filepath)
         # Count the number of buildings in the GeoDataFrame

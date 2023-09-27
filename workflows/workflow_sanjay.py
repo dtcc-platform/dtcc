@@ -16,6 +16,7 @@ import re
 import fiona
 import geopandas as gpd
 from matplotlib.patches import Rectangle, Patch
+import matplotlib.colors as mcolors
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import numpy as np
@@ -761,7 +762,6 @@ def rasterize_landuse(subtracted, cell_resolution, output_dir, category, clippin
     return raster, transform
 
 
-# TODO Hardcoded crs
 def create_gdal_raster_from_array(array, transform, output_path=None, epsg=None, nodata=None):
     """
     Create a GDAL raster dataset from a numpy array.
@@ -983,6 +983,7 @@ def load_and_reproject_data(overlay_data_directory, shapefile_name, landuse_path
 import matplotlib.colors as mcolors
 
 def plot_and_save_overlay(gdf, clipping_boundary, value_column):
+    # Set up the figure and ax based on the clipping boundary
     clipping_bbox = clipping_boundary.bounds
     clipping_width = clipping_bbox[2] - clipping_bbox[0]
     clipping_height = clipping_bbox[3] - clipping_bbox[1]
@@ -996,33 +997,40 @@ def plot_and_save_overlay(gdf, clipping_boundary, value_column):
     ax.set_xlim(clipping_bbox[0], clipping_bbox[2])
     ax.set_ylim(clipping_bbox[1], clipping_bbox[3])
 
-    # Determine the color range
+    # Create a base array for alpha (all zeros, i.e., fully transparent)
+    alpha_array = np.zeros_like(gdf[value_column].values, dtype=float)
+    
+    # Set alpha to 1 (opaque) where data exists
+    alpha_array[~gdf[value_column].isna()] = 1.0
+    
+    # Normalize the data for coloring
     min_val = gdf[value_column].min()
     max_val = gdf[value_column].max()
-    
     if min_val >= 0:
         norm = mcolors.Normalize(vmin=0, vmax=max_val)
     else:
         norm = mcolors.Normalize(vmin=min_val, vmax=max_val)
-
-    gdf.plot(column=value_column, ax=ax, cmap='gray', norm=norm)
+    
+    # Plotting with custom cmap and alpha
+    colors = plt.cm.gray(norm(gdf[value_column].values))
+    colors[:, 3] = alpha_array  # Set the alpha channel based on our mask
+    
+    gdf.plot(facecolor=colors, ax=ax, edgecolor='none')
+    
     ax.axis('off')
     plt.tight_layout(pad=0)
-    ax.set_facecolor('black')
-    fig.set_facecolor('black')
-    ax.margins(0)
-
+    ax.set_facecolor('none')
+    fig.set_facecolor('none')
+    
+    # Save the plot
     output_directory = os.path.join('data', 'unreal_tiles', 'OVERLAY')
     if not os.path.exists(output_directory):
         os.makedirs(output_directory)
     
     output_path = os.path.join(output_directory, 'output_plot.png')
-    plt.savefig(output_path, dpi=300, pad_inches=0, facecolor=fig.get_facecolor())
+    plt.savefig(output_path, dpi=300, bbox_inches='tight', pad_inches=0)
     
     plt.close()
-
-    return output_path
-
 
     return output_path
 

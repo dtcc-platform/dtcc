@@ -50,11 +50,11 @@ DEFAULT_CLIMATE_ZONE = 'ClimateZone6'  # 'ClimateZone1', 'ClimateZone2', 'Climat
 DEFAULT_CONSTRUCTION_TYPE = 'Mass' #'SteelFramed', 'WoodFramed', 'Mass', 'Metal Building'
 DEFAULT_YEAR = 2000
 PROJECT_NAME = 'City'
-FLOOR_TO_FLOOR_HEIGHT = 3
-WINDOW_TO_WALL_RATIO = 0.1
+FLOOR_TO_FLOOR_HEIGHT = 2.8
+WINDOW_TO_WALL_RATIO = 0.4
 WINDOW_HEIGHT = 1.6
 WINDOW_SILL_HEIGHT = 0.7
-WINDOW_TO_WINDOW_HORIZONTAL_SPACING = 3
+WINDOW_TO_WINDOW_HORIZONTAL_SPACING = 4
 ADD_DEFAULT_IDEAL_AIR = True
 DEFAULT_PROGRAM = ProgramType('HighriseApartment')
 BUILDING_PROGRAM_DICT = {
@@ -86,6 +86,7 @@ BUILDING_PROGRAM_DICT = {
     "Samhällsfunktion; Djursjukhus": "Outpatient",
     "Samhällsfunktion; Försvarsbyggnad": "Courthouse",
     "Samhällsfunktion; Vårdcentral": "Outpatient",
+    "Samhällsfunktion; Hälsocentral": "Outpatient",
     "Samhällsfunktion; Högskola": "SecondarySchool",
     "Samhällsfunktion; Ishall": "SmallOffice",
     "Samhällsfunktion; Järnvägsstation": "SmallOffice",
@@ -145,6 +146,24 @@ def load_geojson_data(filepath):
     :param filepath: Path to the geojson file.
     :return: Loaded GeoJSON data.
     """
+    # Check if clip.geojson exists
+    if os.path.isfile('clip.geojson'):
+        logger.info("clip.geojson found. Setting the buildings outside the clip area as context...")
+        clip_gdf = gpd.read_file('clip.geojson')
+        # load the geojson file at filepath
+        gdf = gpd.read_file(filepath)
+        # Count the number of buildings in the GeoDataFrame
+        logger.info(f"Number of buildings before clipping: {len(gdf)}")
+        # Set the building_status to 'context' for buildings outside the clip area
+        gdf.loc[~gdf.intersects(clip_gdf.unary_union), 'building_status'] = 'Existing'
+        # Count the number of buildings set to 'Existing' as context and 'Building' as buildings
+        len_existing = len(gdf[gdf['building_status'] == 'Existing'])
+        len_building = len(gdf[gdf['building_status'] == 'Building'])
+        logger.info(f"Number of buildings set to 'Existing' as context: {len_existing}")
+        logger.info(f"Number of buildings set to 'Building' as buildings: {len_building}")
+        # Save the GeoDataFrame to a new GeoJSON file
+        gdf.to_file(filepath, driver='GeoJSON')
+
     with open(filepath, 'r', encoding='utf-8') as file:
         data = json.load(file)
     return data
@@ -190,21 +209,20 @@ def filter_buildings(city_geojson_path, new_city_geojson_path, filter_height_les
     logger.info(f"Filtered out {features_before - features_after} buildings")
 
 
-
 def enrich_city_geojson(city_geojson_path):
     with open(city_geojson_path, 'r', encoding='utf-8') as file:
         city_geojson = json.load(file)
     # Get the bounding box of the city
     city_gdf = gpd.read_file(city_geojson_path)
     city_bounds = city_gdf.bounds
-    lat_min, lon_min = city_bounds.minx.min(), city_bounds.miny.min()
+    lon_min,lat_min  = city_bounds.minx.min(), city_bounds.miny.min()
     project = {"project": {
         "id": PROJECT_NAME,
         "name": PROJECT_NAME,
         "latitude": lat_min,
         "longitude": lon_min
     }}
-
+    print(f"lat_min: {lat_min}, lon_min: {lon_min}")
     # Add project to city_json
     city_geojson.update(project)
     # Create the project object
@@ -218,7 +236,7 @@ def enrich_city_geojson(city_geojson_path):
         number_of_stories = ceil(height/FLOOR_TO_FLOOR_HEIGHT)
         properties["id"] = "Building{}".format(i)
         properties["name"] = "Building{}".format(i)
-        properties["building_status"] = "Existing"
+        properties["building_status"] = "Building"
         properties["type"] = "Building"
         properties["maximum_roof_height"] = height
         properties["number_of_stories"] = number_of_stories
@@ -280,10 +298,25 @@ def adjust_building_properties(model, geojson_object):
     Adjust properties of buildings in the model using provided building heights.
 
     """
+    # If building_status is 'Building' keep it in building_object if not move it to context_object
+    building_objects = [bldg for bldg in geojson_object['features'] if bldg["properties"]["building_status"] == "Building"]
+    context_objects = [bldg for bldg in geojson_object['features'] if bldg["properties"]["building_status"] == "Existing"]
+    # Check if the number of buildings in the geojson file matches the number of buildings in the model
+    if len(building_objects) != len(model.buildings):
+        logger.error(f"Number of buildings in the geojson file: {len(building_objects)}")
+        logger.error(f"Number of buildings in the model: {len(model.buildings)}")
+        raise Exception("Number of buildings in the geojson file does not match the number of buildings in the model.")
+        return
+    # Check if the number of buildings in the geojson file matches the number of buildings in the model
+    if len(context_objects) != len(model.context_shades):
+        logger.error(f"Number of buildings in the geojson file: {len(context_objects)}")
+        logger.error(f"Number of buildings in the model: {len(model.context_shades)}")
+        raise Exception("Number of buildings in the geojson file does not match the number of buildings in the model.")
+        return
     # Move buildings above ground
     for i, building  in enumerate(model.buildings):
-        ground_height = geojson_object['features'][i]["properties"]['ground_height']
-        building_type = geojson_object['features'][i]["properties"]['ANDAMAL_1T']
+        ground_height = building_objects[i]["properties"]['ground_height']
+        building_type = building_objects[i]["properties"]['ANDAMAL_1T']
         # Fetch the default construction set, this can be set to any year, construction type and climate zone
         construction_identifier = get_construction_identifier(DEFAULT_CONSTRUCTION_TYPE, DEFAULT_CLIMATE_ZONE, DEFAULT_YEAR)
         construction_set = construction_set_by_identifier(construction_identifier)
@@ -296,7 +329,9 @@ def adjust_building_properties(model, geojson_object):
                 building_program = BUILDING_PROGRAM_DICT.get(building_type)
                 if building_program is None:
                     print(f"No program found for building type: {building_type}")
-                program = ProgramType(building_program)
+                    program = DEFAULT_PROGRAM
+                else:
+                    program = ProgramType(building_program)
                 room.properties.energy.program_type = program
                 if ADD_DEFAULT_IDEAL_AIR:
                     room.properties.energy.add_default_ideal_air()
@@ -307,6 +342,12 @@ def adjust_building_properties(model, geojson_object):
                     WINDOW_SILL_HEIGHT,
                     WINDOW_TO_WINDOW_HORIZONTAL_SPACING
                 ))
+    # Move context_shades above ground
+    for i, context in enumerate(model.context_shades):
+        ground_height = context_objects[i]["properties"]['ground_height']
+        m_vec = Vector3D(0, 0, ground_height)
+        context.move(m_vec)
+
     return model
 
 # This should not be recreated - available in cli
@@ -419,8 +460,10 @@ def model_to_gbxml(model_file = None, multiplier = True, no_plenum = True, no_ce
         logger.exception('Model translation failed.\n{}'.format(e))
 
 
-def generate_DF_enriched_geojson(enriched_city_geojson_path,dfModel):
-    """height
+def generate_DF_enriched_geojson(enriched_city_geojson_path, dfModel):
+    """
+    Expected attributes in the dfModel:
+        * height
         * height_above_ground
         * height_from_first_floor
         * footprint_area
@@ -432,22 +475,36 @@ def generate_DF_enriched_geojson(enriched_city_geojson_path,dfModel):
     # Open geojson file
     with open(enriched_city_geojson_path, 'r', encoding='utf-8') as file:
         city_geojson = json.load(file)
-    # Iterate over buildings
-    for i, bldg_object in enumerate(city_geojson['features']):
+
+    # Ensure 'features' key is in the geojson
+    if "features" not in city_geojson:
+        raise ValueError("The geojson does not contain a 'features' key.")
+    
+    # Filter city_geojson features to get buildings with building_status == 'Building'
+    filtered_buildings = [bldg for bldg in city_geojson["features"] if bldg["properties"]["building_status"] == "Building"]  
+
+    # Check if the number of buildings in the geojson file matches the number of buildings in the model
+    if len(filtered_buildings) != len(dfModel.buildings):
+        logger.error(f"Number of buildings in the geojson file: {len(filtered_buildings)}")
+        logger.error(f"Number of buildings in the model: {len(dfModel.buildings)}")
+        raise Exception("Number of buildings in the geojson file does not match the number of buildings in the model.")
+        return
+    
+    # Iterate over buildings with building_status == 'Building'
+    for i, bldg_object in enumerate(filtered_buildings):
         building = dfModel.buildings[i]
         # Add building properties to the geojson file
-        bldg_object["properties"]["height"] = round(building.height,2)
-        bldg_object["properties"]["height_above_ground"] = round(building.height_above_ground,2)
-        bldg_object["properties"]["height_from_first_floor"] = round(building.height_from_first_floor,2)
-        bldg_object["properties"]["footprint_area"] = round(building.footprint_area,2)
-        bldg_object["properties"]["floor_area"] = round(building.floor_area,2)
-        bldg_object["properties"]["exterior_wall_area"] = round(building.exterior_wall_area,2)
-        bldg_object["properties"]["exterior_aperture_area"] = round(building.exterior_aperture_area,2)
-        bldg_object["properties"]["volume"] = round(building.volume,2)
+        bldg_object["properties"]["height"] = round(building.height, 2)
+        bldg_object["properties"]["height_above_ground"] = round(building.height_above_ground, 2)
+        bldg_object["properties"]["height_from_first_floor"] = round(building.height_from_first_floor, 2)
+        bldg_object["properties"]["footprint_area"] = round(building.footprint_area, 2)
+        bldg_object["properties"]["floor_area"] = round(building.floor_area, 2)
+        bldg_object["properties"]["exterior_wall_area"] = round(building.exterior_wall_area, 2)
+        bldg_object["properties"]["exterior_aperture_area"] = round(building.exterior_aperture_area, 2)
+        bldg_object["properties"]["volume"] = round(building.volume, 2)
 
-    
     # Write city_json to file
-    new_city_geojson_path =  'city_enriched_DF.geojson'
+    new_city_geojson_path = 'city_enriched_DF.geojson'
     # Write city_json to file using UTF-8 encoding with indentation
     with open(new_city_geojson_path, "w", encoding='utf-8') as f:
         json.dump(city_geojson, f, ensure_ascii=False, indent=4)
@@ -468,7 +525,7 @@ def generate_EP_assets(geojson_file_path,use_multiplier = False, generate_DFenri
     logger.info("Creating Dragonfly model from GeoJSON...")
 
     model, location = Model.from_geojson(new_geojson_file_path, location=None, point=Point2D(0, 0),
-                     all_polygons_to_buildings=False, existing_to_context=False,
+                     all_polygons_to_buildings=False, existing_to_context=True,
                      units='Meters', tolerance=None, angle_tolerance=1.0)
     logger.info("Adjusting building properties in the model...")
     adjusted_model = adjust_building_properties(model, data)

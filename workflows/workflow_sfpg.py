@@ -20,9 +20,91 @@ import geopandas as gpd
 import matplotlib.pyplot as plt
 import geopandas as gpd
 import laspy
-from shapely.geometry import mapping
+from shapely.geometry import mapping, Polygon
 from rasterio.mask import mask
 
+from OSMPythonTools.overpass import Overpass, overpassQueryBuilder
+import pandas as pd
+import requests
+import json
+
+# Query Overpass API for Building Polygons in Bounding Box
+def _get_buildings_overpass(bbox: list = None):
+    # Create Overpass API instance
+    overpass = Overpass()
+
+    # Build query for buildings inside the given boundingbox
+    query = overpassQueryBuilder(
+        bbox=bbox,
+        elementType='way',
+        selector='building',
+        includeGeometry=True,
+        out='geom')
+
+    # Get Overpass response
+    response = overpass.query(query)
+    if response.isValid():
+        return response
+
+    return None
+
+
+def get_buildings(bbox: list = None):
+
+    # Check if bounding box is valid
+    if len(bbox) == 4:
+        if bbox[0] > bbox[2]:
+            min_lat = bbox[2]
+            bbox[2] = bbox[0]
+            bbox[0] = min_lat
+
+        if bbox[1] > bbox[3]:
+            min_lon = bbox[3]
+            bbox[3] = bbox[1]
+            bbox[3] = min_lon
+    else:
+        print(
+            "Not valid Bounding Box.\n Bounding box must have format : [min_lat, min_lon, max_lat, max_lon]")
+
+    op_buildings = _get_buildings_overpass(bbox)
+    if op_buildings == None:
+        print("No buildings found within input bounding box.")
+        return []
+
+    num_buildings = op_buildings.countWays()
+    print(f"Found {num_buildings} buildings found within input bounding box.")
+
+
+    building_id = [0] * num_buildings
+    building_type = [None] * num_buildings
+    building_geometry = [None] * num_buildings
+    building_levels = [None] * num_buildings
+    building_roof_shapes = [None] * num_buildings
+
+    for i, opb in enumerate(op_buildings.ways()):
+        building_id[i] = opb.id()
+        tags = opb.tags()
+        if "building" in tags.keys():
+            if tags["building"] == "yes":
+                building_type[i] = "unknown"
+            else:  
+                building_type[i] = tags["building"]
+        if "building:levels" in tags.keys():
+            building_levels[i] = int(tags["building:levels"])
+        if "roof:shape" in tags.keys():
+            building_roof_shapes[i] = tags["roof:shape"]
+        if opb.geometry()["type"] == "Polygon":
+            footprint = [tuple(f) for f in opb.geometry()["coordinates"][0]]
+            building_geometry[i] = shapely.Polygon(footprint)
+
+    # Creating GeoDataFrame containing the building footprints and misc. info
+    footprints_gdf = gpd.GeoDataFrame({'building_id': building_id,
+                                       'type': building_type,
+                                       'levels': building_levels,
+                                       'roof_shapes': building_roof_shapes,
+                                       'geometry': building_geometry})
+
+    return footprints_gdf
 
 #load point cloud
 las = laspy.read("10C030_657_67_2550.laz")
@@ -32,9 +114,15 @@ Y = las.Y*las.header.y_scale + las.header.y_offset
 point_data = np.stack([X, Y, las.Z, las.classification], axis=0).transpose((1, 0))
 
 
-#load building footprints
-
+#load building footprints from shapefile
 df = gpd.read_file("../Fastighetskartan_Bebyggelse_latest_shp_br_Property_map_Built_up_areas_df550b58-742c-4484-9424-9979d39e7cdb_/by_01.shp")
+
+#load building footprints from OpenStreetMap 
+
+#Need to provide input bounding box: 
+#Bounding Box Format: [min_lat, min_lon, max_lat, max_lon]
+input_bbox = [] 
+df = get_buildings(bbox= input_bbox)
 
 df1 = gpd.GeoDataFrame()
 s_buildings = []

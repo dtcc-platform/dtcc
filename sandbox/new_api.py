@@ -13,6 +13,9 @@ city = City()
 city.terrain = terrain
 city.buildings = buildings
 
+# Alternative
+city = City(terrain, buildings)
+
 # Shortcut (builds and sets data)
 city = build_city(footprints, pointcloud)
 

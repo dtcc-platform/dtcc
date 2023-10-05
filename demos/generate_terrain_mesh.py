@@ -8,7 +8,7 @@ from dtcc import builder, load_city, load_pointcloud
 from pathlib import Path
 
 # Set data paths
-data_directory = Path("../data/helsingborg-residential-2022")
+data_directory = Path("./dtcc-demo-data/helsingborg-residential-2022")
 buildings_path = data_directory / "footprints.shp"
 pointcloud_path = data_directory / "pointcloud.las"
 

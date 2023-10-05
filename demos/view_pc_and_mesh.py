@@ -8,7 +8,7 @@ from pathlib import Path
 import dtcc
 
 # Build a mesh from raw data
-data_directory = Path("../data/helsingborg-residential-2022")
+data_directory = Path("./dtcc-demo-data//helsingborg-residential-2022")
 p = dtcc.builder.parameters.default()
 p["data_directory"] = data_directory
 dtcc.builder.build(p)

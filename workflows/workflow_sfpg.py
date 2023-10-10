@@ -22,6 +22,7 @@ import geopandas as gpd
 import laspy
 from shapely.geometry import mapping, Polygon
 from rasterio.mask import mask
+import shapely
 
 from OSMPythonTools.overpass import Overpass, overpassQueryBuilder
 import pandas as pd
@@ -107,24 +108,24 @@ def get_buildings(bbox: list = None):
     return footprints_gdf
 
 #load point cloud
-las = laspy.read("10C030_657_67_2550.laz")
+'''las = laspy.read("10C030_657_67_2550.laz")
 
 X = las.X*las.header.x_scale + las.header.x_offset
 Y = las.Y*las.header.y_scale + las.header.y_offset
-point_data = np.stack([X, Y, las.Z, las.classification], axis=0).transpose((1, 0))
+point_data = np.stack([X, Y, las.Z, las.classification], axis=0).transpose((1, 0))'''
 
 
 #load building footprints from shapefile
-df = gpd.read_file("../Fastighetskartan_Bebyggelse_latest_shp_br_Property_map_Built_up_areas_df550b58-742c-4484-9424-9979d39e7cdb_/by_01.shp")
+#df = gpd.read_file("../Fastighetskartan_Bebyggelse_latest_shp_br_Property_map_Built_up_areas_df550b58-742c-4484-9424-9979d39e7cdb_/by_01.shp")
 
 #load building footprints from OpenStreetMap 
 
 #Need to provide input bounding box: 
 #Bounding Box Format: [min_lat, min_lon, max_lat, max_lon]
-input_bbox = [] 
+input_bbox = [59.27353473982153, 18.085366880550804, 59.27393473982153, 18.085566880550804] 
 df = get_buildings(bbox= input_bbox)
 
-df1 = gpd.GeoDataFrame()
+'''df1 = gpd.GeoDataFrame()
 s_buildings = []
 for poly in df['geometry']:
     bounds = list(poly.bounds)
@@ -146,16 +147,18 @@ df_buildings = df_buildings.to_crs(4326)
 a = {'geometry' : s_buildings[91:92]}
 df_b = gpd.GeoDataFrame(a, crs=df.crs)
 poly= df_b['geometry'][0]
-df_b = df_b.to_crs(4326)
+df_b = df_b.to_crs(4326)'''
 
+poly = df['geometry'][0]
 
+'''
 # isolate building point cloud points
 building = point_data[np.where(np.all([point_data[:,0] >= poly.bounds[0], point_data[:,0] <= poly.bounds[2], point_data[:,1] >= poly.bounds[1], point_data[:,1] <= poly.bounds[3]], axis=0))]
-building = building[building[:,3] == 1]
+building = building[building[:,3] == 1]'''
 
 
 #calculate building coordinates from footprint
-lat, lng = df_b['geometry'][0].centroid.y, df_b['geometry'][0].centroid.x
+lat, lng = poly.centroid.y, poly.centroid.x
 
 #fetch aerial image from google maps
 import googlemaps
@@ -165,6 +168,7 @@ import requests
 
 
 apikey = 'AIzaSyBTqS7ul4p32-QjPBbNs46c4FT10zUGiQQ'
+apikey = 'AIzaSyDixmVPoR1-bxl2t4zFP6xxsPjlRI_3zxo'
 gmaps = googlemaps.Client(key=apikey)
 
 
@@ -172,7 +176,7 @@ url = f'https://maps.googleapis.com/maps/api/staticmap?center={lat},{lng}&zoom=2
 a = requests.get(url, stream=True)
 
 image = Image.open(a.raw)
-image.save('satellite.png')
+image.save('cache/satellite.png')
 
 #google maps bounding box
 dLongitude = (512 / 256 ) * ( 360 / pow(2, 21) )
@@ -187,42 +191,44 @@ north = lat+dLatitude
 #Load pre-trained network and predict image
 import keras
 from helpers1 import build_unet1
+import os
 model = build_unet1((512,512,3), 6)
-model.load_weights('../m1655470/RID_dataset/roof_segmentation_model(domain_adapt, 6classes).hdf5')
+model.load_weights(os.getcwd()+'/workflows/roof_segmentation_model(domain_adapt, 6classes).hdf5')
 
-I1 = cv2.imread('satellite.png')
+I1 = cv2.imread('cache/satellite.png')
 I = cv2.cvtColor(I1, cv2.COLOR_BGR2RGB)
 
 
 pred = np.argmax(model.predict(I.reshape(1,512,512,3)), axis=-1)
-cv2.imwrite('mask.png', pred[0])
+cv2.imwrite('cache/mask.png', pred[0])
 
 #convert prediction to TIFF format
-image = Image.open('mask.png').convert('L')
+image = Image.open('cache/mask.png').convert('L')
 
 
 # Create a GeoTIFF file
-tif_path = 'mask.tif'
+tif_path = 'cache/mask.tif'
 with rasterio.open(tif_path, 'w', driver='GTiff', height=image.size[1], width=image.size[0], dtype=rasterio.uint8, count=1) as dst:
     # Set the transformation and coordinate system
     transform = rasterio.transform.from_bounds(west, south, east, north, image.size[0], image.size[1])
     dst.transform = transform
-    dst.crs = rasterio.crs.CRS.from_epsg(3006)
+    #dst.crs = rasterio.crs.CRS.from_epsg(3006)
+    dst.crs = rasterio.crs.CRS.from_epsg(4326)
 
     # Write the image band to the GeoTIFF file
     dst.write(image, indexes=1)
 
 #Crop prediction with respect to the footprint
-geom_building = df_b.geometry.values
+geom_building = [df.geometry[0]]
 
-with rasterio.open("mask.tif") as src:
+with rasterio.open("cache/mask.tif") as src:
     fet = []
     for index, geom in enumerate(geom_building):
         
         fet.append(mapping(geom))
 
   
-    
+
     # the mask function returns an array of the raster pixels within this feature
     out_image, out_transform = mask(src, fet, crop=False, indexes=1, nodata=6)
 
@@ -377,7 +383,10 @@ for i, inter in enumerate(intersections_new):
         intersections.append(inter)
         classes.append(tmp_cl)
 
+import matplotlib.pyplot as plt
+plt.imsave('cache/result.png', image_with_corners)
 
+'''
 #Transform coordinates picture to ESPG4326
 corners = []
 
@@ -450,3 +459,5 @@ for i in range(len(classes)):
             surfaces[ind].append(final[i])
 
 #Reconstruction completed!
+
+'''

@@ -167,8 +167,8 @@ import requests
 
 
 
-apikey = 'AIzaSyBTqS7ul4p32-QjPBbNs46c4FT10zUGiQQ'
-apikey = 'AIzaSyDixmVPoR1-bxl2t4zFP6xxsPjlRI_3zxo'
+
+apikey = 'ENTER_API_KEY'
 gmaps = googlemaps.Client(key=apikey)
 
 

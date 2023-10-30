@@ -278,17 +278,13 @@ following command in the ``dtcc-model`` repository:
     utils/generate-uml-diagrams
 
 Note that ``pylint`` must be installed for this to work. This will
-generate ``.puml`` files in the current directory. Go to the online
-`PlantUML <http://www.plantuml.com/plantuml/uml/>`_ server and copy the
-contents of the ``.puml`` files in the text box (one at a time). Also
-modify top of the diagram as follows::
+generate ``.puml`` files in the current directory.
 
-    @startuml classes
-    !theme vibrant
-    left to right direction
-
-This will generate a UML class diagram. Click the SVG button and download the
-SVG file. Rename and move the file to ``docs/images/`` in the ``dtcc`` repo.
+Go to the online `PlantUML <http://www.plantuml.com/plantuml/uml/>`_
+server.  For each of the ``.puml`` files, copy the contents into the
+text box to generate the UML diagram. Click the SVG button and
+download the SVG file. Rename and move the file to ``docs/images/`` in
+the ``dtcc`` repo.
 
 Tips & tricks
 -------------

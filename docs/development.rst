@@ -265,28 +265,30 @@ Use ChatGPT to generate the docstrings but make sure to check that the
 docstrings make sense and are consistent with the templates above. Also be
 careful to only copy the docstrings into the code (don't modify the code itself).
 
-Generating the UML class diagram
---------------------------------
+Generating the UML class diagrams
+---------------------------------
 
-The UML class diagram is stored as part of the top-level ``dtcc`` package in the
-file ``docs/images/data_model.rst``. To update the diagram after changes to the
+The UML class diagrams are stored as part of the top-level ``dtcc``
+package in the files ``docs/images/uml_diagram_*.rst``.
+
+To update the diagrams after changes to the
 data model (implemented as part of the ``dtcc-model`` package), run the
-following command::
+following command in the ``dtcc-model`` repository:
 
-    pyreverse -o puml dtcc_model
+    utils/generate-uml-diagrams
 
-Note that ``pylint`` must be installed for this to work. This will generate a
-file called ``classes.puml`` in the current directory. Go to the online
-`PlantUML <http://www.plantuml.com/plantuml/uml/>`_ and the contents of
-``classes.puml`` in the text box. Also modify top of the diagram as follows::
+Note that ``pylint`` must be installed for this to work. This will
+generate ``.puml`` files in the current directory. Go to the online
+`PlantUML <http://www.plantuml.com/plantuml/uml/>`_ server and copy the
+contents of the ``.puml`` files in the text box (one at a time). Also
+modify top of the diagram as follows::
 
     @startuml classes
     !theme vibrant
     left to right direction
 
 This will generate a UML class diagram. Click the SVG button and download the
-SVG file. Rename the file to ``data_model.svg`` and move it to ``docs/images/``
-in the ``dtcc`` repo.
+SVG file. Rename and move the file to ``docs/images/`` in the ``dtcc`` repo.
 
 Tips & tricks
 -------------

@@ -3,7 +3,7 @@
 from dtcc import io
 
 # Load point cloud
-pc = io.load_pointcloud("../data/HelsingborgResidential2022/PointCloud.las")
+pc = io.load_pointcloud("./dtcc-demo-data/HelsingborgResidential2022/PointCloud.las")
 
 # Remove global outliers more than 3 standard deviations from the mean,
 # then rasterize the point cloud to a DEM with a cell size of 0.5m

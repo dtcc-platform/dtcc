@@ -39,7 +39,7 @@ if(viewing_option == 1):
 elif viewing_option == 2:
     data = building_mesh.vertices[:, 1]
 
-    # View the building mesh and appedn colors 
+    # View the building mesh and append colors 
     building_mesh.view(data=data)
 
 # View the building mesh with an appended array of colors matching the vertex count    

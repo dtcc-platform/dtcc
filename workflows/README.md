@@ -50,7 +50,7 @@ Table of Contents
 
     or
 
-    `source dtcc_fme_workflow/bin/activate`
+    `dtcc_fme_workflow/Scripts/activate` on windows
 
 
 ### 4\. Navigate to the Workflows Directory
@@ -61,7 +61,7 @@ Table of Contents
 ### 5\. Run the Workflow Script
 
 -   Execute the `workflow_sanjay.py` script using:
-    `python workflow_sanjay.py`
+    `python workflow_sanjay.py --no-plots`
 
 Upon successful execution, this will produce a new folder named `unreal_tiles` within the `workflows` directory.
 

@@ -265,15 +265,37 @@ Use ChatGPT to generate the docstrings but make sure to check that the
 docstrings make sense and are consistent with the templates above. Also be
 careful to only copy the docstrings into the code (don't modify the code itself).
 
+Generating the UML class diagrams
+---------------------------------
+
+The UML class diagrams are stored as part of the top-level ``dtcc``
+package in the files ``docs/images/uml_diagram_*.rst``.
+
+To update the diagrams after changes to the
+data model (implemented as part of the ``dtcc-model`` package), run the
+following command in the ``dtcc-model`` repository:
+
+    utils/generate-uml-diagrams
+
+Note that ``pylint`` must be installed for this to work. This will
+generate ``.puml`` files in the current directory.
+
+Go to the online `PlantUML <http://www.plantuml.com/plantuml/uml/>`_
+server.  For each of the ``.puml`` files, copy the contents into the
+text box to generate the UML diagram. Click the SVG button and
+download the SVG file. Rename and move the file to ``docs/images/`` in
+the ``dtcc`` repo.
+
 Tips & tricks
 -------------
 
 Remote development in VS Code
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In the left-side menu, go to Remote Explorer and press the + sign on the SSH line. Add your SSH connection in the following format::
+In the left-side menu, go to Remote Explorer and press the + sign on the SSH
+line. Add your SSH connection in the following format::
 
-   user@develop.dtcc.chalmers.se
+    user@develop.dtcc.chalmers.se
 
 This should add the `develop` server to the connection list and you may connect to it by clicking on the right arrow next to its name.
 

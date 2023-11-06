@@ -6,10 +6,8 @@
 # Simple script for pip installing all core repos.
 
 for p in `cat utils/projects.csv`; do
-    echo "Pip installing in $p"
+    echo "Pip uninstall $p"
     echo "---------------------------------------------------"
-    cd ../$p
-    pip install --upgrade --no-deps --force-reinstall .
-    cd ../dtcc
+    pip uninstall -y $p
     echo ""
 done

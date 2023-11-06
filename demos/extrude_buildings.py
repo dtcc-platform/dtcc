@@ -4,6 +4,7 @@ from pathlib import Path
 # generate city_with_heights.shp by running demos/building_heights_from_pointcloud.py
 # or load a shp file with a building height field
 
+
 city = dtcc.io.load_city("city_with_heights.shp", height_field="height")
 
 # estimate number of floors

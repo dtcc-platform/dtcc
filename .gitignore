@@ -14,6 +14,7 @@ tests/cpp/bin/
 scratch/
 
 /data/*
+workflows/dtcc_fme_workflow
 workflows/data/*
 DTCC_workflows
 workflows/workflow_sanjay.ipynb

@@ -1,0 +1,41 @@
+{
+    "constants": {
+      "DEFAULT_EPSG": 3006,
+      "CELL_RESOLUTION": 2,
+      "VALID_UE_RESOLUTIONS": [1009, 8129, 4033, 2017, 5055, 253, 127],
+      "BLUR_KERNEL": [
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [1, 1, 1, 1, 4, 6, 4, 1, 1, 1, 1],
+        [1, 1, 1, 4, 16, 24, 16, 4, 1, 1, 1],
+        [1, 1, 1, 6, 24, 36, 24, 6, 1, 1, 1],
+        [1, 1, 1, 4, 16, 24, 16, 4, 1, 1, 1],
+        [1, 1, 1, 1, 4, 6, 4, 1, 1, 1, 1],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+      ]
+    },
+    "data_mapping_configuration": {
+      "ROAD_CATEGORY_VARIABLE": "DETALJTYP",
+      "BUFFER_DICT": {
+        "VÄGBN.M": 10,
+        "VÄGGG.D": 10,
+        "VÄGGG.M": 10,
+        "VÄGKV.M": 10,
+        "VÄGBNU.M": 10
+      },
+      "DEFAULT_ROAD_BUFFER": 5,
+      "LANDUSE_CATEGORY_VARIABLE": "DETALJTYP",
+      "LANDUSE_MAPPING": {
+        "WATER": ["VATTEN"],
+        "GLACIER": ["ÖPGLAC"],
+        "BUILDINGS": ["BEBSLUT", "BEBHÖG", "BEBLÅG", "BEBIND"],
+        "FARMING": ["ODLÅKER", "ODLFRUKT"],
+        "OPEN AREAS": ["ÖPMARK", "ÖPKFJÄLL", "ÖPTORG"],
+        "FOREST": ["SKOGBARR", "SKOGLÖV", "SKOGFBJ"],
+        "UNMAPPED": ["MRKO"]
+      }
+    }
+  }

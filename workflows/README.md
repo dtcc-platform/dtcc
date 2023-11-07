@@ -17,13 +17,7 @@ Table of Contents
 
 ![Alt text](media/workflow_unreal_tiles_2.png)
 ### 1\. Setting up the virtual environment
-You can either use anaconda or python.
 
-#### Conda
--   Create a new conda environment with the following command:
-    `conda env create -f workflow_sanjay.yaml`
-
-#### Pip
 - Install python 3.10 from [here](https://www.python.org/downloads/release/python-3100/)  
 - Specify installation directory to `C:\Python310`  
 - On your terminal cd to the workflows directory using 

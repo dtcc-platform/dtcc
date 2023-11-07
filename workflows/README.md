@@ -28,16 +28,16 @@ Table of Contents
 `C:\Python310\python.exe`
 - Create the virtual environment using
 
-`C:\Python310\python.exe -m venv dtcc_fme_workflow`
+`C:\Python310\python.exe -m venv workflow_unreal_tiles`
 - Activate the venv
 
-`.\dtcc_fme_workflow\Scripts\Activate`
+`.\workflow_unreal_tiles\Scripts\Activate`
 - Update pip
 
 `python -m pip install --upgrade pip setuptools wheel`
 - Install libraries from requirements
 
-`pip install -r workflow_sanjay.txt`
+`pip install -r workflow_unreal_tiles.txt`
 
 - To deactivate
 
@@ -55,14 +55,9 @@ Table of Contents
     
     Note: Noise data can be found at : `GIS-data Buller\Buller_ljudutbredning\ <select one scenario>`
 
-### 3\. Activating the Conda Environment
+### 3\. Activating the virtual environment
 
--   Activate the conda environment using:
-    `conda activate dtcc_fme_workflow`
-
-    or
-
-    `.\dtcc_fme_workflow\Scripts\Activate` using venv
+-   `.\workflow_unreal_tiles\Scripts\Activate`
 
 
 ### 4\. Navigate to the Workflows Directory
@@ -72,8 +67,8 @@ Table of Contents
 
 ### 5\. Run the Workflow Script
 
--   Execute the `workflow_sanjay.py` script using:
-    `python workflow_sanjay.py --no-plots`
+-   Execute the `workflow_unreal_tiles.py` script using:
+    `python workflow_unreal_tiles.py --no-plots`
 
 Upon successful execution, this will produce a new folder named `unreal_tiles` within the `workflows` directory.
 

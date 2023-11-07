@@ -16,21 +16,39 @@ Table of Contents
 ![Alt text](media/workflow_unreal_tiles_1.png)
 
 ![Alt text](media/workflow_unreal_tiles_2.png)
-### 1\. Setting up the Conda Environment
+### 1\. Setting up the virtual environment
+You can either use anaconda or python.
 
+#### Conda
 -   Create a new conda environment with the following command:
     `conda env create -f workflow_sanjay.yaml`
 
-    or (venv is not supported at the moment)
-    
-    `python -m venv dtcc_fme_workflow`
+#### Pip
+- Install python 3.10 from [here](https://www.python.org/downloads/release/python-3100/)  
+- Specify installation directory to `C:\Python310`  
+- On your terminal cd to the workflows directory using 
 
-    `source dtcc_fme_workflow/bin/activate`
-   
+`cd <path\to\workflows\directory>`
+- On your terminal launch python 310 using
 
-    `pip install -r workflow_sanjay.txt`
+`C:\Python310\python.exe`
+- Create the virtual environment using
 
-    `deactivate`
+`C:\Python310\python.exe -m venv dtcc_fme_workflow`
+- Activate the venv
+
+`.\dtcc_fme_workflow\Scripts\Activate`
+- Update pip
+
+`python -m pip install --upgrade pip setuptools wheel`
+- Install libraries from requirements
+
+`pip install -r workflow_sanjay.txt`
+
+- To deactivate
+
+`deactivate`
+
 
 ### 2\. Preparing the Data
 
@@ -50,7 +68,7 @@ Table of Contents
 
     or
 
-    `dtcc_fme_workflow/Scripts/activate` on windows
+    `.\dtcc_fme_workflow\Scripts\Activate` using venv
 
 
 ### 4\. Navigate to the Workflows Directory
@@ -65,10 +83,11 @@ Table of Contents
 
 Upon successful execution, this will produce a new folder named `unreal_tiles` within the `workflows` directory.
 
-## Data requirements
-- Digital Elevation Model (DEM) in geotiff format. This is used for the terrain. Multiple tiles are fine. Specify the cell resolution (meters per pixel)
+## Data requirements and config
+- Digital Elevation Model (DEM) in geotiff format. This is used for the terrain. Multiple tiles are fine. 
+- Specify the cell resolution (meters per pixel) in the `unreal_tiles_config.json`
 - Road centerline data as .shp
-    - If the road centerline data contains an attribute with different road widths, then include a json on how to do the road width mapping such that we can replace it here
+    - If the road centerline data contains an attribute with different road widths, then include a json on how to do the road width mapping such that we can replace it in `unreal_tiles_config.json`
     ``` JSON
     BUFFER_DICT = {
     "VÄGBN.M": 10,

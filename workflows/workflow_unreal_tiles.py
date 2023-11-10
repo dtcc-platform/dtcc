@@ -38,6 +38,9 @@ from shapely import wkt
 from shapely.geometry import box
 from shapely.geometry.polygon import Polygon
 
+# DTCC imports 
+
+from dtcc import Bounds
 
 # ========== INTERNAL CONFIGURATION ==========
 # Set up the logger
@@ -48,7 +51,8 @@ logger = logging.getLogger('Unreal_Tile_Generator')
 
 # Define the path to your JSON configuration file
 config_file_path = 'unreal_tiles_config.json'
-
+SUPPRESS_PLOTS = None
+UE_CELL_RESOLUTION = 1009
 # Read the JSON file and extract the variables
 with open(config_file_path, 'r', encoding='utf-8') as config_file:
     config = json.load(config_file)
@@ -711,7 +715,7 @@ class DemToUnreal:
         return output_path
 
 
-    def generate_heightmap(dem_path, clipping_boundary=None, output_folder="data", ue_cell_resolution=1009):
+    def generate_heightmap(dem_path, clipping_boundary=None, output_folder="data", ue_cell_resolution=UE_CELL_RESOLUTION):
         logger.info(f"Generating heightmap using DEM at {dem_path} and ue_cell_resolution {ue_cell_resolution}...")
         # Ensure the specified Unreal resolution is valid
         if ue_cell_resolution not in VALID_UE_RESOLUTIONS:
@@ -907,7 +911,7 @@ class OverlayToUnreal:
                             landuse_mapping=LANDUSE_MAPPING,
                             road_buffer_dict=BUFFER_DICT,
                             cell_resolution=CELL_RESOLUTION,
-                            ue_cell_resolution=1009,
+                            ue_cell_resolution=UE_CELL_RESOLUTION,
                             output_dir="data/unreal_tiles"):
         logger.info("Generating land use mask...")
         landuse = gpd.read_file(landuse_vector_path)
@@ -1099,8 +1103,6 @@ class OverlayToUnreal:
         logger.info(f"Overlay data saved to {output_path}")
         logger.info(f"Plot saved to {output_path}")
 
-
-
 def generate_unreal_tiles(dem_directory, landuse_path, road_path,overlay_data_directory = None):
     """
     Process and validate input data, generate heightmap and land use mask, 
@@ -1126,21 +1128,17 @@ def generate_unreal_tiles(dem_directory, landuse_path, road_path,overlay_data_di
     # Generate land use mask
     landuse_clipping_bbox = OverlayToUnreal.generate_land_use_mask(landuse_path, road_path, clipping_boundary=clipping_bbox)
 
-    # Generate overlay data
-    OverlayToUnreal.generate_overlay_data(overlay_data_directory, clipping_bbox, landuse_path)
+    if overlay_data_directory:
+        # Generate overlay data
+        OverlayToUnreal.generate_overlay_data(overlay_data_directory, clipping_bbox, landuse_path)
     
     # Write metadata
     DataUtils.write_metadata(z_scale, clipping_bbox)
 
-    # Print bounds
-    print(f"Clipping boundary bounds:")
     tile_xmin, tile_ymin, tile_xmax, tile_ymax = clipping_bbox.bounds
-    # Printtile_xmin, tile_ymin, tile_xmax, tile_ymax
-    print(f"tile_xmin: {tile_xmin}")
-    print(f"tile_ymin: {tile_ymin}")
-    print(f"tile_xmax: {tile_xmax}")
-    print(f"tile_ymax: {tile_ymax}")
-    
+
+    # TODO Call generate_builder_buildings here
+    #fbx_path = generate_builder_buildings(lidar_directory, building_shapefile_path, clipping_bbox, unreal_resolution = UNREAL_RESOLUTION, cell_resolution = CELL_RESOLUTION)
 
 # Parse command-line arguments
 parser = argparse.ArgumentParser(description="Unreal Tile Generator")

@@ -20,11 +20,11 @@
     "data_mapping_configuration": {
       "ROAD_CATEGORY_VARIABLE": "DETALJTYP",
       "BUFFER_DICT": {
-        "VÄGBN.M": 10,
-        "VÄGGG.D": 10,
-        "VÄGGG.M": 10,
-        "VÄGKV.M": 10,
-        "VÄGBNU.M": 10
+        "VÄGBN.M": 5,
+        "VÄGGG.D": 5,
+        "VÄGGG.M": 5,
+        "VÄGKV.M": 5,
+        "VÄGBNU.M": 5
       },
       "DEFAULT_ROAD_BUFFER": 5,
       "LANDUSE_CATEGORY_VARIABLE": "DETALJTYP",

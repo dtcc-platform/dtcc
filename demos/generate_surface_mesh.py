@@ -25,11 +25,16 @@ city = city.terrain_from_pointcloud(
     window_size=5,
     ground_only=True,
 )
+# set building heights
+city = builder.city_methods.compute_building_points(city, pointcloud)
+
+# set building heights
+city = builder.city_methods.compute_building_heights(city, min_building_height=2.5)
 
 # print(f"City has {len(city.buildings)} buildings with bounding boxes {city.bounds}")
 
-ground_mesh = builder.meshing.terrain_mesh(
-    city, max_mesh_size=5.0, min_mesh_angle=25, smoothing=3, include_footprints=False
+surface_mesh = builder.meshing.city_surface_mesh(
+    city, max_mesh_size=5.0, min_mesh_angle=25, smoothing=3
 )
-print(f"Ground mesh: {ground_mesh}")
-ground_mesh.view(pc=pointcloud)
+print(f"Ground mesh: {surface_mesh}")
+surface_mesh.view(pc=pointcloud)

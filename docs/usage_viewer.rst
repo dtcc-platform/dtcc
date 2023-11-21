@@ -13,13 +13,13 @@ of the points:
     filename = '../data/dtcc-demo-data/helsingborg-residential-2022/pointcloud.las'
     pc = dtcc.io.load_pointcloud(filename)
     color_data = pc.points[:,0]
-    pc.view(pc_data = color_data)
+    pc.view(data = color_data)
 
 The second example demonstrates how to build a city from raw data and view the building 
 mesh with three different coloring options. The first option is the default colors 
 calculated from vertex z-coordinates. In the second option colors are are determined 
-based on appended data. In the third option the colors as [r, g, b] values in the range 
-[0, 1] are appended directly.   
+based on appended array of data. In the third option the data is applied as a dictionary
+so that the user can flip through and visualise multiple data sets for the same mesh.    
 
 .. code:: python
 
@@ -50,29 +50,27 @@ based on appended data. In the third option the colors as [r, g, b] values in th
     viewing_option = 1
 
     # View the building mesh with default colors
-    if(viewing_option == 1): 
+    if viewing_option == 1:
         building_mesh.view()
 
-    # View the building mesh with data per vertex  
+    # View the building mesh with data per vertex
     elif viewing_option == 2:
         data = building_mesh.vertices[:, 1]
 
-        # View the building mesh and appedn colors 
+        # View the building mesh and append colors
         building_mesh.view(data=data)
 
-    # View the building mesh with an appended array of colors matching the vertex count    
+    # View the building mesh with a dict of colors
     elif viewing_option == 3:
         # Normalise the data so it falls in the range [0,1]
-        min = building_mesh.vertices[:, 1].min()
-        max = building_mesh.vertices[:, 1].max()
-        color_data = (building_mesh.vertices[:, 1] - min) / (max - min)
+        x = building_mesh.vertices[:, 0]
+        y = building_mesh.vertices[:, 1]
+        z = building_mesh.vertices[:, 2]
 
-        # Create an np array with colors matching the number of vertices of the mesh.
-        colors = np.zeros((len(building_mesh.vertices), 3))
-        colors[:, 1] = color_data
+        dict_data = {"vertex_x": x, "vertex_y": y, "vertex_z": z}
 
-        # View the building mesh and appedn colors 
-        building_mesh.view(colors=colors)
+        # View the building mesh and appedn colors
+        building_mesh.view(data=dict_data)
 
 The third example shows how to build a city from raw data and view its ground mesh 
 together with the pointcloud:
@@ -101,14 +99,11 @@ together with the pointcloud:
     # From the city build meshes
     ground_mesh, building_mesh = dtcc.builder.build_mesh(city, p)
 
-    # From the city build meshes
-    volume_mesh, boundary_mesh = dtcc.builder.build_volume_mesh(city)
-
     # Remove unwanted outliers from the point cloud
     pc = pointcloud.remove_global_outliers(3)
 
-    # View the gorund mesh togheter with the pointcloud
-    ground_mesh.view(pc=pc)
+    # View the building mesh togheter with the pointcloud
+    building_mesh.view(pc=pc)
 
     # Alternatively the pointcloud can be viewed with the mesh as agument
     # pointcloud.view(mesh=ground_mesh)
@@ -144,9 +139,6 @@ inside. The shading mode for the boundary mesh can also be set to wireframe to m
     city = dtcc.builder.build_city(city, pointcloud, bounds, p)
 
     # From the city build meshes
-    volume_mesh, boundary_mesh = dtcc.builder.build_volume_mesh(city)
-
-    # From the city build meshes
     ground_mesh, building_mesh = dtcc.builder.build_mesh(city, p)
 
     # Remove unwanted outliers from the point cloud
@@ -157,15 +149,12 @@ inside. The shading mode for the boundary mesh can also be set to wireframe to m
     window = dtcc.viewer.Window(1200, 800)
 
     # Add meshes with data or colors to the scene for rendering.
-    # To provide data for coloring the keyword argument "mesh_data="" is used.
-    # To provied colors directly the keyword argument "mesh_colors=" is used. 
+    # To provide data for coloring the keyword argument "data="" is used. 
     scene.add_mesh("Building mesh", building_mesh)
     scene.add_mesh("Ground mesh", ground_mesh)
-    scene.add_mesh("Boundary mesh", boundary_mesh)
-
+    
     # Add a pointcloud with data or colors to the scene for rendering.
-    # To provide data for coloring the keyword argument "pc_data="" is used.
-    # To provied colors directly the keyword argument "pc_colors=" is used. 
+    # To provide data for coloring the keyword argument "data="" is used. 
     scene.add_pointcloud("Point cloud", pc)
 
     # Render geometry

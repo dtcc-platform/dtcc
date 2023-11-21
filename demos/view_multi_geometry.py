@@ -24,10 +24,6 @@ pointcloud = dtcc.io.load_pointcloud(pointcloud_path, bounds=bounds)
 city = dtcc.builder.build_city(city, pointcloud, bounds, p)
 
 # From the city build meshes
-volume_mesh, boundary_mesh = dtcc.builder.build_volume_mesh(city)
-
-# From the city build meshes
-# From the city build meshes
 ground_mesh = dtcc.builder.build_terrain_mesh(city, p)
 building_meshes = dtcc.builder.build_building_meshes(city, p)
 building_mesh = dtcc.builder.meshing.merge_meshes(building_meshes)
@@ -40,7 +36,6 @@ scene = dtcc.viewer.Scene()
 window = dtcc.viewer.Window(1200, 800)
 scene.add_mesh("Building mesh", building_mesh)
 scene.add_mesh("Ground mesh", ground_mesh)
-scene.add_mesh("Boundary mesh", boundary_mesh)
 scene.add_pointcloud("Point cloud", pc)
 
 # Render geometry

@@ -41,6 +41,7 @@ from shapely.geometry.polygon import Polygon
 # DTCC imports 
 
 from dtcc import Bounds
+from workflow_unreal_tiles_building import generate_builder_buildings
 
 # ========== INTERNAL CONFIGURATION ==========
 # Set up the logger
@@ -1137,19 +1138,27 @@ def generate_unreal_tiles(dem_directory, landuse_path, road_path,overlay_data_di
 
     tile_xmin, tile_ymin, tile_xmax, tile_ymax = clipping_bbox.bounds
 
-    # TODO Call generate_builder_buildings here
-    #fbx_path = generate_builder_buildings(lidar_directory, building_shapefile_path, clipping_bbox, unreal_resolution = UNREAL_RESOLUTION, cell_resolution = CELL_RESOLUTION)
+    # Setup for generating buildings
+    data_directory = os.path.join('data', 'unreal_buildings')
+    if not os.path.exists(data_directory):
+        os.makedirs(data_directory)
+    stl_path = generate_builder_buildings(data_directory , LIDAR_DIRECTORY, BUILDING_SHAPEFILE_PATH, clipping_bbox = clipping_bbox, unreal_resolution = UE_CELL_RESOLUTION, cell_resolution = CELL_RESOLUTION)
 
 # Parse command-line arguments
 parser = argparse.ArgumentParser(description="Unreal Tile Generator")
 parser.add_argument("--no-plots", action="store_true", help="Suppress plots.")
 
 if __name__ == "__main__":
+    # Set logging level
+    logger.setLevel(logging.INFO)
+
     # Define input paths
     DEM_DIRECTORY = "data\\dem_data"
     LANDUSE_PATH = "data\\landuse_data\\my_south.shp"
     ROAD_PATH = "data\\road_data\\vl_riks.shp"
-    OVERLAY_PATH = "data\\overlay_data\\" 
+    OVERLAY_PATH = "data\\overlay_data\\"
+    LIDAR_DIRECTORY = "data\\lidar_data\\"
+    BUILDING_SHAPEFILE_PATH = "data\\footprint_data\\by_04.shp"
 
     args = parser.parse_args()
     # Supress plots based on command-line argument

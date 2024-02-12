@@ -1,24 +1,17 @@
 from dtcc import *
 
-# Load stuff
-footprints = load_footprints("footprints.shp")
-pointcloud = load_pointcloud("pointcloud.las")
+# Loading a city from internal format (Protobuf)
+city = load_city("city.pb")
 
-# Build stuff
-terrain = build_terrain(pointcloud)
-buildings = build_buildings(footprints, pointcloud)
+# Loading a city from CityJSON
+city = load_city("city.json")
 
-# Create city
+# Building a city from raw data
+footprints = load_footprints("footprints.shp")  # [Polygon]
+pointcloud = load_pointcloud("pointcloud.las")  # PointCloud
 city = City()
-city.terrain = terrain
-city.buildings = buildings
+city.build_geometry(footprints, pointcloud, lod=LOD1)
 
-# Alternative
-city = City(terrain, buildings)
-
-# Shortcut (builds and sets data)
-city = build_city(footprints, pointcloud)
-
-# How to handle roads?
-# How to handle trees?
-# How to handle water?
+# Building mesh
+city.build_mesh(lod=LOD1)  # Builds mesh for a specific LOD
+city.build_meshes()  # Builds meshes for all available LODs

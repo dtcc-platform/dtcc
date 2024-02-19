@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
 
-import dtcc
+# import dtcc
+# from dtcc import builder
+# from dtcc import io
+import dtcc_io as io
+import dtcc_builder as builder
 from pathlib import Path
-from dtcc import builder
+
 
 # Set data paths
 data_directory = Path(__file__).parent / ".." / "data/helsingborg-residential-2022"
@@ -12,8 +16,8 @@ pointcloud_path = data_directory
 ### set heights of buildings from a point cloud
 
 # load pointcloud and footprints
-pc = dtcc.io.load_pointcloud(pointcloud_path)
-cm = dtcc.io.load_footprints(footprints_path)
+pc = io.load_pointcloud(pointcloud_path)
+cm = io.load_footprints(footprints_path)
 
 # clenup pointcloud
 pc = pc.remove_global_outliers(3)
@@ -27,4 +31,4 @@ cm = builder.city_methods.compute_building_points(cm, pc)
 # set building heights
 city = builder.city_methods.compute_building_heights(cm, min_building_height=2.5)
 
-dtcc.io.save_city(city, data_directory / "city_with_heights.shp")
+io.save_city(city, data_directory / "city_with_heights.shp")

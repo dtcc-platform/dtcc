@@ -43,16 +43,14 @@ elif viewing_option == 2:
     # View the building mesh and append colors
     building_mesh.view(data=data)
 
-# View the building mesh with an appended array of colors matching the vertex count
+# View the building mesh with a dict of colors
 elif viewing_option == 3:
     # Normalise the data so it falls in the range [0,1]
-    min = building_mesh.vertices[:, 1].min()
-    max = building_mesh.vertices[:, 1].max()
-    color_data = (building_mesh.vertices[:, 1] - min) / (max - min)
+    x = building_mesh.vertices[:, 0]
+    y = building_mesh.vertices[:, 1]
+    z = building_mesh.vertices[:, 2]
 
-    # Create an np array with colors matching the number of vertices of the mesh.
-    colors = np.zeros((len(building_mesh.vertices), 3))
-    colors[:, 1] = color_data
+    dict_data = {"vertex_x": x, "vertex_y": y, "vertex_z": z}
 
     # View the building mesh and appedn colors
-    building_mesh.view(colors=colors)
+    building_mesh.view(data=dict_data)

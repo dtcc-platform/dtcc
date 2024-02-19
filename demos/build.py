@@ -12,7 +12,7 @@ p = parameters.default()
 data_directory = Path(__file__).parent / ".." / "data/helsingborg-residential-2022"
 
 p["data_directory"] = str(data_directory)
-p["mesh_resolution"] = 20.0
+p["mesh_resolution"] = 5.0
 p["domain_height"] = 75.0
 
 # Build city model

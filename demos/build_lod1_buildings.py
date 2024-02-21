@@ -19,15 +19,26 @@ terrain_raster = dtcc.builder.build_terrain_raster(
 )
 terrain_mesh = dtcc.builder.build_terrain_mesh(terrain_raster)
 
-footprints = dtcc.builder.extract_roof_points(footprints, pc)
+footprints = dtcc.builder.extract_roof_points(
+    footprints, pc, statistical_outlier_remover=True
+)
 footprints = dtcc.builder.compute_building_heights(
     footprints, terrain_raster, overwrite=True
 )
 
-lod1_buildings = dtcc.builder.build_lod1_buildings(footprints)
+lod1_buildings = dtcc.builder.build_lod1_buildings(
+    footprints, default_ground_height=terrain_raster.min, always_use_default_ground=True
+)
 city = dtcc.City()
 city.add_terrain(terrain_raster)
 city.add_terrain(terrain_mesh)
 city.add_buildings(lod1_buildings)
-
+roof_points = [
+    b.flatten_geometry(dtcc.model.GeometryType.POINT_CLOUD) for b in lod1_buildings
+]
+roof_points = [p for p in roof_points if p is not None]
+merged_points = roof_points[0]
+for points in roof_points[1:]:
+    merged_points = merged_points.merge(points)
+# merged_points.view()
 city.view()

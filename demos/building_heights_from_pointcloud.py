@@ -1,34 +1,29 @@
 #!/usr/bin/env python3
-
-# import dtcc
-# from dtcc import builder
-# from dtcc import io
-import dtcc_io as io
-import dtcc_builder as builder
+import dtcc
+import dtcc_viewer
 from pathlib import Path
 
+data_directory = Path(__file__).parent / ".." / "data" / "HelsingborgResidential2022"
+buildings_path = data_directory / "PropertyMap.shp"
+pointcloud_path = data_directory / "PointCloud.las"
 
-# Set data paths
-data_directory = Path(__file__).parent / ".." / "data/helsingborg-residential-2022"
-footprints_path = data_directory / "footprints.shp"
-pointcloud_path = data_directory
+import dtcc
 
-### set heights of buildings from a point cloud
+footprints = dtcc.io.load_footprints(buildings_path, "uuid")
 
-# load pointcloud and footprints
-pc = io.load_pointcloud(pointcloud_path)
-cm = io.load_footprints(footprints_path)
-
-# clenup pointcloud
+pc = dtcc.io.load_pointcloud(pointcloud_path)
 pc = pc.remove_global_outliers(3)
 
-# set terrain
-cm = cm.terrain_from_pointcloud(pc, cell_size=1, radius=3, ground_only=True)
+terrain = dtcc.builder.build_terrain_raster(pc, cell_size=2, radius=3, ground_only=True)
 
-# set building heights
-cm = builder.city_methods.compute_building_points(cm, pc)
+footprints = dtcc.builder.extract_roof_points(footprints, pc)
+footprints = dtcc.builder.compute_building_heights(footprints, terrain)
 
-# set building heights
-city = builder.city_methods.compute_building_heights(cm, min_building_height=2.5)
+lod1_buildings = dtcc.builder.build_lod1_buildings(footprints)
+print(lod1_buildings[157].lod0.vertices)
+city = dtcc.City()
+city.add_terrain(terrain)
+city.add_buildings(lod1_buildings)
 
-io.save_city(city, data_directory / "city_with_heights.shp")
+print(city.buildings[157].geometry[dtcc.GeometryType.LOD1])
+# city.view()

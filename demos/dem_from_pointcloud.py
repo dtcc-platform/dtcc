@@ -1,9 +1,12 @@
 # This demo shows how to create a DEM from a point cloud.
+import dtcc
+from pathlib import Path
 
-from dtcc import io
-
+demo_data_path = Path(__file__).parent / ".." / "data"
 # Load point cloud
-pc = io.load_pointcloud("./dtcc-demo-data/HelsingborgResidential2022/PointCloud.las")
+pc = dtcc.io.load_pointcloud(
+    demo_data_path / "helsingborg-residential-2022" / "pointcloud.las"
+)
 
 # Remove global outliers more than 3 standard deviations from the mean,
 # then rasterize the point cloud to a DEM with a cell size of 0.5m

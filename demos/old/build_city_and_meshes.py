@@ -2,8 +2,7 @@
 # Licensed under the MIT License
 #
 # This demo illustrates how to build a city model from raw data,
-# essentially equivalent to running the dtcc-build command-line
-# utility, but with more control over the process.
+
 
 import dtcc
 from dtcc import *
@@ -12,11 +11,8 @@ from pathlib import Path
 # Set data paths
 data_directory = Path("data/helsingborg-residential-2022")
 buildings_path = data_directory / "footprints.shp"
-pointcloud_path = data_directory
+pointcloud_path = data_directory / "pointcloud.las"
 
-# Set parameters
-p = parameters.default()
-p["auto_domain"] = True
 
 # Calculate bounds
 origin, bounds = calculate_bounds(buildings_path, pointcloud_path, p)

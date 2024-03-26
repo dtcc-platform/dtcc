@@ -3,8 +3,7 @@
 #
 # This demo illustrates how to generate a terrain mesh from a point cloud.
 
-from dtcc import builder, load_city, load_pointcloud
-
+import dtcc
 from pathlib import Path
 
 # Set data paths
@@ -14,22 +13,17 @@ data_directory = (
 buildings_path = data_directory / "footprints.shp"
 pointcloud_path = data_directory / "pointcloud.las"
 
-city = load_city(buildings_path)
-pointcloud = load_pointcloud(pointcloud_path)
+
+pointcloud = dtcc.io.load_pointcloud(pointcloud_path)
 
 pointcloud = pointcloud.remove_global_outliers(3.0)
 
-city = city.terrain_from_pointcloud(
-    pointcloud,
-    cell_size=1.0,
-    window_size=5,
-    ground_only=True,
-)
 
 # print(f"City has {len(city.buildings)} buildings with bounding boxes {city.bounds}")
 
-ground_mesh = builder.meshing.terrain_mesh(
-    city, max_mesh_size=5.0, min_mesh_angle=25, smoothing=3, include_footprints=False
+terrain = dtcc.builder.build_terrain_mesh(
+    pointcloud=pointcloud, max_mesh_size=10, min_mesh_angle=25, smoothing=3
 )
-print(f"Ground mesh: {ground_mesh}")
-ground_mesh.view(pc=pointcloud)
+print(f"Terrain mesh: {terrain}")
+# print(f"Ground mesh: {ground_mesh}")
+terrain.mesh.view()

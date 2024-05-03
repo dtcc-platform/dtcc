@@ -1,6 +1,7 @@
 import dtcc
 from pathlib import Path
 
+
 data_directory = Path(__file__).parent / ".." / "data" / "HelsingborgResidential2022"
 buildings_path = data_directory / "PropertyMap.shp"
 pointcloud_path = data_directory / "PointCloud.las"
@@ -24,10 +25,12 @@ footprints = dtcc.builder.compute_building_heights(
 
 merged_footprints = dtcc.builder.merge_building_footprints(footprints, lod=dtcc.model.GeometryType.LOD0, max_distance=0.5, min_area=10)
 
-merged_footprints = merged_footprints[63:65]
+merged_footprints = merged_footprints[64:65]
+
 
 city = dtcc.City()
 # city.add_terrain(terrain_mesh)
-city.add_buildings(merged_footprints, remove_outside_terrain=False)
+city.add_buildings(merged_footprints)
+
 
 city.view()

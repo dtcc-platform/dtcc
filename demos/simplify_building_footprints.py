@@ -24,13 +24,15 @@ footprints = dtcc.builder.compute_building_heights(
 )
 
 merged_footprints = dtcc.builder.merge_building_footprints(footprints, lod=dtcc.model.GeometryType.LOD0, max_distance=0.5, min_area=10)
+simplifed_footprints = dtcc.builder.simplify_building_footprints(merged_footprints, 0.25, lod=dtcc.model.GeometryType.LOD0)
+clearance_fix = dtcc.builder.fix_building_footprint_clearance(simplifed_footprints, 0.5)
 
-merged_footprints = merged_footprints[64:65]
+# merged_footprints = merged_footprints[63:66]
 
 
 city = dtcc.City()
 # city.add_terrain(terrain_mesh)
-city.add_buildings(merged_footprints)
+city.add_buildings(clearance_fix)
 
 
 city.view()

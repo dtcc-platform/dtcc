@@ -30,21 +30,15 @@ simplifed_footprints = dtcc.builder.simplify_building_footprints(
 )
 clearance_fix = dtcc.builder.fix_building_footprint_clearance(simplifed_footprints, 0.5)
 
-# height = clearance_fix[0].height
 
-max_wall_length = [building.height / 3 for building in clearance_fix]
+max_wall_length = [building.height for building in clearance_fix]
 
 
 split_walls = dtcc.builder.split_footprint_walls(
     clearance_fix, max_wall_length=max_wall_length
 )
 
-# merged_footprints = merged_footprints[63:66]
-
-
 city = dtcc.City()
-# # city.add_terrain(terrain_mesh)
 city.add_buildings(split_walls)
-#
-#
+
 city.view()

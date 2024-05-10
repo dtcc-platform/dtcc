@@ -37,6 +37,13 @@ city.add_buildings(footprints, True)
 # city.view()
 
 surface_mesh = dtcc.builder.build_surface_mesh(
-    city, lod=dtcc.GeometryType.LOD0, max_mesh_size=10, min_mesh_angle=25
+    city,
+    lod=dtcc.GeometryType.LOD0,
+    min_building_detail=0.5,
+    min_building_area=10,
+    building_mesh_triangle_size=2,
+    max_mesh_size=10,
+    min_mesh_angle=25,
+    smoothing=3,
 )
 surface_mesh.view()

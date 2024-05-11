@@ -140,6 +140,7 @@ print(
     f"trimmed mesh has: {len(trimmed_mesh.vertices)} vertices and {len(trimmed_mesh.cells)} cells"
 )
 
+trimmed_mesh.save("trimmed_mesh.vtu")
 
 # Step 3.5: Smooth volume mesh (set ground and building heights)
 volume_mesh = _dtcc_builder.smooth_volume_mesh(

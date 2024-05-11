@@ -56,6 +56,11 @@ subdomain_resolution = [building.height / 2 for building in clearance_fix]
 
 # convert to C++ classes
 builder_dem = raster_to_builder_gridfield(terrain_raster)
+buildser_surfaces = [
+    create_builder_surface(building.lod0)
+    for building in clearance_fix
+    if building is not None
+]
 builder_footprints = [
     create_builder_polygon(building.lod0.to_polygon())
     for building in clearance_fix
@@ -67,6 +72,9 @@ smoothing = 3
 merge_meshes = True
 domain_height = 30
 layer_height = 3
+
+smoother_max_iterations = 1000
+smoothing_relative_tolerance = 0.001
 
 # Step 3.1: Build ground mesh
 
@@ -107,12 +115,43 @@ print(
 
 top_height = domain_height + terrain_raster.data.mean()
 
-# volume_mesh = _dtcc_builder.smooth_volume_mesh(
-#     volume_mesh,
-#     # city,
-#     builder_dem,
-#     top_height,
-#     False,
-#     p["smoothing_max_iterations"],
-#     p["smoothing_relative_tolerance"],
-# )
+volume_mesh = _dtcc_builder.smooth_volume_mesh(
+    volume_mesh,
+    buildser_surfaces,
+    builder_dem,
+    top_height,
+    False,
+    smoother_max_iterations,
+    smoothing_relative_tolerance,
+)
+
+smopthed_mesh = builder_volume_mesh_to_volume_mesh(volume_mesh)
+print(
+    f"smoothed mesh has: {len(smopthed_mesh.vertices)} vertices and {len(smopthed_mesh.cells)} cells"
+)
+
+# Step 3.4: Trim volume mesh (remove building interiors)
+volume_mesh = _dtcc_builder.trim_volume_mesh(
+    volume_mesh, builder_ground_mesh, buildser_surfaces
+)
+
+trimmed_mesh = builder_volume_mesh_to_volume_mesh(volume_mesh)
+print(
+    f"trimmed mesh has: {len(trimmed_mesh.vertices)} vertices and {len(trimmed_mesh.cells)} cells"
+)
+
+
+# Step 3.5: Smooth volume mesh (set ground and building heights)
+volume_mesh = _dtcc_builder.smooth_volume_mesh(
+    volume_mesh,
+    buildser_surfaces,
+    builder_dem,
+    top_height,
+    True,
+    smoother_max_iterations,
+    smoothing_relative_tolerance,
+)
+
+volume_mesh = builder_volume_mesh_to_volume_mesh(volume_mesh)
+
+volume_mesh.save("volume_mesh_new.vtu")

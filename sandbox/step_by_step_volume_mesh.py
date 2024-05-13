@@ -20,6 +20,8 @@ from pathlib import Path
 
 from time import time
 
+import sys
+
 data_directory = Path(__file__).parent / ".." / "data" / "HelsingborgResidential2022"
 buildings_path = data_directory / "PropertyMap.shp"
 pointcloud_path = data_directory / "PointCloud.las"
@@ -99,9 +101,9 @@ print(
 
 start_time = time()
 
-volume_mesh = _dtcc_builder.layer_ground_mesh(
-    builder_ground_mesh, domain_height, max_mesh_size
-)
+layer_heights = [10, 10, 10]
+
+volume_mesh = _dtcc_builder.layer_ground_mesh(builder_ground_mesh, layer_heights)
 
 print(f"Layering took {time() - start_time} seconds")
 
@@ -109,15 +111,22 @@ layer_mesh = builder_volume_mesh_to_volume_mesh(volume_mesh)
 print(
     f"layer mesh has: {len(layer_mesh.vertices)} vertices and {len(layer_mesh.cells)} cells"
 )
+
+# layer_mesh.save("layer_mesh.vtu")
+# layer_mesh_surface = _dtcc_builder.compute_boundary_mesh(volume_mesh)
+# layer_mesh_surface = builder_mesh_to_mesh(layer_mesh_surface)
+# layer_mesh_surface.view()
+# sys.exit(0)
 # layer_mesh.view()
 
 # Step 3.3: mooth volume mesh (set ground height)
 
+domain_height = sum(layer_heights)
 top_height = domain_height + terrain_raster.data.mean()
 
 volume_mesh = _dtcc_builder.smooth_volume_mesh(
     volume_mesh,
-    buildser_surfaces,
+    [],
     builder_dem,
     top_height,
     False,
@@ -125,10 +134,14 @@ volume_mesh = _dtcc_builder.smooth_volume_mesh(
     smoothing_relative_tolerance,
 )
 
-smopthed_mesh = builder_volume_mesh_to_volume_mesh(volume_mesh)
+
+smoothed_mesh = builder_volume_mesh_to_volume_mesh(volume_mesh)
 print(
-    f"smoothed mesh has: {len(smopthed_mesh.vertices)} vertices and {len(smopthed_mesh.cells)} cells"
+    f"smoothed mesh has: {len(smoothed_mesh.vertices)} vertices and {len(smoothed_mesh.cells)} cells"
 )
+smoothed_mesh.view()
+smoothed_mesh.save("smoothed_mesh.vtu")
+
 
 # Step 3.4: Trim volume mesh (remove building interiors)
 volume_mesh = _dtcc_builder.trim_volume_mesh(

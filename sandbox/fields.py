@@ -191,6 +191,6 @@ for key, val in city.geometry.items():
     print(key, type(val))
 
 # Save the city model
-# city.save("city_with_fields.pb")
+city.save("city_with_fields.pb")
 
 # View the quantities (how should this be done?)

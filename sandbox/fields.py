@@ -186,6 +186,10 @@ city.add_field(g1, "volume_grid")
 city.add_field(G0, "volume_grid")
 city.add_field(G1, "volume_grid")
 
+# FIXME: Writing protobuf currently fails since City has a geometry that is not a Geometry
+for key, val in city.geometry.items():
+    print(key, type(val))
+
 # Save the city model
 # city.save("city_with_fields.pb")
 

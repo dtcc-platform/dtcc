@@ -11,12 +11,9 @@ bounds = city.bounds
 print(bounds)
 
 
-terrain = dtcc.builder.flat_terrain(city.bounds.zmin, city.bounds)
-city.remove_terrain()
-city.add_terrain(terrain)
-
-
-surface_mesh = dtcc.builder.build_surface_mesh(city, dtcc.GeometryType.LOD2)
+surface_mesh = dtcc.builder.build_surface_mesh(
+    city, dtcc.GeometryType.LOD2, max_mesh_size=10, building_mesh_triangle_size=5
+)
 
 print("Done!")
 surface_mesh.view()

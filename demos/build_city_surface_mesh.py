@@ -4,10 +4,17 @@ from pathlib import Path
 
 data_directory = Path(__file__).parent / ".." / "data" / "cityjson"
 
-city = dtcc.load_city(data_directory / "DA13_3D_Buildings_Merged.city.json")
+city = dtcc.load_city(data_directory / "DenHaag_01.city.json")
 
-terrain = dtcc.builder.flat_terrain(0, city.bounds)
+print("City loaded, calculating bounds...")
+bounds = city.bounds
+print(bounds)
+
+
+terrain = dtcc.builder.flat_terrain(city.bounds.zmin, city.bounds)
+city.remove_terrain()
 city.add_terrain(terrain)
+
 
 surface_mesh = dtcc.builder.build_surface_mesh(city, dtcc.GeometryType.LOD2)
 

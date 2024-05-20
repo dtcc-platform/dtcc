@@ -12,7 +12,7 @@ print(bounds)
 
 
 surface_mesh = dtcc.builder.build_surface_mesh(
-    city, dtcc.GeometryType.LOD2, max_mesh_size=10, building_mesh_triangle_size=5
+    city, dtcc.GeometryType.LOD2, max_mesh_size=15, building_mesh_triangle_size=5
 )
 
 print("Done!")

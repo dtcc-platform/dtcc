@@ -58,7 +58,7 @@ subdomain_resolution = [building.height / 2 for building in clearance_fix]
 
 # convert to C++ classes
 builder_dem = raster_to_builder_gridfield(terrain_raster)
-buildser_surfaces = [
+builder_surfaces = [
     create_builder_surface(building.lod0)
     for building in clearance_fix
     if building is not None
@@ -89,6 +89,7 @@ builder_ground_mesh = _dtcc_builder.build_ground_mesh(
     terrain_raster.bounds.ymax,
     max_mesh_size,
     min_mesh_angle,
+    True,  # sort triangles
 )
 
 ground_mesh = builder_mesh_to_mesh(builder_ground_mesh)
@@ -101,7 +102,8 @@ print(
 
 start_time = time()
 
-layer_heights = [10, 10, 10]
+layer_heights = [2, 2, 4, 7, 10, 20]
+# layer_heights = [10, 10, 10, 10]
 
 volume_mesh = _dtcc_builder.layer_ground_mesh(builder_ground_mesh, layer_heights)
 
@@ -122,7 +124,7 @@ print(
 # Step 3.3: mooth volume mesh (set ground height)
 
 domain_height = sum(layer_heights)
-top_height = domain_height + terrain_raster.data.mean()
+top_height = domain_height + terrain_raster.data.max()
 
 volume_mesh = _dtcc_builder.smooth_volume_mesh(
     volume_mesh,
@@ -139,13 +141,12 @@ smoothed_mesh = builder_volume_mesh_to_volume_mesh(volume_mesh)
 print(
     f"smoothed mesh has: {len(smoothed_mesh.vertices)} vertices and {len(smoothed_mesh.cells)} cells"
 )
-smoothed_mesh.view()
 smoothed_mesh.save("smoothed_mesh.vtu")
 
 
 # Step 3.4: Trim volume mesh (remove building interiors)
 volume_mesh = _dtcc_builder.trim_volume_mesh(
-    volume_mesh, builder_ground_mesh, buildser_surfaces
+    volume_mesh, builder_ground_mesh, builder_surfaces
 )
 
 trimmed_mesh = builder_volume_mesh_to_volume_mesh(volume_mesh)
@@ -158,7 +159,7 @@ trimmed_mesh.save("trimmed_mesh.vtu")
 # Step 3.5: Smooth volume mesh (set ground and building heights)
 volume_mesh = _dtcc_builder.smooth_volume_mesh(
     volume_mesh,
-    buildser_surfaces,
+    builder_surfaces,
     builder_dem,
     top_height,
     True,
@@ -168,4 +169,9 @@ volume_mesh = _dtcc_builder.smooth_volume_mesh(
 
 volume_mesh = builder_volume_mesh_to_volume_mesh(volume_mesh)
 
-volume_mesh.save("volume_mesh_new.vtu")
+print(
+    f"z min: {volume_mesh.vertices[:, 2].min()} z max: {volume_mesh.vertices[:, 2].max()}"
+)
+
+volume_mesh.save("volume_mesh_new3.vtu")
+# volume_mesh.view()

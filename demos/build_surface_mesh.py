@@ -6,9 +6,9 @@ from pathlib import Path
 import dtcc_viewer
 
 
-data_directory = Path(__file__).parent / ".." / "data" / "HelsingborgResidential2022"
-buildings_path = data_directory / "PropertyMap.shp"
-pointcloud_path = data_directory / "PointCloud.las"
+data_directory = Path(__file__).parent / ".." / "data" / "helsingborg-residential-2022"
+buildings_path = data_directory / "footprints.shp"
+pointcloud_path = data_directory / "pointcloud.las"
 
 footprints = dtcc.io.load_footprints(buildings_path, "uuid")
 

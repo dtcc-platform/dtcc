@@ -102,6 +102,7 @@ Upon successful execution, this will produce a new folder named `unreal_tiles` w
     - Ensure that there is only one other column in the dataset with values that will map to coloured isolines.
 - Finally, ensure that all the data is in the same crs, or else the code will throw an error.
 
+Note: To include buildings in this workflow, please look at the `workflow_unreal_tiles_building.py` script. The script is an addon to this workflow and calls DTCC functions to generate buildings. The resulting 3D mesh is then positioned correctly based on the bounding box of the unreal engine tiles. Additional data to be passed here is a LiDAR point cloud corresponding to the requested area.
 
 # Workflow geojson to DF
 ![Alt text](media/workflow_gbxml_1.png)

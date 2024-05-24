@@ -26,7 +26,6 @@ dependencies = [
   "dtcc-data@git+https://github.com/dtcc-platform/dtcc-data.git@develop",
   "dtcc-builder@git+https://github.com/dtcc-platform/dtcc-builder.git@develop",
   "dtcc-viewer@git+https://github.com/dtcc-platform/dtcc-viewer.git@develop",
-  "dtcc-wrangler@git+https://github.com/dtcc-platform/dtcc-wrangler.git@develop",
 ]
 
 [project.optional-dependencies]

@@ -1,8 +1,12 @@
+# This demo illustrates how to load and view a CityJSON city model.
+
 import dtcc
-from pathlib import Path
 
-data_directory = Path(__file__).parent / ".." / "data" / "cityjson"
+# Set data directory (and check that it exists)
+data_directory = dtcc.set_data_directory("data/cityjson")
 
-# city = dtcc.load_city(data_directory / "DA13_3D_Buildings_Merged.city.json")
+# Load city model from CityJSON file
 city = dtcc.load_city(data_directory / "DenHaag_01.city.json")
+
+# View city
 city.view()

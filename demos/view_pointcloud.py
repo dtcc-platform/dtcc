@@ -1,14 +1,13 @@
-# Copyright (C) 2023 Anders Logg
-# Licensed under the MIT License
-#
-# This demo illustrates how to build a city model from raw data,
-# and viewing the resulting mesh model together with the pointcloud.
+# This demo illustrates how to load and view a point cloud.
+
 import dtcc
-from pathlib import Path
 
-data_directory = Path(__file__).parent / ".." / "data/helsingborg-residential-2022"
+# Set data directory (and check that it exists)
+data_directory = dtcc.set_data_directory("data/helsingborg-residential-2022")
 
-filename = data_directory / "pointcloud.las"
-pc = dtcc.io.load_pointcloud(filename)
+# Load point cloud from LAS file
+pc = dtcc.load_pointcloud(data_directory / "pointcloud.las")
+
+# View point cloud (color by z-coordinate)
 color_data = pc.points[:, 2]
 pc.view(data=color_data)

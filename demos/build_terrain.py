@@ -17,4 +17,4 @@ terrain = dtcc.builder.build_terrain_mesh(
 )
 
 # View mesh
-terrain.view()
+terrain.mesh.view()

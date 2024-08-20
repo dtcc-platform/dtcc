@@ -24,6 +24,7 @@ Table of contents
    :maxdepth: 3
 
    installation
+   data_model
    usage
    demos
    api

@@ -1,6 +1,6 @@
 import dtcc
 
-city = dtcc.io.load_city("../data/HelsingborgHarbour2022/PropertyMap.shp")
+city = dtcc.io.load_city("./dtcc-demo-data/HelsingborgHarbour2022/PropertyMap.shp")
 
 # Simplify building polygons by removing vertices so that the resulting polygon
 # is within the given tolerance of the original polygon.

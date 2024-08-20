@@ -13,6 +13,7 @@ __pycache__
 tests/cpp/bin/
 scratch/
 
+demos/data/
 /data/*
 workflows/workflow_unreal_tiles
 workflows/data/*
@@ -20,3 +21,4 @@ DTCC_workflows
 workflows/workflow_sanjay.ipynb
 !/data/download-demo*
 *.ipynb
+dtcc-demo-data/

@@ -2,20 +2,17 @@
 # Licensed under the MIT License
 #
 # This demo illustrates how to build a city model from raw data,
-# essentially equivalent to running the dtcc-build command-line
-# utility, but with more control over the process.
 
+
+import dtcc
 from dtcc import *
 from pathlib import Path
 
 # Set data paths
 data_directory = Path("data/helsingborg-residential-2022")
 buildings_path = data_directory / "footprints.shp"
-pointcloud_path = data_directory
+pointcloud_path = data_directory / "pointcloud.las"
 
-# Set parameters
-p = parameters.default()
-p["auto_domain"] = True
 
 # Calculate bounds
 origin, bounds = calculate_bounds(buildings_path, pointcloud_path, p)
@@ -28,7 +25,10 @@ pointcloud = load_pointcloud(pointcloud_path, bounds=bounds)
 city = build_city(city, pointcloud, bounds, p)
 
 # Build ground mesh and building mesh (surface meshes)
-ground_mesh, building_mesh = build_mesh(city, p)
+ground_mesh = build_terrain_mesh(city, p)
+buildings_mesh = build_building_meshes(city, p)
+building_mesh = dtcc.builder.meshing.merge_meshes(buildings_mesh)
+surface_mesh = build_city_surface_mesh(city, p)
 
 # Build city mesh and volume mesh (tetrahedral mesh)
 volume_mesh, volume_mesh_boundary = build_volume_mesh(city, p)
@@ -42,5 +42,4 @@ volume_mesh_boundary.save(data_directory / "volume_mesh_boundary.pb")
 
 # View data
 city.view()
-pointcloud.view()
-volume_mesh_boundary.view()
+surface_mesh.view(pc=pointcloud)

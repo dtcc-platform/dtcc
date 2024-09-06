@@ -247,10 +247,10 @@ def generate_builder_buildings(data_directory,
 
     # Define bounds for processing
     bounds  = Bounds()
-    bounds.xmin = clipping_bbox.bounds[0]
-    bounds.ymin = clipping_bbox.bounds[1]
-    bounds.xmax = clipping_bbox.bounds[2]
-    bounds.ymax = clipping_bbox.bounds[3]
+    bounds.xmin = clipping_bbox.xmin
+    bounds.ymin = clipping_bbox.ymin
+    bounds.xmax = clipping_bbox.xmax
+    bounds.ymax = clipping_bbox.ymax
     info("Bounds: " + str(bounds))
 
     # Define parameters for processing
@@ -325,3 +325,6 @@ def generate_builder_buildings(data_directory,
     save_mesh(building_mesh, file_path)
 
     return file_path
+
+bounds=calculate_bounds("data\\footprint_data\\by_04.shp","data\\lidar_data\\")
+generate_builder_buildings("data\\","data\\lidar_data\\","data\\footprint_data\\by_04.shp",bounds[1])

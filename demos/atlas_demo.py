@@ -1,4 +1,4 @@
-from dtcc_atlas.atlas import download_roadnetwork, download_footprints, download_laz
+from dtcc_atlas.atlas import download_roadnetwork, download_footprints, download_laz, get_bounding_box
 from shapely import box 
 
 # NOTE: The server is still under the process of scraping all the data. Currently the server contains only a small portion of the whole dataset.
@@ -21,3 +21,5 @@ download_footprints(bbox_gpkg)
 
 download_roadnetwork(bbox_gpkg)
 
+# Commented for CI. Opens a map that the user can draw a bounding box. returns the coordinates of the bounding box
+# print(get_bounding_box())

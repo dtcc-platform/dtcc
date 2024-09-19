@@ -6,7 +6,7 @@ from shapely import box
 parameters = {}
 parameters["username"] = ""
 parameters["password"] = ""
-parameters["default_directory"] = ""
+parameters["cache_directory"] = ""
 # Create the initial bounding box to request the data
 bbox_gpkg = box(445646,7171055, 458746,7195055)
 bbox_laz = box(300000,6500000, 302500,6505000)

@@ -8,7 +8,7 @@ parameters["username"] = ""
 parameters["password"] = ""
 parameters["cache_directory"] = ""
 
-#Auth is happening against PAM of data2.dtcc.chalmers.se via SSHv2
+# Auth is happening against PAM of data2.dtcc.chalmers.se via SSHv2
 
 # NOTE: WiP password key-chain and way for not using cleartext passwords.
 

@@ -1,3 +1,7 @@
+# TODO proper import like the rest, since dtcc-data is already imported in init.py
+# TODO Remove auth from download_pointcloud
+# TODO Add something regarding licensing in README.md for geotorget
+
 from dtcc_atlas.atlas import download_roadnetwork, download_footprints, download_pointcloud, get_bounding_box
 from shapely import box 
 
@@ -9,6 +13,8 @@ parameters["password"] = ""
 parameters["cache_directory"] = ""
 
 # Auth is happening against PAM of data2.dtcc.chalmers.se via SSHv2
+
+# TODO: Add OSM/Google Maps footprints in case of non-authentication
 
 # NOTE: WiP password key-chain and way for not using cleartext passwords.
 

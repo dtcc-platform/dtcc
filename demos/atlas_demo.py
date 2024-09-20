@@ -1,4 +1,5 @@
 # TODO proper import like the rest, since dtcc-data is already imported in init.py
+# TODO only import is dtcc
 # TODO Remove auth from download_pointcloud
 # TODO Add something regarding licensing in README.md for geotorget
 

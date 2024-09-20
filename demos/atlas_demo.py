@@ -1,13 +1,19 @@
 from dtcc_atlas.atlas import download_roadnetwork, download_footprints, download_pointcloud, get_bounding_box
 from shapely import box 
 
-# NOTE: The server is still under the process of scraping all the data. Currently the server contains only a small portion of the whole dataset.
-# That means that the area that the server can return is still minimal. 
+# NOTE: The server is still under the process of scraping all the data. Currently the server contains small portions of the whole dataset.
+
 parameters = {}
 parameters["username"] = ""
 parameters["password"] = ""
 parameters["cache_directory"] = ""
+
+#Auth is happening against PAM of data2.dtcc.chalmers.se via SSHv2
+
+# NOTE: WiP password key-chain and way for not using cleartext passwords.
+
 # Create the initial bounding box to request the data
+
 bbox_gpkg = box(445646,7171055, 458746,7195055)
 bbox_laz = box(300000,6500000, 302500,6505000)
 
@@ -24,4 +30,5 @@ download_footprints(bbox_gpkg, parameters)
 download_roadnetwork(bbox_gpkg, parameters)
 
 # Commented for CI. Opens a map that the user can draw a bounding box. returns the coordinates of the bounding box
+
 # print(get_bounding_box())

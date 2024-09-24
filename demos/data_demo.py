@@ -3,15 +3,17 @@
 # TODO Remove auth from download_pointcloud
 # TODO Add something regarding licensing in README.md for geotorget
 
-from dtcc_atlas.atlas import download_roadnetwork, download_footprints, download_pointcloud, get_bounding_box
-from shapely import box 
+# from dtcc_atlas.atlas import download_roadnetwork, download_footprints, download_pointcloud, get_bounding_box
+import dtcc
+
 
 # NOTE: The server is still under the process of scraping all the data. Currently the server contains small portions of the whole dataset.
 
-parameters = {}
-parameters["username"] = ""
-parameters["password"] = ""
+parameters = dtcc.atlas.parameters.default()
+parameters["username"] = "" 
+parameters["password"] = "" 
 parameters["cache_directory"] = ""
+
 
 # Auth is happening against PAM of data2.dtcc.chalmers.se via SSHv2
 
@@ -21,21 +23,29 @@ parameters["cache_directory"] = ""
 
 # Create the initial bounding box to request the data
 
-bbox_gpkg = box(445646,7171055, 458746,7195055)
-bbox_laz = box(300000,6500000, 302500,6505000)
+bbox_gpkg = dtcc.model.Bounds(xmin= 445646,
+                              ymin= 7171055, 
+                              xmax= 458746,
+                              ymax= 7195055)
+
+
+bbox_laz =  dtcc.model.Bounds(xmin=300000,
+                              ymin=6500000, 
+                              xmax=302500,
+                              ymax=6505000)
 
 # Downloads all missing Lidar files for the specified bounding box and updates/creates the lidar atlas
 
-download_pointcloud(bbox_laz, parameters)
+dtcc.atlas.download_pointcloud(bbox_laz, parameters)
 
 # Downloads all missing GPKG files for footprints for the specified bounding box 
 
-download_footprints(bbox_gpkg, parameters)
+dtcc.atlas.download_footprints(bbox_gpkg, parameters)
 
 # Downloads all missing Lidar files for roadnetwork for the specified bounding box 
 
-download_roadnetwork(bbox_gpkg, parameters)
+dtcc.atlas.download_roadnetwork(bbox_gpkg, parameters)
 
 # Commented for CI. Opens a map that the user can draw a bounding box. returns the coordinates of the bounding box
 
-# print(get_bounding_box())
+# print(dtcc.atlas.get_bounding_box())

@@ -4,8 +4,8 @@ from dtcc_core import model as model
 from dtcc_core import io as io
 from dtcc_core import builder as builder
 
-# import dtcc_data as data
-# import dtcc_atlas as atlas
+import dtcc_data as data
+import dtcc_atlas as atlas
 import dtcc_viewer as viewer
 
 
@@ -29,6 +29,6 @@ __all__ += ["debug", "info", "warning", "error", "critical"]
 # and then all modules extend the parameter set with their own parameters.
 from dtcc_core.builder import parameters
 
-# __all__.append("atlas")
-# __all__.append("data")
+__all__.append("atlas")
+__all__.append("data")
 __all__.append("parameters")

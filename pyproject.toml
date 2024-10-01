@@ -22,7 +22,7 @@ classifiers = [
 ]
 dependencies = [  
   "dtcc-core@git+https://github.com/dtcc-platform/dtcc-core.git@develop",
-  "dtcc-viewer@git+https://github.com/dtcc-platform/dtcc-viewer.git@develop", 
+  "dtcc-viewer@git+https://github.com/dtcc-platform/dtcc-viewer.git@dev/dtcc-core", 
 ]
 
 [project.optional-dependencies]

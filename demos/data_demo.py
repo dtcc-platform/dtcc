@@ -10,9 +10,8 @@ import dtcc
 # NOTE: The server is still under the process of scraping all the data. Currently the server contains small portions of the whole dataset.
 
 parameters = dtcc.atlas.parameters.default()
-parameters["username"] = "" 
-parameters["password"] = "" 
-parameters["cache_directory"] = ""
+parameters["username"] = "auth-themis1223" 
+parameters["cache_directory"] = "/home/auth-themis1223/atlas_data"
 
 
 # Auth is happening against PAM of data2.dtcc.chalmers.se via SSHv2

@@ -10,9 +10,9 @@ import dtcc
 # NOTE: The server is still under the process of scraping all the data. Currently the server contains small portions of the whole dataset.
 
 parameters = dtcc.data.parameters.default()
-parameters["username"] = "demouser" 
-parameters["password"] = "8oJUeJY!" 
-parameters["cache_directory"] = "/Users/georgespaias/Scratch/development_dtcc/data/atlas"
+parameters["username"] = "" 
+parameters["password"] = "" 
+parameters["cache_directory"] = ""
 
 
 # Auth is happening against PAM of data2.dtcc.chalmers.se via SSHv2

@@ -48,4 +48,4 @@ dtcc.data.download_roadnetwork(bbox_gpkg, parameters)
 
 # Commented for CI. Opens a map that the user can draw a bounding box. returns the coordinates of the bounding box
 
-print(dtcc.data.get_bounding_box())
+# print(dtcc.data.get_bounding_box())

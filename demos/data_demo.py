@@ -9,9 +9,10 @@ import dtcc
 
 # NOTE: The server is still under the process of scraping all the data. Currently the server contains small portions of the whole dataset.
 
-parameters = dtcc.atlas.parameters.default()
-parameters["username"] = "auth-themis1223" 
-parameters["cache_directory"] = "/home/auth-themis1223/atlas_data"
+parameters = dtcc.data.parameters.default()
+parameters["username"] = "" 
+parameters["password"] = "" 
+parameters["cache_directory"] = ""
 
 
 # Auth is happening against PAM of data2.dtcc.chalmers.se via SSHv2
@@ -35,16 +36,16 @@ bbox_laz =  dtcc.model.Bounds(xmin=300000,
 
 # Downloads all missing Lidar files for the specified bounding box and updates/creates the lidar atlas
 
-dtcc.atlas.download_pointcloud(bbox_laz, parameters)
+dtcc.data.download_pointcloud(bbox_laz, parameters)
 
 # Downloads all missing GPKG files for footprints for the specified bounding box 
 
-dtcc.atlas.download_footprints(bbox_gpkg, parameters)
+dtcc.data.download_footprints(bbox_gpkg, parameters)
 
 # Downloads all missing Lidar files for roadnetwork for the specified bounding box 
 
-dtcc.atlas.download_roadnetwork(bbox_gpkg, parameters)
+dtcc.data.download_roadnetwork(bbox_gpkg, parameters)
 
 # Commented for CI. Opens a map that the user can draw a bounding box. returns the coordinates of the bounding box
 
-# print(dtcc.atlas.get_bounding_box())
+# print(dtcc.data.get_bounding_box())

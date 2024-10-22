@@ -3,7 +3,7 @@
 import dtcc
 
 from pathlib import Path
-import dtcc_viewer
+# import dtcc_viewer
 
 
 data_directory = Path(__file__).parent / ".." / "data" / "helsingborg-residential-2022"

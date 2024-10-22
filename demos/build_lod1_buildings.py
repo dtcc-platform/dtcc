@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import dtcc
-import dtcc_viewer
 
 # import dtcc_viewer
 from pathlib import Path

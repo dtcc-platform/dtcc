@@ -27,6 +27,7 @@ dependencies = [
 [project.optional-dependencies]
 test = ["pytest"]
 docs = ["sphinx", "sphinx-immaterial"]
+viewer = ["dtcc-viewer@git+https://github.com/dtcc-platform/dtcc-viewer.git@develop"]
 
 [tool.scikit-build]
 wheel.expand-macos-universal-tags = true

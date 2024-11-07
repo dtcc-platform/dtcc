@@ -14,55 +14,35 @@ parameters["username"] = ""
 parameters["password"] = "" 
 parameters["cache_directory"] = ""
 
-"""Start local server to serve the map page"""
-dtcc.data.atlas.start_server()
-try:
-    data = dtcc.data.atlas.serve_map()
-    xmin = data['topLeft']['lng']
-    xmax = data['bottomRight']['lng']
+"""Use Viewer for getting data using a map"""
+dtcc.data.start_map_viewer(parameters=parameters)
 
-    ymin = data['bottomRight']['lat']
-    ymax = data['topLeft']['lat']
+"""Or uncomment the code below to get data by applying the coordinates manually"""
+# NOTE: WiP password key-chain and way for not using cleartext passwords.
 
-    # Auth is happening against PAM of data2.dtcc.chalmers.se via SSHv2
+# Create the initial bounding box to request the data
 
-    # TODO: Add OSM/Google Maps footprints in case of non-authentication
-
-    # NOTE: WiP password key-chain and way for not using cleartext passwords.
-
-    # Create the initial bounding box to request the data
-
-    bbox_gpkg = dtcc.model.Bounds(xmin=xmin,
-                                  ymin=ymin,
-                                  xmax=xmax,
-                                  ymax=ymax)
-
-    bbox_laz = dtcc.model.Bounds(xmin=xmin,
-                                 ymin=ymin,
-                                 xmax=xmax,
-                                 ymax=ymax)
-
-    # Downloads all missing Lidar files for the specified bounding box and updates/creates the lidar atlas
-    if 'pointCloudLaz' in data['selectedOptions']:
-        dtcc.data.download_pointcloud(bbox_laz, parameters)
-
-    # Downloads all missing GPKG files for footprints for the specified bounding box
-    if 'footprintsGpkg' in data['selectedOptions']:
-        dtcc.data.download_footprints(bbox_gpkg, parameters)
-
-    # Downloads all missing Lidar files for roadnetwork for the specified bounding box
-    if 'roadNetworkGpkg' in data['selectedOptions']:
-        dtcc.data.download_roadnetwork(bbox_gpkg, parameters)
-
-except Exception as ex:
-    print(f"DTCC Data Demo had an exception: {ex}")
-
-finally:
-    """Stop local server"""
-    print("Server is stopping")
-    dtcc.data.atlas.stop_server()
-    print("Server stopped")
+# bbox_gpkg = dtcc.model.Bounds(xmin=445646,
+#                               ymin=7171055,
+#                               xmax=458746,
+#                               ymax=7195055)
+#
+# bbox_laz = dtcc.model.Bounds(xmin=300000,
+#                              ymin=6500000,
+#                              xmax=302500,
+#                              ymax=6505000)
+#
+# # Downloads all missing Lidar files for the specified bounding box and updates/creates the lidar atlas
+#
+# dtcc.data.download_pointcloud(bbox_laz, parameters)
+#
+# # Downloads all missing GPKG files for footprints for the specified bounding box
+#
+# dtcc.data.download_footprints(bbox_gpkg, parameters)
+#
+# # Downloads all missing Lidar files for roadnetwork for the specified bounding box
+#
+# dtcc.data.download_roadnetwork(bbox_gpkg, parameters)
 
 # Commented for CI. Opens a map that the user can draw a bounding box. returns the coordinates of the bounding box
-"""Disable the old way, but keeping it for testing, or faster revert."""
 # print(dtcc.data.get_bounding_box())

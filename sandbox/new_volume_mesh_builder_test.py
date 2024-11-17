@@ -27,7 +27,7 @@ _parameters["smoothing_relative_tolerance"] = 0.001
 _parameters["domain_padding_height"] = 0.0
 _parameters["debug_step"] = 5
 
-data_directory = Path(__file__).parent / ".." / "data" / "HelsingborgResidential2022"
+data_directory = Path(__file__).parent / ".." / "data" / "helsingborg-residential-2022"
 buildings_path = data_directory / "footprints.shp"
 pointcloud_path = data_directory / "PointCloud.las"
 
@@ -116,4 +116,3 @@ print(
 volume_mesh.save(data_directory / "volume_mesh_test.vtu")
 
 sys.exit(0)
-

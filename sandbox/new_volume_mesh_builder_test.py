@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-import dtcc
+from dtcc import *
+
 from dtcc_core.builder.model_conversion import (
     create_builder_polygon,
     create_builder_surface,
@@ -32,32 +33,32 @@ buildings_path = data_directory / "footprints.shp"
 pointcloud_path = data_directory / "PointCloud.las"
 
 
-footprints = dtcc.io.load_footprints(buildings_path, "uuid")
+footprints = load_footprints(buildings_path, "uuid")
 
-pc = dtcc.io.load_pointcloud(pointcloud_path)
+pc = load_pointcloud(pointcloud_path)
 pc = pc.remove_global_outliers(3)
 
-terrain_raster = dtcc.builder.build_terrain_raster(
+terrain_raster = build_terrain_raster(
     pc, cell_size=2, radius=3, ground_only=True
 )
 
 # caluclate the building heights
-footprints = dtcc.builder.extract_roof_points(
+footprints = extract_roof_points(
     footprints, pc, statistical_outlier_remover=True
 )
 
-footprints = dtcc.builder.compute_building_heights(
+footprints = compute_building_heights(
     footprints, terrain_raster, overwrite=True
 )
 
 # merge and simplify the building footprints
-merged_footprints = dtcc.builder.merge_building_footprints(
-    footprints, lod=dtcc.model.GeometryType.LOD0, max_distance=0.5, min_area=10
+merged_footprints = merge_building_footprints(
+    footprints, lod=GeometryType.LOD0, max_distance=0.5, min_area=10
 )
-simplifed_footprints = dtcc.builder.simplify_building_footprints(
-    merged_footprints, 0.25, lod=dtcc.model.GeometryType.LOD0
+simplifed_footprints = simplify_building_footprints(
+    merged_footprints, 0.25, lod=GeometryType.LOD0
 )
-clearance_fix = dtcc.builder.fix_building_footprint_clearance(simplifed_footprints, 0.5)
+clearance_fix = fix_building_footprint_clearance(simplifed_footprints, 0.5)
 
 # set subdomain resolution to half the building height
 subdomain_resolution = [building.height / 2 for building in clearance_fix]
@@ -76,8 +77,7 @@ builder_footprints = [
 ]
 
 
-# Step 3.1: Build ground mesh
-
+# Build ground mesh
 builder_ground_mesh = _dtcc_builder.build_ground_mesh(
     builder_footprints,
     subdomain_resolution,
@@ -91,28 +91,31 @@ builder_ground_mesh = _dtcc_builder.build_ground_mesh(
 )
 
 ground_mesh = builder_mesh_to_mesh(builder_ground_mesh)
-print(
-    f"Ground mesh has: {len(ground_mesh.vertices)} vertices and {len(ground_mesh.faces)} faces"
-)
-# ground_mesh.view()
+info(ground_mesh)
 
+# Save ground mesh to file
+ground_mesh.save(data_directory / "ground_mesh.vtu")
 
+# FIXME: Why is an object needed, why not use static functions?
 volume_mesh_builder = _dtcc_builder.VolumeMeshBuilder(  builder_surfaces,
                                                         builder_dem,
                                                         builder_ground_mesh,
                                                         _parameters["domain_height"])
 
+# Build volume mesh
 builder_volume_mesh = volume_mesh_builder.build(_parameters["smoother_max_iterations"],
                                                 _parameters["smoothing_relative_tolerance"],
                                                 _parameters["domain_padding_height"],
                                                 _parameters["debug_step"])
 
+# Convert to Python mesh
 volume_mesh = builder_volume_mesh_to_volume_mesh(builder_volume_mesh)
-print(
-    f"Volume mesh has: {len(volume_mesh.vertices)} vertices and {len(volume_mesh.cells)} cells"
-)
+info(volume_mesh)
 
-#volume_mesh.view()
-volume_mesh.save(data_directory / "volume_mesh_test.vtu")
+# Save volume mesh to file
+volume_mesh.save(data_directory / "volume_mesh.vtu")
 
-sys.exit(0)
+
+# FIXME
+#
+# 1. Print mesh quality at each stage

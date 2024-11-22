@@ -15,6 +15,12 @@ from pathlib import Path
 from time import time
 import sys
 
+# Domain bounds (isolate bad buildings)
+bounds = Bounds(102250, 6213200, 102500, 6213450)  # Aspect ratio 485
+
+# Debug step
+step = 2
+
 # Parameters
 _parameters = {}
 _parameters["max_mesh_size"] = 10
@@ -26,32 +32,28 @@ _parameters["layer_height"] = 3
 _parameters["smoother_max_iterations"] = 1000
 _parameters["smoothing_relative_tolerance"] = 0.001
 _parameters["domain_padding_height"] = 0.0
-_parameters["debug_step"] = 5
+_parameters["debug_step"] = step
+
 
 data_directory = Path(__file__).parent / ".." / "data" / "helsingborg-residential-2022"
 buildings_path = data_directory / "footprints.shp"
 pointcloud_path = data_directory / "PointCloud.las"
 
 
-footprints = load_footprints(buildings_path, "uuid")
+# Load data
+footprints = load_footprints(buildings_path, "uuid", bounds=bounds)
+pc = load_pointcloud(pointcloud_path, bounds=bounds)
 
-pc = load_pointcloud(pointcloud_path)
 pc = pc.remove_global_outliers(3)
 
-terrain_raster = build_terrain_raster(
-    pc, cell_size=2, radius=3, ground_only=True
-)
+terrain_raster = build_terrain_raster(pc, cell_size=2, radius=3, ground_only=True)
 
-# caluclate the building heights
-footprints = extract_roof_points(
-    footprints, pc, statistical_outlier_remover=True
-)
+# Calculate building heights
+footprints = extract_roof_points(footprints, pc, statistical_outlier_remover=True)
 
-footprints = compute_building_heights(
-    footprints, terrain_raster, overwrite=True
-)
+footprints = compute_building_heights(footprints, terrain_raster, overwrite=True)
 
-# merge and simplify the building footprints
+# Merge and simplify building footprints
 merged_footprints = merge_building_footprints(
     footprints, lod=GeometryType.LOD0, max_distance=0.5, min_area=10
 )
@@ -97,25 +99,27 @@ info(ground_mesh)
 ground_mesh.save(data_directory / "ground_mesh.vtu")
 
 # FIXME: Why is an object needed, why not use static functions?
-volume_mesh_builder = _dtcc_builder.VolumeMeshBuilder(  builder_surfaces,
-                                                        builder_dem,
-                                                        builder_ground_mesh,
-                                                        _parameters["domain_height"])
+volume_mesh_builder = _dtcc_builder.VolumeMeshBuilder(
+    builder_surfaces, builder_dem, builder_ground_mesh, _parameters["domain_height"]
+)
 
 # Build volume mesh
-builder_volume_mesh = volume_mesh_builder.build(_parameters["smoother_max_iterations"],
-                                                _parameters["smoothing_relative_tolerance"],
-                                                _parameters["domain_padding_height"],
-                                                _parameters["debug_step"])
+builder_volume_mesh = volume_mesh_builder.build(
+    _parameters["smoother_max_iterations"],
+    _parameters["smoothing_relative_tolerance"],
+    _parameters["domain_padding_height"],
+    _parameters["debug_step"],
+)
 
 # Convert to Python mesh
 volume_mesh = builder_volume_mesh_to_volume_mesh(builder_volume_mesh)
 info(volume_mesh)
 
 # Save volume mesh to file
-volume_mesh.save(data_directory / "volume_mesh.vtu")
+volume_mesh.save(data_directory / f"volume_mesh_{step}.vtu")
 
 
 # FIXME
 #
 # 1. Print mesh quality at each stage
+# 2. Gauss-Seidel not converging (using all 1000 iterations)

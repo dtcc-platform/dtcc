@@ -13,13 +13,16 @@ from dtcc_core.builder.model_conversion import (
 from dtcc_core.builder import _dtcc_builder
 from pathlib import Path
 from time import time
+from plotting import plot_mesh
 import sys
+
 
 # Domain bounds (isolate bad buildings)
 bounds = Bounds(102250, 6213200, 102500, 6213450)  # Aspect ratio 485
+zoom = Bounds(102350, 6213200, 102500, 6213250)
 
 # Debug step
-step = 2
+step = 5
 
 # Parameters
 _parameters = {}
@@ -94,6 +97,8 @@ builder_ground_mesh = _dtcc_builder.build_ground_mesh(
 
 ground_mesh = builder_mesh_to_mesh(builder_ground_mesh)
 info(ground_mesh)
+plot_mesh(ground_mesh, show_labels=True, bounds=zoom)
+# ground_mesh.view()
 
 # Save ground mesh to file
 ground_mesh.save(data_directory / "ground_mesh.vtu")

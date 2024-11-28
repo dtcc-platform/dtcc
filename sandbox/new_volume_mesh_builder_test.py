@@ -18,8 +18,12 @@ import sys
 
 
 # Domain bounds (isolate bad buildings)
-bounds = Bounds(102250, 6213200, 102500, 6213450)  # Aspect ratio 485
-zoom = Bounds(102350, 6213200, 102500, 6213250)
+# bounds = Bounds(102250, 6213200, 102500, 6213450)  # Aspect ratio 485
+# zoom = Bounds(102440, 6213200, 102500, 6213250)
+
+# bounds = Bounds(102000, 6213000, 103000, 6214000)
+bounds = None
+zoom = None
 
 # Debug step
 step = 5
@@ -97,7 +101,7 @@ builder_ground_mesh = _dtcc_builder.build_ground_mesh(
 
 ground_mesh = builder_mesh_to_mesh(builder_ground_mesh)
 info(ground_mesh)
-plot_mesh(ground_mesh, show_labels=True, bounds=zoom)
+# plot_mesh(ground_mesh, show_labels=True, bounds=zoom)
 # ground_mesh.view()
 
 # Save ground mesh to file

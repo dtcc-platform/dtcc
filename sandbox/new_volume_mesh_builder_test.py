@@ -22,12 +22,12 @@ import sys
 # zoom = Bounds(102440, 6213200, 102500, 6213250)
 
 # bounds = Bounds(102000, 6213000, 103000, 6214000)
-bounds = Bounds(102000, 6213000, 102050, 6213050)
+bounds = Bounds(102000, 6213000, 102150, 6213150)
 # bounds = None
 zoom = None
 
 # Debug step
-step = 3
+step = 4
 
 # Parameters
 _parameters = {}

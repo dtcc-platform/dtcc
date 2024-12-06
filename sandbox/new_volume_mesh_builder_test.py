@@ -27,7 +27,7 @@ bounds = Bounds(102000, 6213000, 102150, 6213150)
 zoom = None
 
 # Debug step
-step = 4
+step = 5
 
 # Parameters
 _parameters = {}

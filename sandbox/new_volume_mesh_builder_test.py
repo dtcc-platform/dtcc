@@ -22,8 +22,9 @@ import sys
 # zoom = Bounds(102440, 6213200, 102500, 6213250)
 
 # bounds = Bounds(102000, 6213000, 103000, 6214000)
-bounds = Bounds(102000, 6213000, 102150, 6213150)
-# bounds = None
+# bounds = Bounds(102000, 6213000, 102250, 6213250)
+# bounds = Bounds(102500, 6213000, 103000, 6213500)
+bounds = None
 zoom = None
 
 # Debug step
@@ -37,8 +38,8 @@ _parameters["smoothing"] = 3
 _parameters["merge_meshes"] = True
 _parameters["domain_height"] = 30
 _parameters["layer_height"] = 3
-_parameters["smoother_max_iterations"] = 1000
-_parameters["smoothing_relative_tolerance"] = 0.01
+_parameters["smoother_max_iterations"] = 5000
+_parameters["smoothing_relative_tolerance"] = 0.0005
 _parameters["domain_padding_height"] = 0.0
 _parameters["debug_step"] = step
 

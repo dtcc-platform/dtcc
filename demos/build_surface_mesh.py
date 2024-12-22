@@ -13,6 +13,9 @@ footprints = dtcc.io.load_footprints(buildings_path, "uuid")
 pc = dtcc.io.load_pointcloud(pointcloud_path)
 pc = pc.remove_global_outliers(3)
 
+terrain_raster = dtcc.builder.build_terrain_raster(
+    pc, cell_size=2, radius=3, ground_only=True
+)
 
 footprints = dtcc.builder.extract_roof_points(
     footprints, pc, statistical_outlier_remover=True

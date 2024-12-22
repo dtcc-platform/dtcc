@@ -30,6 +30,9 @@ jobs:
     - name: pip install MacOS/Ubuntu
       run: ls -alt && export PATH="$pythonLocation:$PATH" && python --version && export "DEB_PYTHON_INSTALL_LAYOUT=deb_system" && pip install .
       if: matrix.os != 'windows-latest'
+    - name: download demo data
+      run: dtcc-download-demo-data
+      if: matrix.os != 'windows-latest'
     - name: run demos
       run: |
           for file in demos/*.py; do

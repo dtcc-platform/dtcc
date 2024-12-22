@@ -30,6 +30,9 @@ jobs:
     - name: pip install MacOS/Ubuntu
       run: ls -alt && export PATH="$pythonLocation:$PATH" && python --version && export "DEB_PYTHON_INSTALL_LAYOUT=deb_system" && pip install .
       if: matrix.os != 'windows-latest'
+    - name: run demos
+      run: ls -alt && pwd && ls -altr
+      if: matrix.os != 'windows-latest'  
     - name: pip install Windows
       run: pip install .  
       if: matrix.os == 'windows-latest'

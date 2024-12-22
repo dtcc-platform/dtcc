@@ -33,7 +33,7 @@ jobs:
     - name: download demo data
       run: dtcc-download-demo-data && pwd && ls -altr && mv demo-data/ data/
       if: matrix.os != 'windows-latest'
-    - name: run demos
+    - name: Run demos on Non-Windows
       run: |
           for file in demos/*.py; do
             echo "Running $file"
@@ -42,6 +42,15 @@ jobs:
       if: matrix.os != 'windows-latest'  
     - name: pip install Windows
       run: pip install .  
+      if: matrix.os == 'windows-latest'
+    - name: Run demons on Windows
+      shell: pwsh
+      run: |
+          $files = Get-ChildItem .\demos\*.py
+          foreach ($file in $files) {
+            Write-Host "Running $($file.FullName)"
+            python $($file.FullName)
+          }
       if: matrix.os == 'windows-latest'
       # ${{ github.event.repository.name }}/
     #  shell: bash {0}

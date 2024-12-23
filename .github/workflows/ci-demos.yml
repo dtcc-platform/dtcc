@@ -41,9 +41,9 @@ jobs:
           done
       if: matrix.os != 'windows-latest'  
     - name: pip install Windows
-      run: pip install .  
+      run: pip install . ; if($?) {dtcc-download-demo-data}
       if: matrix.os == 'windows-latest'
-    - name: Run demons on Windows
+    - name: Run demos on Windows
       shell: pwsh
       run: |
           $files = Get-ChildItem .\demos\*.py

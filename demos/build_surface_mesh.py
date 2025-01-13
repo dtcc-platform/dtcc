@@ -3,8 +3,6 @@
 import dtcc
 
 from pathlib import Path
-# import dtcc_viewer
-
 
 data_directory = Path(__file__).parent / ".." / "data" / "helsingborg-residential-2022"
 buildings_path = data_directory / "footprints.shp"
@@ -18,7 +16,7 @@ pc = pc.remove_global_outliers(3)
 terrain_raster = dtcc.builder.build_terrain_raster(
     pc, cell_size=2, radius=3, ground_only=True
 )
-print(terrain_raster)
+
 footprints = dtcc.builder.extract_roof_points(
     footprints, pc, statistical_outlier_remover=True
 )
@@ -29,12 +27,13 @@ footprints = dtcc.builder.compute_building_heights(
 
 print("Creating city")
 city = dtcc.City()
-terrain_mesh = dtcc.builder.build_terrain_mesh(terrain_raster)
+
+terrain_raster = dtcc.builder.build_terrain_raster(
+    pc, cell_size=2, radius=3, ground_only=True
+)
 city.add_terrain(terrain_raster)
 
 city.add_buildings(footprints, True)
-
-# city.view()
 
 surface_mesh = dtcc.builder.build_surface_mesh(
     city,

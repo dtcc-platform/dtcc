@@ -43,7 +43,7 @@ for i in range(len(footprints)):
 
 
 terrain = dtcc.builder.build_terrain_mesh(
-    pointcloud=pointcloud,
+    pointcloud,
     subdomains=footprints,
     subdomain_resolution=subdomain_resolution,
     max_mesh_size=20,

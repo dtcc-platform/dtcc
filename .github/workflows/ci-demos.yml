@@ -30,9 +30,51 @@ jobs:
     - name: pip install MacOS/Ubuntu
       run: ls -alt && export PATH="$pythonLocation:$PATH" && python --version && export "DEB_PYTHON_INSTALL_LAYOUT=deb_system" && pip install .
       if: matrix.os != 'windows-latest'
+    - name: download demo data
+      run: dtcc-download-demo-data && pwd && ls -altr && mv demo-data/ data/
+      if: matrix.os != 'windows-latest'
+    - name: Run demos on Non-Windows
+      run: |
+          for file in demos/*.py; do
+            echo "Running $file"
+            python "$file"
+          done
+      if: matrix.os != 'windows-latest'  
     - name: pip install Windows
-      run: pip install .  
+      shell: pwsh
+      run: |
+       pip install .
+       if ($LastExitCode -eq 0) {
+       dtcc-download-demo-data
+       # If dtcc-download-demo-data also succeeded, rename demo-data to data
+       if ($LastExitCode -eq 0) {
+        Move-Item -Path demo-data -Destination data
+        }
+       }
       if: matrix.os == 'windows-latest'
+    - name: Run demos on Windows
+      shell: pwsh
+      run: |
+           Push-Location demos
+           $files = Get-ChildItem *.py
+           foreach ($file in $files) {
+           Write-Host "Running $($file.Name)"
+           python $($file.Name)
+           }
+           Pop-Location
+      if: matrix.os == 'windows-latest'
+    #- name: pip install Windows
+    #  run: pip install . ; if($?) {dtcc-download-demo-data}
+    #  if: matrix.os == 'windows-latest'
+    #- name: Run demos on Windows
+    #  shell: pwsh
+    #  run: |
+    #      $files = Get-ChildItem .\demos\*.py
+    #      foreach ($file in $files) {
+    #        Write-Host "Running $($file.FullName)"
+    #        python $($file.FullName)
+    #      }
+    #  if: matrix.os == 'windows-latest'
       # ${{ github.event.repository.name }}/
     #  shell: bash {0}
     #- name: cmake install

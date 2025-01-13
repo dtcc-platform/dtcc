@@ -20,21 +20,22 @@ from plotting import plot_mesh
 
 # Domain bounds (for testing)
 # bounds = Bounds(102000, 6213000, 103000, 6214000)
-bounds = Bounds(102000, 6213000, 102100, 6213100)
-# bounds = None
+# bounds = Bounds(102000, 6213000, 102100, 6213100)
+bounds = None
 
 # FIXME: Mix of parameters in dict and explicit function arguments below
 
 # Set parameters
 _parameters = {}
 _parameters["max_mesh_size"] = 10
-_parameters["min_mesh_angle"] = 25
+_parameters["min_mesh_angle"] = 30
 _parameters["smoother_max_iterations"] = 5000
 _parameters["smoothing_relative_tolerance"] = 0.0005
 _parameters["debug_step"] = 5
 
 # Set data paths
 data_directory = Path("../data/helsingborg-residential-2022")
+# data_directory = Path("../data/helsingborg-harbour-2022")
 buildings_path = data_directory / "footprints.shp"
 pointcloud_path = data_directory / "PointCloud.las"
 

@@ -21,7 +21,16 @@ from plotting import plot_mesh
 # Domain bounds (for testing)
 # bounds = Bounds(102000, 6213000, 103000, 6214000)
 # bounds = Bounds(102000, 6213000, 102100, 6213100)
-bounds = None
+# bounds = None
+
+x0 = 99086.5
+y0 = 6212830
+x1 = 100294
+y1 = 6214710
+print(x1 - x0, y1 - y0)
+
+# This gives segmentation fault
+bounds = Bounds(x1 - 100, y1 - 100, x1, y1)
 
 # FIXME: Mix of parameters in dict and explicit function arguments below
 
@@ -34,8 +43,8 @@ _parameters["smoothing_relative_tolerance"] = 0.0005
 _parameters["debug_step"] = 5
 
 # Set data paths
-data_directory = Path("../data/helsingborg-residential-2022")
-# data_directory = Path("../data/helsingborg-harbour-2022")
+# data_directory = Path("../data/helsingborg-residential-2022")
+data_directory = Path("../data/helsingborg-harbour-2022")
 buildings_path = data_directory / "footprints.shp"
 pointcloud_path = data_directory / "PointCloud.las"
 

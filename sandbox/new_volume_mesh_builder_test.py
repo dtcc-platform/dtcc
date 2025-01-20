@@ -27,10 +27,7 @@ x0 = 99086.5
 y0 = 6212830
 x1 = 100294
 y1 = 6214710
-print(x1 - x0, y1 - y0)
-
-# This gives segmentation fault
-bounds = Bounds(x1 - 100, y1 - 100, x1, y1)
+bounds = Bounds(x1 - 500, y1 - 500, x1, y1)
 
 # FIXME: Mix of parameters in dict and explicit function arguments below
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+import sys
 from pathlib import Path
 from dtcc import *
 
@@ -16,12 +16,12 @@ from dtcc_core.builder.model_conversion import (
 from dtcc_core.builder._dtcc_builder import build_ground_mesh, VolumeMeshBuilder
 
 # FIXME: Debug plotting in Python
-from plotting import plot_mesh
+# from plotting import plot_mesh
 
 # Domain bounds (for testing)
 # bounds = Bounds(102000, 6213000, 103000, 6214000)
 # bounds = Bounds(102000, 6213000, 102100, 6213100)
-# bounds = None
+bounds = None
 
 x0 = 99086.5
 y0 = 6212830
@@ -29,9 +29,11 @@ x1 = 100294
 y1 = 6214710
 print(x1 - x0, y1 - y0)
 
-# This gives segmentation fault
-bounds = Bounds(x1 - 100, y1 - 100, x1, y1)
 
+# # This gives segmentation fault
+# bounds = Bounds(x1 - 100, y1 - 100, x1, y1)
+# bounds = Bounds(99548.0, 6212920.0, 99700.0, 6213050.0)
+# bounds = Bounds(xmin=100050, ymin=6213370, xmax=100125, ymax=6213390)
 # FIXME: Mix of parameters in dict and explicit function arguments below
 
 # Set parameters
@@ -51,8 +53,9 @@ pointcloud_path = data_directory / "PointCloud.las"
 # FIXME: Can we get this data from dtcc-data?
 
 # Load data
-footprints = load_footprints(buildings_path, bounds=bounds)
 pointcloud = load_pointcloud(pointcloud_path, bounds=bounds)
+footprints = load_footprints(buildings_path, bounds=bounds)
+
 
 # FIXME: Are all operations on point clouds and footprints out-place?
 # FIXME: Explicit parameter 3 for remove_global_outliers() is not clear.
@@ -90,13 +93,24 @@ fix_footprint_clearance = fix_building_footprint_clearance
 # Merge and simplify building footprints
 lod = GeometryType.LOD0
 footprints = merge_footprints(footprints, lod=lod, max_distance=0.5, min_area=10)
+
+
 footprints = simplify_footprints(footprints, 0.25, lod=lod)
+
+
 footprints = fix_footprint_clearance(footprints, 0.5)
+
 
 # FIXME: Is this the ideal resolution? Handle it automatically?
 
+
 # Set subdomain resolution to half the building height
-subdomain_resolution = [building.height / 2 for building in footprints]
+subdomain_resolution = [
+    min(building.height, _parameters["max_mesh_size"]) for building in footprints
+]
+
+# subdomain_resolution = []
+
 
 # FIXME: Should not need to convert from Python to C++.
 
@@ -128,7 +142,8 @@ _ground_mesh = build_ground_mesh(
 ground_mesh = builder_mesh_to_mesh(_ground_mesh)
 
 # Save ground mesh to file
-ground_mesh.save(data_directory / "ground_mesh.vtu")
+ground_mesh.save(data_directory / "ground_mesh_full3.vtu")
+
 
 # View ground mesh (for debugging)
 # zoom = Bounds(102000, 6213000, 103000, 6214000)
@@ -157,6 +172,7 @@ _surfaces = [
 # Create volume mesh builder
 volume_mesh_builder = VolumeMeshBuilder(_surfaces, _dem, _ground_mesh, 0.0)
 
+
 # Build volume mesh
 _volume_mesh = volume_mesh_builder.build(
     _parameters["smoother_max_iterations"],
@@ -171,4 +187,4 @@ _volume_mesh = volume_mesh_builder.build(
 volume_mesh = builder_volume_mesh_to_volume_mesh(_volume_mesh)
 
 # Save volume mesh to file
-volume_mesh.save(data_directory / f"volume_mesh_{_parameters['debug_step']}.vtu")
+volume_mesh.save(data_directory / f"volume_mesh_sd2_{_parameters['debug_step']}.vtu")

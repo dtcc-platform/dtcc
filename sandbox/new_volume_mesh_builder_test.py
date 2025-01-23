@@ -27,8 +27,6 @@ x0 = 99086.5
 y0 = 6212830
 x1 = 100294
 y1 = 6214710
-print(x1 - x0, y1 - y0)
-
 
 # # This gives segmentation fault
 # bounds = Bounds(x1 - 100, y1 - 100, x1, y1)
@@ -96,10 +94,7 @@ footprints = merge_footprints(footprints, lod=lod, max_distance=0.5, min_area=10
 
 
 footprints = simplify_footprints(footprints, 0.25, lod=lod)
-
-
 footprints = fix_footprint_clearance(footprints, 0.5)
-
 
 # FIXME: Is this the ideal resolution? Handle it automatically?
 
@@ -142,8 +137,7 @@ _ground_mesh = build_ground_mesh(
 ground_mesh = builder_mesh_to_mesh(_ground_mesh)
 
 # Save ground mesh to file
-ground_mesh.save(data_directory / "ground_mesh_full3.vtu")
-
+ground_mesh.save(data_directory / "ground_mesh.vtu")
 
 # View ground mesh (for debugging)
 # zoom = Bounds(102000, 6213000, 103000, 6214000)
@@ -171,7 +165,6 @@ _surfaces = [
 
 # Create volume mesh builder
 volume_mesh_builder = VolumeMeshBuilder(_surfaces, _dem, _ground_mesh, 0.0)
-
 
 # Build volume mesh
 _volume_mesh = volume_mesh_builder.build(

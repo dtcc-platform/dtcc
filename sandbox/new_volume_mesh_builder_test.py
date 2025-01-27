@@ -27,11 +27,17 @@ x0 = 99086.5
 y0 = 6212830
 x1 = 100294
 y1 = 6214710
+dx = x1 - x0
+dy = y1 - y0
+print(f"dx = {dx}, dy = {dy}")
+# exit()
+xm = (x0 + x1) / 2
+ym = (y0 + y1) / 2
+bounds = Bounds(x0 + 650, y0 + 1150, x1 - 100, y1 - 300)
 
-# # This gives segmentation fault
-# bounds = Bounds(x1 - 100, y1 - 100, x1, y1)
 # bounds = Bounds(99548.0, 6212920.0, 99700.0, 6213050.0)
 # bounds = Bounds(xmin=100050, ymin=6213370, xmax=100125, ymax=6213390)
+
 # FIXME: Mix of parameters in dict and explicit function arguments below
 
 # Set parameters
@@ -40,7 +46,7 @@ _parameters["max_mesh_size"] = 10
 _parameters["min_mesh_angle"] = 30
 _parameters["smoother_max_iterations"] = 5000
 _parameters["smoothing_relative_tolerance"] = 0.0005
-_parameters["debug_step"] = 5
+_parameters["debug_step"] = 3
 
 # Set data paths
 # data_directory = Path("../data/helsingborg-residential-2022")
@@ -53,7 +59,6 @@ pointcloud_path = data_directory / "PointCloud.las"
 # Load data
 pointcloud = load_pointcloud(pointcloud_path, bounds=bounds)
 footprints = load_footprints(buildings_path, bounds=bounds)
-
 
 # FIXME: Are all operations on point clouds and footprints out-place?
 # FIXME: Explicit parameter 3 for remove_global_outliers() is not clear.
@@ -69,6 +74,26 @@ pointcloud = pointcloud.remove_global_outliers(3)
 
 # Build terrain raster
 terrain = build_terrain_raster(pointcloud, cell_size=2, radius=3, ground_only=True)
+
+# Save to file for debugging
+with open("raster.csv", "w") as f:
+    f.write(", ".join(str(x) for x in terrain.data.flatten()))
+print(terrain.data.shape)
+
+# import matplotlib.pyplot as plt
+# import numpy as np
+# Z = terrain.data
+# ny, nx = terrain.shape
+# x = np.linspace(terrain.bounds.xmin, terrain.bounds.xmax, nx)
+# y = np.linspace(terrain.bounds.ymin, terrain.bounds.ymax, ny)
+# X, Y = np.meshgrid(x, y)
+# plt.figure()
+# plt.imshow(Z, cmap="terrain", origin="lower")
+# plt.figure()
+# ax = plt.axes(projection="3d")
+# ax.plot_surface(X, Y, Z, cmap="terrain")
+# plt.show()
+# exit()
 
 # Extract roof points
 footprints = extract_roof_points(
@@ -180,4 +205,4 @@ _volume_mesh = volume_mesh_builder.build(
 volume_mesh = builder_volume_mesh_to_volume_mesh(_volume_mesh)
 
 # Save volume mesh to file
-volume_mesh.save(data_directory / f"volume_mesh_sd2_{_parameters['debug_step']}.vtu")
+volume_mesh.save(data_directory / f"volume_mesh_{_parameters['debug_step']}.vtu")

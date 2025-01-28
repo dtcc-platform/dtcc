@@ -6,7 +6,7 @@ COLOR1 = "#F26C2E"
 COLOR2 = "#16579A"
 
 
-def plot_mesh(mesh, show_labels=False, bounds=None):
+def plot_mesh(mesh, show_labels=False, bounds=None, show=True):
     fig, ax = plt.subplots()
     for face_index, face in enumerate(mesh.faces):
 
@@ -22,7 +22,7 @@ def plot_mesh(mesh, show_labels=False, bounds=None):
         # Plot face
         _x = x + [x[0]]
         _y = y + [y[0]]
-        marker = mesh.markers[face_index]
+        marker = mesh.markers[face_index] if mesh.markers else 0
         if marker >= 0:
             ax.fill(_x, _y, color=COLOR2)
         elif marker == -1:
@@ -45,4 +45,10 @@ def plot_mesh(mesh, show_labels=False, bounds=None):
             )
 
     ax.set_aspect("equal")
+
+    if show:
+        plt.show()
+
+
+def show():
     plt.show()

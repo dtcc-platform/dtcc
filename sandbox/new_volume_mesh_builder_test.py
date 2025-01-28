@@ -163,6 +163,7 @@ ground_mesh = builder_mesh_to_mesh(_ground_mesh)
 
 # Save ground mesh to file
 ground_mesh.save(data_directory / "ground_mesh.vtu")
+ground_mesh.save("ground_mesh.pb")
 
 # View ground mesh (for debugging)
 # zoom = Bounds(102000, 6213000, 103000, 6214000)

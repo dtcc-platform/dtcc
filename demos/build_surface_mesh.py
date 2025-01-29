@@ -25,7 +25,6 @@ footprints = dtcc.builder.compute_building_heights(
     footprints, terrain_raster, overwrite=True
 )
 
-print("Creating city")
 city = dtcc.City()
 
 terrain_raster = dtcc.builder.build_terrain_raster(

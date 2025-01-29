@@ -1,6 +1,7 @@
 import numpy as np
 from dtcc import VolumeMesh
 from collections import defaultdict
+from timeit import default_timer as timer
 
 """
 Notes: 
@@ -104,7 +105,7 @@ def vertex__cell_adjacency(volume_mesh: VolumeMesh):
     list of list of int
         A list where each index contains the list of cell indices adjacent to a vertex.
     """
-    vertex_neighbours = [[] for _ in volume_mesh.vertices]
+    vertex_neighbours = defaultdict(list)
 
     for c, cell in enumerate(volume_mesh.cells.astype(int)):
         vertex_neighbours[cell[0]].append(c)
@@ -210,7 +211,13 @@ def tetrahedron_circumcenter(v0, v1, v2, v3):
     B = np.array([np.dot(v1, v1) - np.dot(v0, v0),
                   np.dot(v2, v2) - np.dot(v0, v0),
                   np.dot(v3, v3) - np.dot(v0, v0)])
-    return np.linalg.solve(A, B)
+    
+    if np.linalg.cond(A) > 1e12:  
+        return np.mean([v0, v1, v2, v3], axis=0)  # Fallback to centroid
+    else:
+        return np.linalg.solve(A, B)
+
+    
 
 def calculate_circumcenters(mesh: VolumeMesh) -> np.ndarray:
     circumcenters = np.zeros((mesh.num_cells, 3))
@@ -252,12 +259,15 @@ def lloyd_smoothing(mesh: VolumeMesh, iterations: int = 100, alpha: float = 0.2)
    
     
     # change for testing
-    boundary_markers = (-1,-2 ,-4)
+    boundary_markers = (-1,-2 ,-3,-4)
     for iter in range(iterations):
         print("Lloyd Iteration", iter)
+        start = timer()
+
          # Compute cell volumes and centroids
         cell_volumes = calculate_volumes(mesh)
-        cell_centroids = calculate_circumcenters(mesh)
+        # cell_centroids = calculate_circumcenters(mesh)
+        cell_centroids = calculate_centroids(mesh)
         new_vertices = np.zeros_like(mesh.vertices)
         # For each vertex, compute area-weighted average of centroids of adjacent faces
         for v_idx, marker in enumerate(mesh.markers):
@@ -277,7 +287,56 @@ def lloyd_smoothing(mesh: VolumeMesh, iterations: int = 100, alpha: float = 0.2)
             old_vertex = mesh.vertices[v_idx]
             new_vertex = weighted_sum / (total_weight + 1e-16)
             new_vertices[v_idx] = (1 - alpha) * old_vertex + alpha * new_vertex
-
+            
         mesh.vertices = new_vertices
-
+        print(f"Iteration {iter} completed in {timer() - start:.4f} seconds")
     return mesh
+
+
+
+def create_cube_with_perturbed_center():
+    """Create a cube mesh with a perturbed interior node."""
+    # Cube vertices (8 corners + 1 perturbed center)
+    vertices = np.array([
+        [0.0, 0.0, 0.0],  # 0
+        [1.0, 0.0, 0.0],  # 1
+        [1.0, 1.0, 0.0],  # 2
+        [0.0, 1.0, 0.0],  # 3
+        [0.0, 0.0, 1.0],  # 4
+        [1.0, 0.0, 1.0],  # 5
+        [1.0, 1.0, 1.0],  # 6
+        [0.0, 1.0, 1.0],  # 7
+        [0.6, 0.6, 0.6]   # 8 (perturbed center)
+    ])
+
+    # Tetrahedrons connecting faces to the center (12 cells)
+    cells = np.array([
+        [0, 1, 2, 8],    # Bottom face (z=0)
+        [0, 2, 3, 8],
+        [4, 5, 6, 8],    # Top face (z=1)
+        [4, 6, 7, 8],
+        [0, 1, 5, 8],    # Front face (y=0)
+        [0, 5, 4, 8],
+        [2, 3, 7, 8],    # Back face (y=1)
+        [2, 7, 6, 8],
+        [0, 3, 7, 8],    # Left face (x=0)
+        [0, 7, 4, 8],
+        [1, 2, 6, 8],    # Right face (x=1)
+        [1, 6, 5, 8]
+    ])
+
+    # Markers: -4 for boundary nodes (corners), -5 for free node (center)
+    markers = np.full(len(vertices), -4, dtype=int)
+    markers[[0,1,2,3,8]] = -5  # Free interior node
+
+    return VolumeMesh(vertices=vertices, cells=cells, markers=markers)
+
+if __name__ == "__main__":
+
+    mesh = create_cube_with_perturbed_center()
+    mesh.save("cube.vtu")
+    # Perform Lloyd smoothing   
+    mesh = lloyd_smoothing(mesh, iterations=10, alpha=0.2)
+
+    # Save the smoothed mesh    
+    mesh.save("smoothed_cube2.vtu")

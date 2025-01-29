@@ -114,7 +114,7 @@ def vertex__cell_adjacency(volume_mesh: VolumeMesh):
     return vertex_neighbours
 
 
-def cell_volume(v0: np.ndarray, v1: np.ndarray, v2: np.ndarray, v3: np.ndarray) -> float:
+def tetrahedron_volume(v0: np.ndarray, v1: np.ndarray, v2: np.ndarray, v3: np.ndarray) -> float:
     """
     Compute the volume of a tetrahedral cell.
 
@@ -157,11 +157,11 @@ def calculate_volumes(mesh: VolumeMesh) -> np.array:
         v2 = mesh.vertices[cell[2]]
         v3 = mesh.vertices[cell[3]]
 
-        volume[c] = cell_volume(v0, v1, v2, v3)
+        volume[c] = tetrahedron_volume(v0, v1, v2, v3)
 
     return volume
 
-def cell_centroid(v0: np.ndarray, v1: np.ndarray, v2: np.ndarray, v3: np.ndarray) -> np.ndarray:
+def tetrahedron_centroid(v0: np.ndarray, v1: np.ndarray, v2: np.ndarray, v3: np.ndarray) -> np.ndarray:
     """
     Compute the centroid of a tetrahedral cell.
 
@@ -200,10 +200,25 @@ def calculate_centroids(mesh: VolumeMesh) -> np.array:
         v2 = mesh.vertices[cell[2]]
         v3 = mesh.vertices[cell[3]]
 
-        centroid[c] = cell_centroid(v0, v1, v2, v3)
+        centroid[c] = tetrahedron_centroid(v0, v1, v2, v3)
 
     return centroid
 
+def tetrahedron_circumcenter(v0, v1, v2, v3):
+    # Solve equidistant equations for circumcenter
+    A = np.array([2*(v1 - v0), 2*(v2 - v0), 2*(v3 - v0)])
+    B = np.array([np.dot(v1, v1) - np.dot(v0, v0),
+                  np.dot(v2, v2) - np.dot(v0, v0),
+                  np.dot(v3, v3) - np.dot(v0, v0)])
+    return np.linalg.solve(A, B)
+
+def calculate_circumcenters(mesh: VolumeMesh) -> np.ndarray:
+    circumcenters = np.zeros((mesh.num_cells, 3))
+    for c, cell in enumerate(mesh.cells.astype(int)):
+        v0, v1, v2, v3 = mesh.vertices[cell]
+        circumcenters[c] = tetrahedron_circumcenter(v0, v1, v2, v3)
+    
+    return circumcenters
 
 def lloyd_smoothing(mesh: VolumeMesh, iterations: int = 100, alpha: float = 0.2):
     """
@@ -232,16 +247,17 @@ def lloyd_smoothing(mesh: VolumeMesh, iterations: int = 100, alpha: float = 0.2)
     # -3: Top of the domain
     # -4: Vertical walls of the domain
     # -5: Free nodes
-    volume_mesh = compute_smoothing_markers(volume_mesh)
+    mesh = compute_smoothing_markers(mesh)
 
-    # Compute cell volumes and centroids
-    cell_volumes = calculate_volumes(mesh)
-    cell_centroids = calculate_centroids(mesh)
+   
     
     # change for testing
     boundary_markers = (-1,-2 ,-4)
     for iter in range(iterations):
         print("Lloyd Iteration", iter)
+         # Compute cell volumes and centroids
+        cell_volumes = calculate_volumes(mesh)
+        cell_centroids = calculate_circumcenters(mesh)
         new_vertices = np.zeros_like(mesh.vertices)
         # For each vertex, compute area-weighted average of centroids of adjacent faces
         for v_idx, marker in enumerate(mesh.markers):

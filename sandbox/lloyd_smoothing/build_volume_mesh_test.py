@@ -208,7 +208,8 @@ _volume_mesh = volume_mesh_builder.build(
 volume_mesh = builder_volume_mesh_to_volume_mesh(_volume_mesh)
 
 # Save volume mesh to file
-volume_mesh.save(data_directory / f"volume_mesh_{_parameters["debug_step"]}.vtu")
+volume_mesh.save(data_directory / f"volume_mesh_original.vtu")
 
+# LLoyd smoothing
 volume_mesh = lloyd_smoothing(volume_mesh, iterations=10, alpha=0.2)
-volume_mesh.save(data_directory / f"volume_mesh_lloyd_3.vtu")
+volume_mesh.save(data_directory / f"volume_mesh_lloyd.vtu")

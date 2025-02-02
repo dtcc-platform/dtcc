@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import sys
 from pathlib import Path
+from lloyd_smoothing_3d import lloyd_smoothing
 from dtcc import *
 
 # FIXME: Obscure imports
@@ -34,7 +35,7 @@ print(f"dx = {dx}, dy = {dy}")
 xm = (x0 + x1) / 2
 ym = (y0 + y1) / 2
 bounds = Bounds(x0 + 650, y0 + 1150, x1 - 100, y1 - 300)
-
+print(bounds)
 # bounds = Bounds(99548.0, 6212920.0, 99700.0, 6213050.0)
 # bounds = Bounds(xmin=100050, ymin=6213370, xmax=100125, ymax=6213390)
 
@@ -46,11 +47,11 @@ _parameters["max_mesh_size"] = 10
 _parameters["min_mesh_angle"] = 30
 _parameters["smoother_max_iterations"] = 5000
 _parameters["smoothing_relative_tolerance"] = 0.0005
-_parameters["debug_step"] = 3
+_parameters["debug_step"] = 2
 
 # Set data paths
 # data_directory = Path("../data/helsingborg-residential-2022")
-data_directory = Path("../data/helsingborg-harbour-2022")
+data_directory = Path("/Users/georgespaias/Scratch/development_dtcc/data/helsingborg-harbour-2022")
 buildings_path = data_directory / "footprints.shp"
 pointcloud_path = data_directory / "PointCloud.las"
 
@@ -206,4 +207,7 @@ _volume_mesh = volume_mesh_builder.build(
 volume_mesh = builder_volume_mesh_to_volume_mesh(_volume_mesh)
 
 # Save volume mesh to file
-volume_mesh.save(data_directory / f"volume_mesh_{_parameters['debug_step']}.vtu")
+# volume_mesh.save(data_directory / f"volume_mesh_{_parameters["debug_step"]}.vtu")
+
+volume_mesh = lloyd_smoothing(volume_mesh, iterations=10, alpha=1)
+volume_mesh.save(data_directory / f"volume_mesh_lloyd_2s.vtu")

@@ -140,7 +140,7 @@ def test_simple_mesh():
 def test_ground_mesh():
 
     # Load ground mesh
-    mesh = dtcc.load_mesh("ground_mesh.pb")
+    mesh = dtcc.load_mesh("ground_mesh.")
     plot_mesh(mesh, show=False)
     # mesh.view()
 

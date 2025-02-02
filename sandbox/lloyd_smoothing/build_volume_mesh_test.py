@@ -47,11 +47,12 @@ _parameters["max_mesh_size"] = 10
 _parameters["min_mesh_angle"] = 30
 _parameters["smoother_max_iterations"] = 5000
 _parameters["smoothing_relative_tolerance"] = 0.0005
-_parameters["debug_step"] = 2
+_parameters["debug_step"] = 3
 
 # Set data paths
 # data_directory = Path("../../data/helsingborg-residential-2022")
 data_directory = Path("../../data/helsingborg-harbour-2022")
+data_directory = Path("/Users/georgespaias/Scratch/development_dtcc/data/helsingborg-harbour-2022")
 buildings_path = data_directory / "footprints.shp"
 pointcloud_path = data_directory / "PointCloud.las"
 
@@ -207,7 +208,7 @@ _volume_mesh = volume_mesh_builder.build(
 volume_mesh = builder_volume_mesh_to_volume_mesh(_volume_mesh)
 
 # Save volume mesh to file
-# volume_mesh.save(data_directory / f"volume_mesh_{_parameters["debug_step"]}.vtu")
+volume_mesh.save(data_directory / f"volume_mesh_{_parameters["debug_step"]}.vtu")
 
 volume_mesh = lloyd_smoothing(volume_mesh, iterations=10, alpha=0.2)
-volume_mesh.save(data_directory / f"volume_mesh_lloyd_2s.vtu")
+volume_mesh.save(data_directory / f"volume_mesh_lloyd_3.vtu")

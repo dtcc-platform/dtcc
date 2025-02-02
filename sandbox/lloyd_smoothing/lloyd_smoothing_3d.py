@@ -227,7 +227,7 @@ def calculate_circumcenters(mesh: VolumeMesh) -> np.ndarray:
     
     return circumcenters
 
-def lloyd_smoothing(mesh: VolumeMesh, iterations: int = 100, alpha: float = 0.2):
+def lloyd_smoothing(mesh: VolumeMesh, iterations: int = 10, alpha: float = 0.2, threshold: float = 1e-1) -> VolumeMesh:
     """
     Perform Lloyd smoothing on a tetrahedral mesh.
 
@@ -279,6 +279,9 @@ def lloyd_smoothing(mesh: VolumeMesh, iterations: int = 100, alpha: float = 0.2)
             adj_cell_indices = adjacency[v_idx]
             # Sum of area * centroid for all adjacent faces
             total_weight = np.sum(cell_volumes[adj_cell_indices])
+            # if total_weight < threshold:
+            #     new_vertices[v_idx] = mesh.vertices[v_idx]
+            #     continue
             prod = cell_centroids[adj_cell_indices] * cell_volumes[adj_cell_indices, np.newaxis]
             weighted_sum = np.sum(
                prod , axis=0
@@ -306,7 +309,7 @@ def create_cube_with_perturbed_center():
         [1.0, 0.0, 1.0],  # 5
         [1.0, 1.0, 1.0],  # 6
         [0.0, 1.0, 1.0],  # 7
-        [0.6, 0.6, 0.6]   # 8 (perturbed center)
+        [0.6, 0.6, 50.0]   # 8 (perturbed center)
     ])
 
     # Tetrahedrons connecting faces to the center (12 cells)
@@ -327,7 +330,7 @@ def create_cube_with_perturbed_center():
 
     # Markers: -4 for boundary nodes (corners), -5 for free node (center)
     markers = np.full(len(vertices), -4, dtype=int)
-    markers[[0,1,2,3,8]] = -5  # Free interior node
+    markers[8] = -5  # Free interior node
 
     return VolumeMesh(vertices=vertices, cells=cells, markers=markers)
 
@@ -336,7 +339,7 @@ if __name__ == "__main__":
     mesh = create_cube_with_perturbed_center()
     mesh.save("cube.vtu")
     # Perform Lloyd smoothing   
-    mesh = lloyd_smoothing(mesh, iterations=10, alpha=0.2)
+    mesh = lloyd_smoothing(mesh, iterations=100, alpha=0.2)
 
     # Save the smoothed mesh    
-    mesh.save("smoothed_cube2.vtu")
+    mesh.save("smoothed_cube.vtu")

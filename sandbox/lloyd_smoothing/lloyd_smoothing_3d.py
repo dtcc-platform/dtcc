@@ -239,7 +239,10 @@ def calculate_circumcenters(mesh: VolumeMesh) -> np.ndarray:
 
     return circumcenters
 
-def lloyd_smoothing(mesh: VolumeMesh, iterations: int = 10, alpha: float = 0.2, threshold: float = 1e-1) -> VolumeMesh:
+
+def lloyd_smoothing(
+    mesh: VolumeMesh, iterations: int = 10, alpha: float = 0.2, threshold: float = 1e-1
+) -> VolumeMesh:
     """
     Perform Lloyd smoothing on a tetrahedral mesh.
 
@@ -257,7 +260,7 @@ def lloyd_smoothing(mesh: VolumeMesh, iterations: int = 10, alpha: float = 0.2, 
     VolumeMesh
         The smoothed mesh.
     """
-    print("Lloyd Smoothing")
+    print(f"Lloyd smoothing with {iterations} iterations and alpha = {alpha}")
     # Compute adjacency of each vertex (Vertex star)
     adjacency = vertex__cell_adjacency(mesh)
     # Compute smoothing markers
@@ -292,10 +295,11 @@ def lloyd_smoothing(mesh: VolumeMesh, iterations: int = 10, alpha: float = 0.2, 
             # if total_weight < threshold:
             #     new_vertices[v_idx] = mesh.vertices[v_idx]
             #     continue
-            prod = cell_centroids[adj_cell_indices] * cell_volumes[adj_cell_indices, np.newaxis]
-            weighted_sum = np.sum(
-               prod , axis=0
+            prod = (
+                cell_centroids[adj_cell_indices]
+                * cell_volumes[adj_cell_indices, np.newaxis]
             )
+            weighted_sum = np.sum(prod, axis=0)
 
             old_vertex = mesh.vertices[v_idx]
             new_vertex = weighted_sum / (total_weight + 1e-16)
@@ -309,17 +313,19 @@ def lloyd_smoothing(mesh: VolumeMesh, iterations: int = 10, alpha: float = 0.2, 
 def create_cube_with_perturbed_center():
     """Create a cube mesh with a perturbed interior node."""
     # Cube vertices (8 corners + 1 perturbed center)
-    vertices = np.array([
-        [0.0, 0.0, 0.0],  # 0
-        [1.0, 0.0, 0.0],  # 1
-        [1.0, 1.0, 0.0],  # 2
-        [0.0, 1.0, 0.0],  # 3
-        [0.0, 0.0, 1.0],  # 4
-        [1.0, 0.0, 1.0],  # 5
-        [1.0, 1.0, 1.0],  # 6
-        [0.0, 1.0, 1.0],  # 7
-        [0.6, 0.6, 50.0]   # 8 (perturbed center)
-    ])
+    vertices = np.array(
+        [
+            [0.0, 0.0, 0.0],  # 0
+            [1.0, 0.0, 0.0],  # 1
+            [1.0, 1.0, 0.0],  # 2
+            [0.0, 1.0, 0.0],  # 3
+            [0.0, 0.0, 1.0],  # 4
+            [1.0, 0.0, 1.0],  # 5
+            [1.0, 1.0, 1.0],  # 6
+            [0.0, 1.0, 1.0],  # 7
+            [0.6, 0.6, 50.0],  # 8 (perturbed center)
+        ]
+    )
 
     # Tetrahedrons connecting faces to the center (12 cells)
     cells = np.array(
@@ -352,8 +358,8 @@ if __name__ == "__main__":
     mesh.save("cube.vtu")
     # Perform Lloyd smoothing
     mesh = lloyd_smoothing(mesh, iterations=10, alpha=0.2)
-    # Perform Lloyd smoothing   
+    # Perform Lloyd smoothing
     mesh = lloyd_smoothing(mesh, iterations=100, alpha=0.2)
 
-    # Save the smoothed mesh    
+    # Save the smoothed mesh
     mesh.save("smoothed_cube.vtu")

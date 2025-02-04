@@ -35,7 +35,13 @@ print(f"dx = {dx}, dy = {dy}")
 xm = (x0 + x1) / 2
 ym = (y0 + y1) / 2
 bounds = Bounds(x0 + 650, y0 + 1150, x1 - 100, y1 - 300)
-print(bounds)
+
+# Lloyd smoothing test case from helsingborg-harbour-2022
+# 99795.2 to 100077 (delta: 281.672)
+# 6.21398e+06 to 6.21415e+06 (delta: 166.035)
+bounds = Bounds(99795, 6.21398e+06, 100077, 6.21415e+06)
+print("Lloyd smoothing test case from helsingborg-harbour-2022:\n",bounds)
+
 # bounds = Bounds(99548.0, 6212920.0, 99700.0, 6213050.0)
 # bounds = Bounds(xmin=100050, ymin=6213370, xmax=100125, ymax=6213390)
 
@@ -52,7 +58,6 @@ _parameters["debug_step"] = 3
 # Set data paths
 # data_directory = Path("../../data/helsingborg-residential-2022")
 data_directory = Path("../../data/helsingborg-harbour-2022")
-data_directory = Path("/Users/georgespaias/Scratch/development_dtcc/data/helsingborg-harbour-2022")
 buildings_path = data_directory / "footprints.shp"
 pointcloud_path = data_directory / "PointCloud.las"
 

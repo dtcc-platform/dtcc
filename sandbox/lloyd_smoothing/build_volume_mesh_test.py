@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import sys
 from pathlib import Path
-from lloyd_smoothing_3d import lloyd_smoothing
+from lloyd_smoothing_3d_new import lloyd_smoothing
 from dtcc import *
 
 # FIXME: Obscure imports
@@ -39,8 +39,8 @@ bounds = Bounds(x0 + 650, y0 + 1150, x1 - 100, y1 - 300)
 # Lloyd smoothing test case from helsingborg-harbour-2022
 # 99795.2 to 100077 (delta: 281.672)
 # 6.21398e+06 to 6.21415e+06 (delta: 166.035)
-bounds = Bounds(99795, 6.21398e+06, 100077, 6.21415e+06)
-print("Lloyd smoothing test case from helsingborg-harbour-2022:\n",bounds)
+bounds = Bounds(99795, 6.21398e06, 100077, 6.21415e06)
+print("Lloyd smoothing test case from helsingborg-harbour-2022:\n", bounds)
 
 # bounds = Bounds(99548.0, 6212920.0, 99700.0, 6213050.0)
 # bounds = Bounds(xmin=100050, ymin=6213370, xmax=100125, ymax=6213390)
@@ -216,5 +216,9 @@ volume_mesh = builder_volume_mesh_to_volume_mesh(_volume_mesh)
 volume_mesh.save(data_directory / f"volume_mesh_original.vtu")
 
 # LLoyd smoothing
-volume_mesh = lloyd_smoothing(volume_mesh, iterations=10, alpha=0.2)
+volume_mesh = lloyd_smoothing(volume_mesh, iterations=5)
 volume_mesh.save(data_directory / f"volume_mesh_lloyd.vtu")
+
+# Bad tetrahedron
+cell_id = 61890
+print(volume_mesh.cells[cell_id])

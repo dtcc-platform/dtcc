@@ -51,7 +51,9 @@ _parameters["debug_step"] = 2
 
 # Set data paths
 # data_directory = Path("../data/helsingborg-residential-2022")
-data_directory = Path("/Users/georgespaias/Scratch/development_dtcc/data/helsingborg-harbour-2022")
+data_directory = Path(
+    "/Users/georgespaias/Scratch/development_dtcc/data/helsingborg-harbour-2022"
+)
 buildings_path = data_directory / "footprints.shp"
 pointcloud_path = data_directory / "PointCloud.las"
 
@@ -209,5 +211,5 @@ volume_mesh = builder_volume_mesh_to_volume_mesh(_volume_mesh)
 # Save volume mesh to file
 # volume_mesh.save(data_directory / f"volume_mesh_{_parameters["debug_step"]}.vtu")
 
-volume_mesh = lloyd_smoothing(volume_mesh, iterations=10, alpha=1)
+volume_mesh = lloyd_smoothing(volume_mesh, iterations=10, alpha=1.0)
 volume_mesh.save(data_directory / f"volume_mesh_lloyd_2s.vtu")

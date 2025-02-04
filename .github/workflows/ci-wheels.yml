@@ -1,65 +1,104 @@
 name: Build and upload to PyPI
 
 on:
-  workflow_dispatch:
-  pull_request:
+  # Build on all pushes and pull requests
   push:
-    branches:
-      - main
+    branches: [ main ]
+  pull_request:
+  # Upload only when a release is published
   release:
-    types:
-      - published
+    types: [published]
+  workflow_dispatch:
 
 jobs:
   build_wheels:
-    name: Build wheels on ${{ matrix.os }}
+    name: Build wheels (cibuildwheel) on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: ["3.10"]
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-python@v3
+
+      - uses: actions/setup-python@v4
+        with:
+          # You only need to pick one "bootstrap" Python.
+          # cibuildwheel will build for many versions automatically.
+          python-version: "3.10"
+
+      - name: Upgrade pip + install cibuildwheel
+        run: |
+          pip install --upgrade pip setuptools wheel
+          pip install cibuildwheel==2.22.0
 
       - name: Build wheels
-        #uses: pypa/cibuildwheel@v2.15.0
-        run: python -m pip wheel . -w ./wheelhouse/
+        # Will build wheels for all supported platforms/versions.
+        run: cibuildwheel --output-dir wheelhouse
 
       - uses: actions/upload-artifact@v3
         with:
-          path: ./wheelhouse/dtcc*.whl
+          name: wheels-${{ matrix.os }}
+          path: wheelhouse/*.whl
 
   build_sdist:
-    name: Build source distribution
+    name: Build source distribution (sdist)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
 
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Upgrade pip + install build
+        run: |
+          pip install --upgrade pip setuptools wheel build
+
       - name: Build sdist
-        run: pipx run build --sdist
+        run: python -m build --sdist
 
       - uses: actions/upload-artifact@v3
         with:
-          path: dist/dtcc*.tar.gz
+          name: sdist
+          path: dist/*.tar.gz
 
   upload_pypi:
-    needs: [build_sdist, build_wheels]
+    name: Upload to PyPI
+    needs: [build_wheels, build_sdist]
     runs-on: ubuntu-latest
-    environment: pypi
-    permissions:
-      id-token: write
-    #if: github.event_name == 'release' && github.event.action == 'published'
-    # or, alternatively, upload to PyPI on every tag starting with 'v' (remove on: release above to use this)
-    # if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+
+    # Only run if a release is published:
+    if: github.event_name == 'release' && github.event.action == 'published'
+
     steps:
       - uses: actions/download-artifact@v3
         with:
-          # unpacks default artifact into dist/
-          # if `name: artifact` is omitted, the action will create extra parent dir
-          name: artifact
+          name: wheels-ubuntu-latest
           path: dist
 
-      - uses: pypa/gh-action-pypi-publish@release/v1
-        #with:
-          #repository_url: https://test.pypi.org/legacy/
+      - uses: actions/download-artifact@v3
+        with:
+          name: wheels-windows-latest
+          path: dist
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: wheels-macos-latest
+          path: dist
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: sdist
+          path: dist
+
+      # If you have a protected environment named "pypi", you can uncomment below
+      # environment: pypi
+      # permissions:
+      #   id-token: write
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          # If you want to publish to TestPyPI, uncomment next line:
+          # repository_url: https://test.pypi.org/legacy/
+          password: ${{ secrets.PYPI_API_TOKEN }}

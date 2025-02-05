@@ -1,13 +1,18 @@
 # This demo illustrates how to build a terrain from a point cloud.
 
 import dtcc
-from pathlib import Path
 
-# Load point cloud from LAS file
+# Define the bounding box for the Helsingborg residential area. 
+# These coordinates specify the area of interest to be passed into the 
+bounds = dtcc.Bounds(
+    xmin=319891.0,
+    ymin=6399790.0,
+    xmax=319891.0+2000.0,
+    ymax=6399790.0+2000.0
+)
 
-data_directory = Path(__file__).parent / ".." / "data" / "helsingborg-residential-2022"
-pointcloud_path = data_directory / "pointcloud.las"
-pointcloud = dtcc.load_pointcloud(pointcloud_path)
+# Download point cloud
+pointcloud = dtcc.data.download_data(data_type='lidar', provider= 'dtcc', user_bbox=bounds)
 
 # Remove global outliers
 pointcloud = pointcloud.remove_global_outliers(3.0)

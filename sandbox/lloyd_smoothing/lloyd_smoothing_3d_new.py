@@ -1,6 +1,7 @@
 import numpy as np
 from dtcc import VolumeMesh  # using your existing mesh class
 from collections import defaultdict
+import matplotlib.pyplot as plt
 
 
 def find_boundary_nodes_via_connectivity(volume_mesh: VolumeMesh):
@@ -213,7 +214,36 @@ def lloyd_smoothing_adaptive(mesh, iterations=1, alpha=0.2, max_attempts=5, tol=
     # -4: Vertical walls of the domain
     # -5: Free nodes
     mesh = compute_smoothing_markers(mesh)
+
+    # Fix halos, ground, top, and vertical walls
     boundary_markers = (-1, -2, -3, -4)
+
+    # Move ground
+    # boundary_markers = (-2, -1)
+    # x0 = np.min(mesh.vertices[:, 0])
+    # y0 = np.min(mesh.vertices[:, 1])
+    # x1 = np.max(mesh.vertices[:, 0])
+    # y1 = np.max(mesh.vertices[:, 1])
+    # dx = x1 - x0
+    # dy = y1 - y0
+    # for v_idx, marker in enumerate(mesh.markers):
+    #     if not marker in (-2, -1):
+    #         continue
+    #     x = mesh.vertices[v_idx][0]
+    #     y = mesh.vertices[v_idx][1]
+    #     z = mesh.vertices[v_idx][2]
+    #     _x = (x - x0) / dx
+    #     _y = (y - y0) / dy
+    #     z += 10 * np.sin(2 * np.pi * _x) * np.sin(2 * np.pi * _y)
+    #     mesh.vertices[v_idx] = np.array([x, y, z])
+
+    # Record initial quality distribution.
+    initial_qualities = []
+    for cell in mesh.cells.astype(int):
+        verts = mesh.vertices[cell]
+        q = compute_tet_quality(verts[0], verts[1], verts[2], verts[3])
+        initial_qualities.append(q)
+    quality_history = [initial_qualities]
 
     for it in range(iterations):
         # Compute volumes and centroids for all tetrahedral cells.
@@ -232,6 +262,7 @@ def lloyd_smoothing_adaptive(mesh, iterations=1, alpha=0.2, max_attempts=5, tol=
 
         new_vertices = mesh.vertices.copy()
         for v_idx, marker in enumerate(mesh.markers):
+
             # Skip boundary vertices.
             if marker in boundary_markers:
                 continue
@@ -289,6 +320,28 @@ def lloyd_smoothing_adaptive(mesh, iterations=1, alpha=0.2, max_attempts=5, tol=
 
         mesh.vertices = new_vertices
         print(f"Iteration {it} completed.")
+
+        # Record quality distribution after this iteration.
+        iteration_qualities = []
+        for cell in mesh.cells.astype(int):
+            verts = mesh.vertices[cell]
+            q = compute_tet_quality(verts[0], verts[1], verts[2], verts[3])
+            iteration_qualities.append(q)
+        quality_history.append(iteration_qualities)
+
+    # Plot histograms of quality distributions for each iteration (including iteration 0 = initial state)
+    num_plots = len(quality_history)
+    fig, axes = plt.subplots(1, num_plots, figsize=(4 * num_plots, 4), squeeze=False)
+    axes = axes[0]
+
+    for i, qualities in enumerate(quality_history):
+        axes[i].hist(qualities, bins=20, edgecolor="black", color="skyblue")
+        axes[i].set_title(f"Iteration {i}")
+        axes[i].set_xlabel("Quality")
+        axes[i].set_ylabel("Frequency")
+
+    plt.tight_layout()
+    plt.show()
 
     return mesh
 

@@ -11,7 +11,7 @@ import dtcc_data as data
 from .logging import debug, info, warning, error, critical
 
 
-modules = [common, model, io, builder,]
+modules = [common, model, io, builder, data,]
 
 # Try to import dtcc_viewer. 
 # Checking if dtcc_viewer is pip installed and if there is graphical environment

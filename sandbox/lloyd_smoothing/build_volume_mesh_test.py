@@ -58,7 +58,6 @@ _parameters["debug_step"] = 3
 # Set data paths
 # data_directory = Path("../../data/helsingborg-residential-2022")
 data_directory = Path("../../data/helsingborg-harbour-2022")
-data_directory = Path("/Users/georgespaias/Scratch/development_dtcc/data/helsingborg-harbour-2022")
 buildings_path = data_directory / "footprints.shp"
 pointcloud_path = data_directory / "PointCloud.las"
 

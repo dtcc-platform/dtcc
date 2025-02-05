@@ -272,7 +272,7 @@ def lloyd_smoothing(
     mesh = compute_smoothing_markers(mesh)
 
     # change for testing
-    boundary_markers = (-1, -2, -3, -4)
+    boundary_markers =[] # (-1, -2, -3, )
     for iter in range(iterations):
         print("Lloyd Iteration", iter)
         start = timer()

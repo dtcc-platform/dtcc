@@ -40,6 +40,7 @@ bounds = Bounds(x0 + 650, y0 + 1150, x1 - 100, y1 - 300)
 # 99795.2 to 100077 (delta: 281.672)
 # 6.21398e+06 to 6.21415e+06 (delta: 166.035)
 bounds = Bounds(99795, 6.21398e06, 100077, 6.21415e06)
+# bounds = Bounds(99795, 6.21398e06, 100077 - 200, 6.21415e06 - 100)
 print("Lloyd smoothing test case from helsingborg-harbour-2022:\n", bounds)
 
 # bounds = Bounds(99548.0, 6212920.0, 99700.0, 6213050.0)
@@ -53,7 +54,7 @@ _parameters["max_mesh_size"] = 10
 _parameters["min_mesh_angle"] = 30
 _parameters["smoother_max_iterations"] = 5000
 _parameters["smoothing_relative_tolerance"] = 0.0005
-_parameters["debug_step"] = 3
+_parameters["debug_step"] = 2
 
 # Set data paths
 # data_directory = Path("../../data/helsingborg-residential-2022")
@@ -216,9 +217,14 @@ volume_mesh = builder_volume_mesh_to_volume_mesh(_volume_mesh)
 volume_mesh.save(data_directory / f"volume_mesh_original.vtu")
 
 # LLoyd smoothing
-volume_mesh = lloyd_smoothing(volume_mesh, iterations=5)
-volume_mesh.save(data_directory / f"volume_mesh_lloyd.vtu")
+# volume_mesh = lloyd_smoothing(volume_mesh, iterations=10)
+# volume_mesh.save(data_directory / f"volume_mesh_lloyd.vtu")
+
+# Write mesh to FEniCS XML file
+from fenics import write_mesh_to_xml
+
+write_mesh_to_xml(volume_mesh, "mesh.xml")
 
 # Bad tetrahedron
-cell_id = 61890
-print(volume_mesh.cells[cell_id])
+# cell_id = 61890
+# print(volume_mesh.cells[cell_id])

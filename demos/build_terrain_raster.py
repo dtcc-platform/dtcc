@@ -1,4 +1,4 @@
-# This demo illustrates how to build a terrain from a point cloud.
+# This demo illustrates how to build a terrain raster from a point cloud.
 
 import dtcc
 
@@ -12,13 +12,8 @@ pointcloud = dtcc.download_pointcloud(bounds=bounds)
 # Remove global outliers
 pointcloud = pointcloud.remove_global_outliers(3.0)
 
-# Build terrain
-terrain = dtcc.build_terrain(
-    pointcloud,
-    max_mesh_size=10,
-    min_mesh_angle=25,
-    smoothing=3,
-)
+# Build terrain raster
+raster = dtcc.build_terrain_raster(pointcloud, cell_size=10)
 
-# View terrain
-terrain.view()
+# View terrain raster
+raster.view()

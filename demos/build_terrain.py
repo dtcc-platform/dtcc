@@ -2,28 +2,23 @@
 
 import dtcc
 
-# Define the bounding box for the Helsingborg residential area. 
-# These coordinates specify the area of interest to be passed into the 
-bounds = dtcc.Bounds(
-    xmin=319891.0,
-    ymin=6399790.0,
-    xmax=319891.0+2000.0,
-    ymax=6399790.0+2000.0
-)
+# Define bounds (a residential area in Helsingborg)
+h = 2000.0
+bounds = dtcc.Bounds(319891, 6399790, 319891 + h, 6399790 + h)
 
 # Download point cloud
-pointcloud = dtcc.data.download_data(data_type='lidar', provider= 'dtcc', user_bbox=bounds)
+pointcloud = dtcc.download_pointcloud(bounds=bounds)
 
 # Remove global outliers
 pointcloud = pointcloud.remove_global_outliers(3.0)
 
 # Build terrain
-terrain = dtcc.builder.build_terrain_mesh(
+terrain = dtcc.build_terrain(
     pointcloud,
     max_mesh_size=10,
     min_mesh_angle=25,
     smoothing=3,
 )
 
-# View mesh
-terrain.mesh.view()
+# View terrain
+terrain.view()

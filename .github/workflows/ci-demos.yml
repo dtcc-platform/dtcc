@@ -30,9 +30,9 @@ jobs:
     - name: pip install MacOS/Ubuntu
       run: ls -alt && export PATH="$pythonLocation:$PATH" && python --version && export "DEB_PYTHON_INSTALL_LAYOUT=deb_system" && pip install .
       if: matrix.os != 'windows-latest'
-    - name: download demo data
-      run: dtcc-download-demo-data && pwd && ls -altr && mv demo-data/ data/
-      if: matrix.os != 'windows-latest'
+    #- name: download demo data
+    #  run: dtcc-download-demo-data && pwd && ls -altr && mv demo-data/ data/
+    #  if: matrix.os != 'windows-latest'
     - name: Run demos on Non-Windows
       run: |
           for file in demos/*.py; do
@@ -45,11 +45,11 @@ jobs:
       run: |
        pip install .
        if ($LastExitCode -eq 0) {
-       dtcc-download-demo-data
+       #dtcc-download-demo-data
        # If dtcc-download-demo-data also succeeded, rename demo-data to data
-       if ($LastExitCode -eq 0) {
-        Move-Item -Path demo-data -Destination data
-        }
+       #if ($LastExitCode -eq 0) {
+       # Move-Item -Path demo-data -Destination data
+        #}
        }
       if: matrix.os == 'windows-latest'
     - name: Run demos on Windows

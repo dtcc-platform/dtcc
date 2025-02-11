@@ -1,104 +1,80 @@
-name: Build and upload to PyPI
+name: Python-only CI and Publish
 
 on:
-  # Build on all pushes and pull requests
   push:
-    branches: [ main ]
+    branches: [ develop ]
   pull_request:
-  # Upload only when a release is published
   release:
     types: [published]
   workflow_dispatch:
 
 jobs:
-  build_wheels:
-    name: Build wheels (cibuildwheel) on ${{ matrix.os }}
+  # 1) Test the code on multiple Python versions + OSes
+  test:
+    name: Tests on ${{ matrix.os }} - Python ${{ matrix.python-version }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: [3.11, 3.12]
+    
     steps:
       - uses: actions/checkout@v3
-
+      
       - uses: actions/setup-python@v4
         with:
-          # You only need to pick one "bootstrap" Python.
-          # cibuildwheel will build for many versions automatically.
-          python-version: "3.10"
-
-      - name: Upgrade pip + install cibuildwheel
+          python-version: ${{ matrix.python-version }}
+      
+      - name: Install dependencies
         run: |
-          pip install --upgrade pip setuptools wheel
-          pip install cibuildwheel==2.22.0
+          python -m pip install --upgrade pip pytest
+          python -m pip install .
+      
+      - name: Run tests
+        if: runner.os != 'Windows'
+        run: |
+          pytest tests/python/test*.py --maxfail=1 --disable-warnings --verbose
 
-      - name: Build wheels
-        # Will build wheels for all supported platforms/versions.
-        run: cibuildwheel --output-dir wheelhouse
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: wheels-${{ matrix.os }}
-          path: wheelhouse/*.whl
-
-  build_sdist:
-    name: Build source distribution (sdist)
+  # 2) Build a universal wheel + sdist on a single OS
+  build_dist:
+    name: Build universal wheel and sdist
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
 
       - uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
+          python-version: "3.11"  # your 'build' Python
 
-      - name: Upgrade pip + install build
+      - name: Install build tooling
         run: |
-          pip install --upgrade pip setuptools wheel build
+          python -m pip install --upgrade pip
+          pip install build
 
-      - name: Build sdist
-        run: python -m build --sdist
+      - name: Build wheel & sdist
+        run: |
+          python -m build
 
       - uses: actions/upload-artifact@v4
         with:
-          name: sdist
-          path: dist/*.tar.gz
+          name: dist-artifacts
+          path: dist/*
 
+  # 3) Upload to PyPI only when a GitHub release is published
   upload_pypi:
     name: Upload to PyPI
-    needs: [build_wheels, build_sdist]
+    needs: [test, build_dist]
     runs-on: ubuntu-latest
-
-    # Only run if a release is published:
     if: github.event_name == 'release' && github.event.action == 'published'
-
     steps:
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
-          name: wheels-ubuntu-latest
+          name: dist-artifacts
           path: dist
-
-      - uses: actions/download-artifact@v3
-        with:
-          name: wheels-windows-latest
-          path: dist
-
-      - uses: actions/download-artifact@v3
-        with:
-          name: wheels-macos-latest
-          path: dist
-
-      - uses: actions/download-artifact@v3
-        with:
-          name: sdist
-          path: dist
-
-      # If you have a protected environment named "pypi", you can uncomment below
-      # environment: pypi
-      # permissions:
-      #   id-token: write
 
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          # If you want to publish to TestPyPI, uncomment next line:
+          password: ${{ secrets.PYPI_TOKEN }}
+          # If you want to publish to TestPyPI first, uncomment:
           # repository_url: https://test.pypi.org/legacy/
-          password: ${{ secrets.PYPI_API_TOKEN }}

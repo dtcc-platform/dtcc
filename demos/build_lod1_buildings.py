@@ -8,7 +8,10 @@ footprints = dtcc.download_data(
     data_type="footprints", provider="dtcc", user_bbox=bounds
 )
 
-pointcloud = dtcc.download_data(data_type="lidar", provider="dtcc", user_bbox=bounds)
+footprints = dtcc.download_data(data_type="footprints", provider="dtcc", bounds=bounds)
+
+pointcloud = dtcc.download_data(data_type="lidar", provider="dtcc", bounds=bounds)
+
 pointcloud = pointcloud.remove_global_outliers(3.0)
 
 terrain_raster = dtcc.builder.build_terrain_raster(

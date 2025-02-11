@@ -23,12 +23,13 @@ jobs:
 
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - uses: actions/setup-python@v2
     #- name: clone repo
     #  run: git clone https://github.com/dtcc-platform/${{ github.event.repository.name }} -b $BRANCH && pwd
     - name: pip install MacOS/Ubuntu
-      run: ls -alt && export PATH="$pythonLocation:$PATH" && python --version && export "DEB_PYTHON_INSTALL_LAYOUT=deb_system" && pip install .
+      #run: ls -alt && export PATH="$pythonLocation:$PATH" && python --version && export "DEB_PYTHON_INSTALL_LAYOUT=deb_system" && pip install .
+      run: pip install .
       if: matrix.os != 'windows-latest'
     #- name: download demo data
     #  run: dtcc-download-demo-data && pwd && ls -altr && mv demo-data/ data/

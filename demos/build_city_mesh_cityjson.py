@@ -1,4 +1,5 @@
-# This demo illustrates...
+# This demo illustrates how to build a mesh for a CityJSON city model.
+
 
 import dtcc
 from urllib.request import urlretrieve
@@ -11,8 +12,7 @@ urlretrieve(url=url, filename="city.json")
 city = dtcc.load_city("city.json")
 
 # Build city mesh
-mesh = dtcc.build_city_mesh(
-    city, dtcc.GeometryType.LOD2, max_mesh_size=15, building_mesh_triangle_size=5
-)
+mesh = dtcc.build_city_mesh(city, dtcc.GeometryType.LOD2)
 
+# View mesh
 mesh.view()

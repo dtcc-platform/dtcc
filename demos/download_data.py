@@ -1,25 +1,22 @@
+# This demo illustrates how download data with different providers.
+
 import dtcc
 
-#Demos showcasing how to use dtcc in order to fetch data with different providers
-bounds = dtcc.Bounds(
-    xmin=319891,
-    ymin=6399790,
-    xmax=319891+2000,
-    ymax=6399790+2000
-)
+# Define bounds (a residential area in Helsingborg)
+h = 2000.0
+bounds = dtcc.Bounds(319891, 6399790, 319891 + h, 6399790 + h)
 
-#For all functions the Default provider is dtcc
-#Fetching Lidar data. Provider is dtcc. (Currently the only one, default)
-pc = dtcc.download_pointcloud(bounds = bounds)
+# Download point cloud (lidar) data using default provider (DTCC)
+pointcloud = dtcc.download_pointcloud(bounds=bounds)
 
-#Fetching Footprint data. Provider is dtcc (default)
-footprints_dtcc = dtcc.download_footprints(bounds = bounds)
+# Download footprint data using default provider (DTCC)
+footprints_dtcc = dtcc.download_footprints(bounds=bounds)
 
-#Fetching Footprint data with another provider, OSM
-footprints_osm = dtcc.download_footprints(bounds = bounds, provider="OSM")
+# Download footprint data using OSM provider
+footprints_osm = dtcc.download_footprints(bounds=bounds, provider="OSM")
 
-#Fetching Roadnetwork data with OSM provider. (Currently the only one)
-roadnetwork_osm = dtcc.download_roadnetwork(bounds = bounds, provider="OSM")
+# Download road network data using OSM provider
+roadnetwork_osm = dtcc.download_roadnetwork(bounds=bounds, provider="OSM")
 
-#Clearing the cache of downloaded data
+# Clear cache of downloaded data
 dtcc.empty_cache()

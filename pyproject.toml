@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-version = "0.7.20"
+version = "0.8.0"
 name = "dtcc"
 description = "DTCC"
 readme = "README.md"
@@ -13,6 +13,7 @@ authors = [
   { name = "Vasilis Naserentin", email = "vasilis.naserentin@chalmers.se" },
   { name = "George Spaias" , email= "gspaiasa@ece.auth.gr" },
   { name = "Jens Olsson" , email= "jens.olsson@chalmersindustriteknik.se" },
+  { name = "Themistoklis Arvanitis" , email= "thearva@chalmers.se" },
 ]
 requires-python = ">=3.10"
 classifiers = [
@@ -20,9 +21,9 @@ classifiers = [
   "Programming Language :: Python :: 3",
   "License :: OSI Approved :: MIT License",
 ]
-dependencies = [  
-  "dtcc-core@git+https://github.com/dtcc-platform/dtcc-core.git@develop", 
-  "dtcc-data@git+https://github.com/dtcc-platform/dtcc-data.git@develop"
+dependencies = [
+"dtcc-core",
+"dtcc-data",
 ]
 
 [project.optional-dependencies]

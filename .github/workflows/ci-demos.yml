@@ -1,60 +1,61 @@
-name: CI-demos
+name: CI demos
 
 on:
   push:
-    branches: [ "develop" ]
+    branches: [ develop ]
   pull_request:
-    branches: [ "develop" ]
-
-env:
-  BRANCH: develop
+  release:
+    types: [published]
+  workflow_dispatch:
 
 jobs:
-  build:
-    strategy:
-      matrix: 
-        os: [macos-latest, ubuntu-latest, windows-latest]#, windows-latest, macos-latest]
-        python-version: ["3.10"]
+  # 1) Test the code on multiple Python versions + OSes
+  test:
+    name: Tests on ${{ matrix.os }} - Python ${{ matrix.python-version }}
     runs-on: ${{ matrix.os }}
-    # Placeholder for Docker on our Amazon AWS Runner
-    #container:
-    #  image: ubuntu-latest
-    #  options: --user 1000
-
-
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: [3.11, 3.12]
+    
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-python@v2
-    #- name: clone repo
-    #  run: git clone https://github.com/dtcc-platform/${{ github.event.repository.name }} -b $BRANCH && pwd
-    - name: pip install MacOS/Ubuntu
-      run: ls -alt && export PATH="$pythonLocation:$PATH" && python --version && export "DEB_PYTHON_INSTALL_LAYOUT=deb_system" && pip install .
-      if: matrix.os != 'windows-latest'
-    #- name: download demo data
-    #  run: dtcc-download-demo-data && pwd && ls -altr && mv demo-data/ data/
-    #  if: matrix.os != 'windows-latest'
-    - name: Run demos on Non-Windows
-      run: |
+      - uses: actions/checkout@v3
+      
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip pytest
+          python -m pip install .
+      
+    #  - name: Run tests
+    #    if: runner.os != 'Windows'
+    #    run: |
+    #      pytest tests/python/test*.py --maxfail=1 --disable-warnings --verbose
+      - name: Run demos on Non-Windows
+        run: |
           for file in demos/*.py; do
             echo "Running $file"
             python "$file"
           done
-      if: matrix.os != 'windows-latest'  
-    - name: pip install Windows
-      shell: pwsh
-      run: |
-       pip install .
-       if ($LastExitCode -eq 0) {
+        if: matrix.os != 'windows-latest'  
+     # - name: pip install Windows
+     #   shell: pwsh
+     #   run: |
+     #    pip install .
+         #if ($LastExitCode -eq 0) {
        #dtcc-download-demo-data
        # If dtcc-download-demo-data also succeeded, rename demo-data to data
        #if ($LastExitCode -eq 0) {
        # Move-Item -Path demo-data -Destination data
         #}
-       }
-      if: matrix.os == 'windows-latest'
-    - name: Run demos on Windows
-      shell: pwsh
-      run: |
+          #}
+     #   if: matrix.os == 'windows-latest'
+      - name: Run demos on Windows
+        shell: pwsh
+        run: |
            Push-Location demos
            $files = Get-ChildItem *.py
            foreach ($file in $files) {
@@ -62,27 +63,11 @@ jobs:
            python $($file.Name)
            }
            Pop-Location
-      if: matrix.os == 'windows-latest'
-    #- name: pip install Windows
-    #  run: pip install . ; if($?) {dtcc-download-demo-data}
-    #  if: matrix.os == 'windows-latest'
-    #- name: Run demos on Windows
-    #  shell: pwsh
-    #  run: |
-    #      $files = Get-ChildItem .\demos\*.py
-    #      foreach ($file in $files) {
-    #        Write-Host "Running $($file.FullName)"
-    #        python $($file.FullName)
-    #      }
-    #  if: matrix.os == 'windows-latest'
-      # ${{ github.event.repository.name }}/
-    #  shell: bash {0}
-    #- name: cmake install
-    #  run: cd ${{ github.event.repository.name }}/build/ && cmake .. && make all && sudo make install && cd ..
-    - name: run tests on MacOS/Linux
-      run: cd demos && ls -alt
-      if: matrix.os != 'windows-latest'
-    - name: run tests on MacOS/Linux
-      run: cd demos && dir 
-      if: matrix.os == 'windows-latest'
+        if: matrix.os == 'windows-latest'
+      #- name: run tests on MacOS/Linux
+      #  run: cd demos && ls -alt
+      #  if: matrix.os != 'windows-latest'
+      #- name: run tests on MacOS/Linux
+      #  run: cd demos && dir 
+      #  if: matrix.os == 'windows-latest'
    

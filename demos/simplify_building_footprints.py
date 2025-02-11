@@ -9,9 +9,9 @@ bounds = dtcc.Bounds(
     ymax=6399790+2000
 )
 
-footprints = dtcc.download_data(data_type='footprints', provider='dtcc', user_bbox=bounds)
+footprints = dtcc.download_data(data_type='footprints', provider='dtcc', bounds=bounds)
 
-pc = dtcc.download_data(data_type='lidar', provider='dtcc', user_bbox=bounds)
+pc = dtcc.download_data(data_type='lidar', provider='dtcc', bounds=bounds)
 pc = pc.remove_global_outliers(3)
 
 terrain_raster = dtcc.build_terrain_raster(

@@ -3,7 +3,7 @@
 import dtcc
 from urllib.request import urlretrieve
 
-# Download example CityJSON file https://www.cityjson.org/datasets/s
+# Download example CityJSON file
 url = "https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/v2.0/DenHaag_01.city.json"
 urlretrieve(url=url, filename="city.json")
 

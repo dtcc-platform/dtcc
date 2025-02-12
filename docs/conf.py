@@ -1,19 +1,26 @@
-project = "DTCC Platform"
-copyright = "Digital Twin Cities Centre 2023"
-author = "Digital Twin Cities Centre"
+import os
+
+# Determine whether to skip API docs generation.
+skip_api = os.environ.get("NO_API", "0") == "1"
 
 extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
     "sphinx.ext.autosectionlabel",
     "sphinx_immaterial",
-    "sphinx_immaterial.apidoc.python.apigen",
 ]
+
+if skip_api:
+    print("Skipping building API docs")
+    exclude_patterns = ["_api"]
+else:
+    print("Building API docs enabled")
+    extensions.append("sphinx_immaterial.apidoc.python.apigen")
+    python_apigen_modules = {"dtcc": "_api/"}
 
 source_suffix = ".rst"
 master_doc = "index"
 
-python_apigen_modules = {"dtcc": "_api/"}
 add_function_parentheses = True
 add_module_names = False
 

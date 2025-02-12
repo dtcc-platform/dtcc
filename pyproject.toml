@@ -22,8 +22,8 @@ classifiers = [
   "License :: OSI Approved :: MIT License",
 ]
 dependencies = [
-"dtcc-core",
-"dtcc-data",
+"dtcc-core@git+https://github.com/dtcc-platform/dtcc-core.git@develop", 
+"dtcc-data@git+https://github.com/dtcc-platform/dtcc-data.git@develop",
 ]
 
 [project.optional-dependencies]

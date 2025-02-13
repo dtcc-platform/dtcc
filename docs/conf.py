@@ -1,8 +1,14 @@
 import os
 
+# General information about the project
+project = "DTCC Platform"
+author = "Digital Twin Cities Centre"
+copyright = "Digital Twin Cities Centre 2025"
+
 # Determine whether to skip API docs generation.
 skip_api = os.environ.get("NO_API", "0") == "1"
 
+# Sphinx configuration
 extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
@@ -24,6 +30,7 @@ master_doc = "index"
 add_function_parentheses = True
 add_module_names = False
 
+# HTML output
 html_theme = "sphinx_immaterial"
 html_theme_options = {
     "font": False,

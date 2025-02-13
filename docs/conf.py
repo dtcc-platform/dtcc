@@ -27,5 +27,9 @@ add_module_names = False
 html_theme = "sphinx_immaterial"
 html_theme_options = {
     "font": False,
-    "palette": {"primary": "light-blue", "accent": "orange"},
+    "palette": {
+        "scheme": "default",
+    },
 }
+html_static_path = ["_static"]
+html_css_files = ["custom.css"]

@@ -31,4 +31,4 @@ jobs:
       # 4) Run tests (assuming pytest is used)
       - name: Run tests
         run: |
-          pytest tests/python/test*.py
+          cd tests && pytest

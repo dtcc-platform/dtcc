@@ -1,4 +1,4 @@
-name: ci-docs
+name: CI-docs
 
 on:
  workflow_dispatch:

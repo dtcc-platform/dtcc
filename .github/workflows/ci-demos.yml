@@ -37,7 +37,11 @@ jobs:
       - name: Run demos on Non-Windows
         run: |
           for file in demos/*.py; do
-            echo "Running $file"
+           if [ "$file" = "demos/download_data.py" ]; then
+             echo "Skipping $file"
+             continue
+           fi
+           echo "Running $file"
             python "$file"
           done
         if: matrix.os != 'windows-latest'  

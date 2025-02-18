@@ -63,6 +63,10 @@ jobs:
            Push-Location demos
            $files = Get-ChildItem *.py
            foreach ($file in $files) {
+           if ($_.Name -eq 'download_data.py') {
+           Write-Host "Skipping $($_.Name)"
+           continue
+           }
            Write-Host "Running $($file.Name)"
            python $($file.Name)
            }

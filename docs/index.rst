@@ -22,6 +22,8 @@ Table of contents
 
    installation
    data_model
+   data_classes
+   data_formats
    usage
    demos
    api

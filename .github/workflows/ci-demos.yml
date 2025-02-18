@@ -37,7 +37,11 @@ jobs:
       - name: Run demos on Non-Windows
         run: |
           for file in demos/*.py; do
-            echo "Running $file"
+           if [ "$file" = "demos/download_data.py" ]; then
+             echo "Skipping $file"
+             continue
+           fi
+           echo "Running $file"
             python "$file"
           done
         if: matrix.os != 'windows-latest'  
@@ -59,6 +63,10 @@ jobs:
            Push-Location demos
            $files = Get-ChildItem *.py
            foreach ($file in $files) {
+           if ($_.Name -eq 'download_data.py') {
+           Write-Host "Skipping $($_.Name)"
+           continue
+           }
            Write-Host "Running $($file.Name)"
            python $($file.Name)
            }

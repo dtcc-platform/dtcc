@@ -1,6 +1,5 @@
 # This demo illustrates how to build a mesh for a CityJSON city model.
 
-
 import dtcc
 from urllib.request import urlretrieve
 

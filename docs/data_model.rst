@@ -10,12 +10,6 @@ modeling of physical and virtual city elements—ranging from entire cities and 
 to finer components such as park benches or road networks—while supporting robust
 spatial analysis and I/O operations.
 
-The data model is implemented as
-`Python dataclasses <https://docs.python.org/3/library/dataclasses.html>`_ within the
-DTCC Python package. In addition, the model is implemented in
-`Protobuf <https://protobuf.dev/>`_ to facilitate data exchange over the web and across
-different programming languages.
-
 High-Level Design
 -----------------
 

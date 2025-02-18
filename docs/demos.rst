@@ -10,4 +10,13 @@ These demos illustrate how DTCC Platform can be used. New users should start wit
 .. toctree::
    :maxdepth: 3
 
-   demo_build_city_and_meshes
+   demos/download_data
+   demos/view_pointcloud
+   demos/view_cityjson
+   demos/build_terrain_raster
+   demos/build_terrain_mesh
+   demos/build_terrain_mesh_with_footprints
+   demos/build_city_mesh
+   demos/build_city_mesh_from_cityjson
+   demos/build_city
+   demos/simplify_building_footprints

@@ -14,8 +14,6 @@ The platform is developed and maintained by the `Digital Twin Cities
 Centre <https://dtcc.chalmers.se/>`__ (DTCC) hosted by Chalmers University of
 Technology.
 
-I have added this on purpose 18 Feb 13.00 CET
-
 Table of contents
 -----------------
 

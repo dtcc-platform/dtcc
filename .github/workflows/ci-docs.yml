@@ -38,7 +38,8 @@ jobs:
           #pwd && ls -alt && ls bin/ && cd bin/ && cat build-docs 
           #./bin/build-docs && cd website && ls && npm install && npm run build && ls
           #&& cd website && npm install && npm run build
-          pwd && sudo apt-get install python3-opengl&& export "DEB_PYTHON_INSTALL_LAYOUT=deb_system" && pip install . && ls -alt && cd docs && ls -alt && pip install --upgrade sphinx_immaterial && make  #&& cd sphinx && ls -alt && make html
+          pwd && sudo apt-get install python3-opengl&& export "DEB_PYTHON_INSTALL_LAYOUT=deb_system" && pip install . && ls -alt && cd docs && ls -alt &&
+          pip install Sphinx==8.1.3 && pip install sphinx_immaterial && make  #&& cd sphinx && ls -alt && make html
         shell: bash
 
 

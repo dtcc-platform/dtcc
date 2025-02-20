@@ -76,5 +76,6 @@ jobs:
           cd docs/build
           aws s3 ls s3://$S3_BUCKET
           aws s3 sync . s3://$S3_BUCKET
+          aws s3 cp . s3://$S3_BUCKET/newtry/
           aws cloudfront create-invalidation --distribution-id E2X21HEI2MF4EQ --paths "/*" 
 

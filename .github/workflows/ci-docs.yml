@@ -76,9 +76,11 @@ jobs:
 
       - name: Deploy to S3
         run: |
+          echo "${{ steps.get_version.outputs.version }}"
           pwd
           cd docs/      
-          cp -R build "${{ steps.get_version.outputs.version }}"
+          #cp -R build "${{ steps.get_version.outputs.version }}"
+          mv build "${{ steps.get_version.outputs.version }}"
           ls build/ -altR
           cd build
           #aws s3 ls s3://$S3_BUCKET

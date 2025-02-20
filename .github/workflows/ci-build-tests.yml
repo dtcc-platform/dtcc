@@ -3,9 +3,12 @@ name: build-tests
 on:
   push:
     branches: [ "develop" ]
+    paths-ignore:
+      - 'docs/**'
   pull_request:
     branches: [ "develop" ]
-
+    paths-ignore:
+      - 'docs/**'
 jobs:
   build-and-test:
     runs-on: ubuntu-latest

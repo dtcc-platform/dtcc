@@ -3,6 +3,8 @@ name: demos
 on:
   push:
     branches: [ develop ]
+    paths-ignore:
+      - 'docs/**'
   pull_request:
   release:
     types: [published]

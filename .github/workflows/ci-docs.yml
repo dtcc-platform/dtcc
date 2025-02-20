@@ -24,6 +24,8 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      doc_version: ${{ steps.get_version.outputs.version }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -80,15 +82,15 @@ jobs:
 
       - name: Deploy to S3
         run: |
-          echo ${{ steps.get_version.outputs.version }}
+          echo ${{ needs.build.outputs.doc_version }}"
           pwd
           cd docs/      
           #cp -R build ${{ steps.get_version.outputs.version }}
-          mv build "${{ steps.get_version.outputs.version }}"
+          mv build "${{ needs.build.outputs.doc_version }}"
           ls build/ -altR
           cd build
           #aws s3 ls s3://$S3_BUCKET
           #aws s3 sync . s3://$S3_BUCKET
-          aws s3 cp --recursive . s3://$S3_BUCKET/"${{ steps.get_version.outputs.version }}"
+          aws s3 cp --recursive . s3://$S3_BUCKET/"${{ needs.build.outputs.doc_version }}"
           aws cloudfront create-invalidation --distribution-id E2X21HEI2MF4EQ --paths "/*" 
 

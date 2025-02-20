@@ -83,11 +83,12 @@ jobs:
       - name: Deploy to S3
         run: |
           pwd
-          cd docs/      
+          cd docs/
+          ls build/ -al
           #cp -R build ${{ steps.get_version.outputs.version }}
           mv build "${{ needs.build.outputs.doc_version }}"
-          ls build/ -altR
-          cd build
+          ls -al
+          cd "${{ needs.build.outputs.doc_version }}"
           #aws s3 ls s3://$S3_BUCKET
           #aws s3 sync . s3://$S3_BUCKET
           aws s3 cp --recursive . s3://$S3_BUCKET/"${{ needs.build.outputs.doc_version }}"

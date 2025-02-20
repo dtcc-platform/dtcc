@@ -91,6 +91,6 @@ jobs:
           cd "${{ needs.build.outputs.doc_version }}"
           #aws s3 ls s3://$S3_BUCKET
           #aws s3 sync . s3://$S3_BUCKET
-          aws s3 cp --recursive . s3://$S3_BUCKET/"${{ needs.build.outputs.doc_version }}"
+          aws s3 cp --recursive . s3://$S3_BUCKET/"v${{ needs.build.outputs.doc_version }}"
           aws cloudfront create-invalidation --distribution-id E2X21HEI2MF4EQ --paths "/*" 
 

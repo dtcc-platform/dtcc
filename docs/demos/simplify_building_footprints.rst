@@ -19,8 +19,7 @@ It demonstrates how to:
 - Process the point cloud by removing outliers.
 - Build a terrain raster from the point cloud.
 - Extract roof points and compute building heights.
-- Simplify building footprints through merging, simplification, and clearance
-  fixing.
+- Simplify building footprints through merging, simplification, and clearance fixing.
 - Optionally split footprint walls based on building height.
 - Assemble a city model and visualize the result.
 

@@ -39,7 +39,7 @@ html_theme_options = {
     "version_info": [
         {"version": "2.0", "title": "2.0", "aliases": ["latest"]},
         {"version": "1.0", "title": "1.0", "aliases": []},
-        {"version": "0.9", "title": "older", "aliases": []},
+        {"version": "0.9", "title": "0.9", "aliases": []},
     ],
 }
 html_static_path = ["_static"]

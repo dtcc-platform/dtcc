@@ -78,11 +78,11 @@ jobs:
         run: |
           pwd
           cd docs/      
-          cp -R build/ "${{ steps.get_version.outputs.version }}"
+          cp -R build "${{ steps.get_version.outputs.version }}"
           ls build/ -altR
           cd build
-          aws s3 ls s3://$S3_BUCKET
-          aws s3 sync . s3://$S3_BUCKET
+          #aws s3 ls s3://$S3_BUCKET
+          #aws s3 sync . s3://$S3_BUCKET
           aws s3 cp --recursive . s3://$S3_BUCKET/"${{ steps.get_version.outputs.version }}"
           aws cloudfront create-invalidation --distribution-id E2X21HEI2MF4EQ --paths "/*" 
 

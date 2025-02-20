@@ -82,7 +82,6 @@ jobs:
 
       - name: Deploy to S3
         run: |
-          echo ${{ needs.build.outputs.doc_version }}"
           pwd
           cd docs/      
           #cp -R build ${{ steps.get_version.outputs.version }}

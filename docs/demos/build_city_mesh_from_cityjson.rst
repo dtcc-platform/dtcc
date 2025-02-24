@@ -16,26 +16,35 @@ level of detail (LOD2 in this case), and visualize the resulting mesh.
 Step-by-step
 ------------
 
-1. **Download CityJSON File:**
+1. **Download CityJSON File:**  
    Retrieve the CityJSON file from a specified URL. This file contains the city
    model data in the CityJSON format.
 
    .. code:: python
 
        from urllib.request import urlretrieve
-       url = "https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/v2.0/DenHaag_01.city.json"
+       url = "https://3d.bk.tudelft.nl/opendata/cityjson/3dcities/v2.0/3-20-DELFSHAVEN.city.json"
        urlretrieve(url=url, filename="city.json")
 
-2. **Load City Model:**
-   Load the city model from the downloaded CityJSON file using the ``load_city``
-   function provided by DTCC.
+2. **Load City Model:**  
+   Load the city model from the downloaded CityJSON file using the
+   ``load_city`` function provided by DTCC.
 
    .. code:: python
 
        import dtcc
        city = dtcc.load_city("city.json")
 
-3. **Build City Mesh:**
+3. **Add Terrain (if not present):**  
+   If the loaded city model does not include terrain, add a flat terrain with a
+   small buffer.
+
+   .. code:: python
+
+       if not city.has_terrain():
+           city.add_flat_terrain(buffer=10)
+
+4. **Build City Mesh:**  
    Generate a city mesh from the loaded city model. Here, the mesh is built at
    level of detail LOD2.
 
@@ -43,7 +52,7 @@ Step-by-step
 
        mesh = dtcc.build_city_mesh(city, dtcc.GeometryType.LOD2)
 
-4. **Visualize the Mesh:**
+5. **Visualize the Mesh:**  
    View the generated city mesh using the ``view()`` method.
 
    .. code:: python

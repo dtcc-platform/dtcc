@@ -27,8 +27,8 @@ Step-by-step
       urlretrieve(url=url, filename=temp_path.name)
 
 2. **Load City Model:**
-   Load the city model from the downloaded CityJSON file using the ``load_city``
-   function provided by DTCC.
+   Load the city model from the downloaded CityJSON file using the
+   ``load_city`` function provided by DTCC.
 
    .. code:: python
 
@@ -45,11 +45,11 @@ Step-by-step
 
 4. **Build City Mesh:**
    Generate a city mesh from the loaded city model. Here, the mesh is built at
-   level of detail LOD1.
+   level of detail LOD2.
 
    .. code:: python
 
-       mesh = dtcc.build_city_mesh(city, dtcc.GeometryType.LOD1)
+       mesh = dtcc.build_city_mesh(city, dtcc.GeometryType.LOD2)
 
 5. **Visualize the Mesh:**
    View the generated city mesh using the ``view()`` method.

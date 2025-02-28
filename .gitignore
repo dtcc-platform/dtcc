@@ -13,5 +13,7 @@ __pycache__
 tests/cpp/bin/
 scratch/
 
+demos/data/
 /data/*
 !/data/download-demo*
+dtcc-demo-data/

@@ -1,11 +1,10 @@
 # DTCC
 
 DTCC is a meta package for DTCC Platform. It imports all other DTCC
-packages and provides a common interface to DTCC Platform.
+packages and provides a common interface to DTCC Platform. The DTCC
+package also hosts demos and common documentation.
 
-This package is also used to host common documentation and issues.
-
-This project is part the
+This project is part of the
 [Digital Twin Platform (DTCC Platform)](https://github.com/dtcc-platform/)
 developed at the
 [Digital Twin Cities Centre](https://dtcc.chalmers.se/)
@@ -27,7 +26,7 @@ This project is documented as part of the
 This project is licensed under the
 [MIT license](https://opensource.org/licenses/MIT).
 
-Copyright is held by the individual authors as listed at the top of
+Copyrights are held by the individual authors as listed at the top of
 each source file.
 
 ## Community guidelines

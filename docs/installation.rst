@@ -1,9 +1,11 @@
 Installation
 ============
 
-DTCC Platform can be installed using `pip <https://pypi.org/project/pip/>`_.
+DTCC Platform can be installed using `pip
+<https://pypi.org/project/pip/>`_.
 
-To install from the `Python Package Index (PyPI) <https://pypi.org/>`_::
+To install from the `Python Package Index (PyPI)
+<https://pypi.org/>`_::
 
    $ pip install dtcc
 
@@ -13,19 +15,19 @@ To install from the source directory::
 
 .. note::
 
-   Sometimes ``pip`` and ``python`` may be out of sync which means
-   that ``pip`` will install a package in a location where it will not
-   be found by ``python``. It is therefore safer to replace the
-   ``pip`` command by ``python -m pip``::
+   For reliable installation and to avoid conflicts with your system Python,
+   please create and activate a virtual environment before running any pip
+   install commands. This approach is now required by modern packaging
+   standards (see `PEP 668 <https://www.python.org/dev/peps/pep-0668/>`_).
 
-       $ python -m pip install [ package-name or . ]
+   For example, on Unix systems you can run::
 
-.. note::
+      $ python -m venv .venv
+      $ source .venv/bin/activate
+      $ pip install dtcc
 
-   A bug in Ubuntu 22.04 prevents
-   `PEP621 <https://peps.python.org/pep-0621/>`__ compliant Python
-   projects from installing properly with ``pip``, resulting in package
-   name and version number ``UNKNOWN-0.0.0``. To fix this, run the
-   following commmand before ``pip install``::
+   On Windows, activate the environment with::
 
-      $ export DEB_PYTHON_INSTALL_LAYOUT=deb_system
+      > python -m venv .venv
+      > .venv\Scripts\activate
+      > pip install dtcc

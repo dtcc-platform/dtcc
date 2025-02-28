@@ -1,11 +1,14 @@
-# Copyright (C) 2023 Anders Logg
-# Licensed under the MIT License
-#
-# This demo illustrates how to build a city model from raw data,
-# and viewing the resulting mesh model together with the pointcloud.
+# This demo illustrates how to download and view a point cloud.
+
 import dtcc
 
-filename = '../data/helsingborg-residential-2022/pointcloud.las'
-pc = dtcc.io.load_pointcloud(filename)
-color_data = pc.points[:,0]
-pc.view(pc_data = color_data)
+# Define bounds (a residential area in Helsingborg)
+h = 2000.0
+bounds = dtcc.Bounds(319891, 6399790, 319891 + h, 6399790 + h)
+
+# Download point cloud
+pointcloud = dtcc.download_pointcloud(bounds=bounds)
+
+# View point cloud (color by z-coordinate)
+color_data = pointcloud.points[:, 2]
+pointcloud.view(data=color_data)

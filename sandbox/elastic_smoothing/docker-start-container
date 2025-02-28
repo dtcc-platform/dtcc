@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+docker start fenics
+docker exec -it fenics bash

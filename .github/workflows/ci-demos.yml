@@ -2,7 +2,7 @@ name: demos
 
 on:
   push:
-    branches: [ develop ]
+    branches: [ develop, main ]
     paths-ignore:
       - 'docs/**'
   pull_request:

@@ -2,11 +2,11 @@ name: build-tests
 
 on:
   push:
-    branches: [ "develop" ]
+    branches: [ "develop", "main" ]
     paths-ignore:
       - 'docs/**'
   pull_request:
-    branches: [ "develop" ]
+    branches: [ "develop", "main" ]
     paths-ignore:
       - 'docs/**'
 jobs:

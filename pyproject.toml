@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-version = "0.9.2dev"
+version = "0.9.2"
 name = "dtcc"
 description = "DTCC"
 readme = "README.md"
@@ -22,14 +22,14 @@ classifiers = [
   "License :: OSI Approved :: MIT License",
 ]
 dependencies = [
-"dtcc-core@git+https://github.com/dtcc-platform/dtcc-core.git@develop", 
-"dtcc-data@git+https://github.com/dtcc-platform/dtcc-data.git@develop",
+"dtcc-core", 
+"dtcc-data",
 ]
 
 [project.optional-dependencies]
 test = ["pytest"]
 docs = ["sphinx", "sphinx-immaterial"]
-viewer = ["dtcc-viewer@git+https://github.com/dtcc-platform/dtcc-viewer.git@develop"]
+viewer = ["dtcc-viewer"]
 
 [tool.scikit-build]
 wheel.expand-macos-universal-tags = true

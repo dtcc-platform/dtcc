@@ -19,7 +19,7 @@ Platform.
 ======== ================ ================ ===============
 Variable ``snake_case``   ``snake_case``   ``camelCase``
 Function ``snake_case()`` ``snake_case()`` ``camelCase()``
-Class    ``PascalCase``   ``PascalCase``   ``CamelCase``
+Class    ``PascalCase``   ``PascalCase``   ``PascalCase``
 Module   ``snake_case``
 ======== ================ ================ ===============
 
@@ -40,6 +40,19 @@ committing. or instructions on how to set it up for Visual Studio Code, see for
 example `these instructions
 <https://dev.to/adamlombard/how-to-use-the-black-python-code-formatter-in-vscode-3lo0>`_.
 
+The following settings should be used in VS Code::
+
+    // Python Settings
+    "[python]": {
+      "editor.defaultFormatter": "ms-python.black-formatter"
+    },
+
+    // C++ Settings
+    "[cpp]": {
+      "editor.defaultFormatter": "xaver.clang-format"
+    },
+    "C_Cpp.clang_format_fallbackStyle": "none",
+
 Git practices
 -------------
 
@@ -58,7 +71,7 @@ DTCC Platform uses the following Git practices:
 -  Branches that will (likely) not be merged but kept for reference
    should be named ``old/branch-name`` where ``branch-name`` is a free
    form descriptive name.
--  Note that hypens should be used for naming (not underscore).
+-  Note that hyphens should be used for naming (not underscore).
 -  When the work is done, make a pull request for merging the branch
    into ``develop``.
 -  When the work has been merged, the branch should be deleted to keep
@@ -97,11 +110,9 @@ New versions should be released from the ``main`` branch (after ``develop``) has
 
 1. Update the version number in ``pyproject.toml``.
 2. Set the correct dependencies in ``pyproject.toml``. Note that dependencies should be to released versions of all DTCC packages (not Git branches).
-3. Commit the changes with commit message ``Release version X.Y.Z``.
+3. Commit the changes with commit message ``Bump version number to X.Y.Z``.
 4. Add a tag with the version number: ``git tag vX.Y.Z``
 5. ... pypi, announce, etc.
-
-**@vasilis: Please expand these instructions.**
 
 Writing documentation
 ---------------------
@@ -264,27 +275,6 @@ helpful when generating the docstrings::
 Use ChatGPT to generate the docstrings but make sure to check that the
 docstrings make sense and are consistent with the templates above. Also be
 careful to only copy the docstrings into the code (don't modify the code itself).
-
-Generating the UML class diagrams
----------------------------------
-
-The UML class diagrams are stored as part of the top-level ``dtcc``
-package in the files ``docs/images/uml_diagram_*.rst``.
-
-To update the diagrams after changes to the
-data model (implemented as part of the ``dtcc-model`` package), run the
-following command in the ``dtcc-model`` repository:
-
-    utils/generate-uml-diagrams
-
-Note that ``pylint`` must be installed for this to work. This will
-generate ``.puml`` files in the current directory.
-
-Go to the online `PlantUML <http://www.plantuml.com/plantuml/uml/>`_
-server.  For each of the ``.puml`` files, copy the contents into the
-text box to generate the UML diagram. Click the SVG button and
-download the SVG file. Rename and move the file to ``docs/images/`` in
-the ``dtcc`` repo.
 
 Tips & tricks
 -------------

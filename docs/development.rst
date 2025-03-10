@@ -53,6 +53,14 @@ The following settings should be used in VS Code::
     },
     "C_Cpp.clang_format_fallbackStyle": "none",
 
+The following settings are used for clang-format (``.clang-format`` in
+``dtcc-core`` repo)::
+
+    BreakBeforeBraces: Allman
+    IndentWidth: 2
+    UseTab: Never
+    ColumnLimit: 100
+
 Git practices
 -------------
 

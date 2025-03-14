@@ -21,6 +21,12 @@ and constructing a city model. Specifically, it covers:
 - Creating a city model by assembling the buildings and terrain geometries.
 - Visualizing the final city model using the 3D viewer.
 
+Expected Output
+----------------
+.. image:: ../images/build_city.jpg
+   :alt: Demo Title
+   :align: center
+
 Step-by-step
 ------------
 

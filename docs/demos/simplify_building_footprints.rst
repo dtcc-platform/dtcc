@@ -23,6 +23,12 @@ It demonstrates how to:
 - Optionally split footprint walls based on building height.
 - Assemble a city model and visualize the result.
 
+Expected Output
+----------------
+.. image:: ../images/simplify_building_footprints.jpg
+   :alt: Demo Title
+   :align: center
+
 Step-by-step
 ------------
 

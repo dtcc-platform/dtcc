@@ -13,6 +13,12 @@ This demo demonstrates how to download a point cloud for a specified area,
 process the point cloud by removing global outliers, build a terrain raster from
 the processed data, and finally visualize the resulting raster.
 
+Expected Output
+----------------
+.. image:: ../images/build_terrain_raster.jpg
+   :alt: Demo Title
+   :align: center
+
 Step-by-step
 ------------
 

@@ -15,6 +15,12 @@ This demo demonstrates how to download point cloud data within a specified
 bounding box and visualize it. The visualization colors the point cloud based
 on the z-coordinate, making it easier to see elevation variations.
 
+Expected Output
+----------------
+.. image:: ../images/view_pointcloud.jpg
+   :alt: Demo Title
+   :align: center
+
 Step-by-step
 ------------
 

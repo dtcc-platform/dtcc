@@ -10,6 +10,7 @@ project = "DTCC Platform"
 author = "Digital Twin Cities Centre"
 copyright = "Digital Twin Cities Centre (2025)"
 release = version
+python_apigen_order_tiebreaker = "alphabetical"
 
 # Determine whether to skip API docs generation.
 skip_api = os.environ.get("NO_API", "0") == "1"

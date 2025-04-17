@@ -2,7 +2,7 @@
 import sys
 from pathlib import Path
 from dtcc import *
-
+import dtcc
 
 # FIXME: Obscure imports
 from dtcc_core.builder.model_conversion import (
@@ -36,7 +36,7 @@ xm = (x0 + x1) / 2
 ym = (y0 + y1) / 2
 
 # Problematic Bounds ( for testing)
-bounds = Bounds(x0+1000,y0+1000,x0 + 2000, y0 + 2000)
+bounds = dtcc.Bounds(x0+1000,y0+1000,x0 + 2000, y0 + 2000)
 
 bounds = Bounds(99515.5, 6213510, 100074, 6213830)
 print(bounds)
@@ -55,18 +55,29 @@ _parameters["smoothing_relative_tolerance"] = 0.0005
 _parameters["debug_step"] = 7
 _parameters["aspect_ratio_threshold"] = 10.0
 
-# Set data paths
-data_directory = Path("../data/helsingborg-harbour-2022")
+h = 1000.0
+bounds = dtcc.Bounds(319891, 6399790, 319891 + h, 6399790 + h)
+#bounds = dtcc.Bounds(102746, 6213510, 103000, 6213770)
 
-buildings_path = data_directory / "footprints.shp"
-pointcloud_path = data_directory / "PointCloud.las"
+# Download point cloud (lidar) data using default provider (DTCC)
+pointcloud = dtcc.download_pointcloud(bounds=bounds)
+
+# Download footprint data using default provider (DTCC)
+footprints= dtcc.download_footprints(bounds=bounds)
+
+
+# Set data paths
+#data_directory = Path("../data/helsingborg-harbour-2022")
+
+#buildings_path = data_directory / "footprints.shp"
+#pointcloud_path = data_directory / "PointCloud.las"
 
 # FIXME: Can we get this data from dtcc-data?
 # bounds=Bounds(102746, 6213510, 103000, 6213770)
 # bounds=None
 # Load data
-pointcloud = load_pointcloud(pointcloud_path, bounds=bounds)
-footprints = load_footprints(buildings_path, bounds=bounds)
+#pointcloud = load_pointcloud(pointcloud_path, bounds=bounds)
+#footprints = load_footprints(buildings_path, bounds=bounds)
 
 # FIXME: Are all operations on point clouds and footprints out-place?
 # FIXME: Explicit parameter 3 for remove_global_outliers() is not clear.
@@ -172,7 +183,7 @@ _ground_mesh = build_ground_mesh(
 ground_mesh = builder_mesh_to_mesh(_ground_mesh)
 
 # Save ground mesh to file
-ground_mesh.save(data_directory / "ground_mesh.vtu")
+ground_mesh.save("ground_mesh.vtu")
 ground_mesh.save("ground_mesh.pb")
 
 # View ground mesh (for debugging)
@@ -217,6 +228,6 @@ _volume_mesh = volume_mesh_builder.build(
 volume_mesh = builder_volume_mesh_to_volume_mesh(_volume_mesh)
 
 # Save volume mesh to file
-volume_mesh.save(data_directory / f"volume_mesh_{_parameters["debug_step"]}.vtu")
+volume_mesh.save("volume_mesh_{_parameters['debug_step']}.vtu")
 
 # volume_mesh.save(data_directory / f"volume_mesh_elastic_step_{_parameters["debug_step"]}.vtu")

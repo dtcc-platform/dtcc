@@ -1,4 +1,4 @@
-name: Run download-data demo Hourly
+name: Run download-data demo hourly
 
 on:
   # Runs every hour on the hour

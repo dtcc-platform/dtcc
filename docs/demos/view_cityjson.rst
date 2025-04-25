@@ -13,6 +13,12 @@ Purpose
 This demo demonstrates how to download a CityJSON file from an external URL,
 load the city model from the file, and visualize it using the DTCC platform.
 
+Expected Output
+----------------
+.. image:: ../images/view_cityjson.jpg
+   :alt: Demo Title
+   :align: center
+
 Step-by-step
 ------------
 

@@ -15,6 +15,12 @@ process the data to extract roof points and compute building heights, and create
 city model. From the city model, a city mesh is generated at a specified level of
 detail (LOD) and visualized.
 
+Expected Output
+----------------
+.. image:: ../images/build_city_mesh.jpg
+   :alt: Demo Title
+   :align: center
+
 Step-by-step
 ------------
 

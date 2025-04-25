@@ -15,6 +15,12 @@ from the OSM provider, process and simplify the footprints, and then build a
 terrain mesh with the footprints serving as subdomains. This approach allows
 the mesh to better conform to the building boundaries.
 
+Expected Output
+----------------
+.. image:: ../images/build_terrain_mesh_with_footprints.jpg
+   :alt: Demo Title
+   :align: center
+
 Step-by-step
 ------------
 

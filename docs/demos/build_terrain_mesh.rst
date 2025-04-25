@@ -13,6 +13,12 @@ This demo demonstrates how to download point cloud data for a specified area,
 process the data by removing global outliers, and build a terrain mesh from the
 processed point cloud. Finally, the resulting terrain mesh is visualized.
 
+Expected Output
+----------------
+.. image:: ../images/build_terrain_mesh.jpg
+   :alt: Demo Title
+   :align: center
+
 Step-by-step
 ------------
 

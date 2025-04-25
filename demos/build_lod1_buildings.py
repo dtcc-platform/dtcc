@@ -1,5 +1,7 @@
 import dtcc
 
+from pathlib import Path
+
 # Define bounds (a residential area in Helsingborg)
 h = 2000.0
 bounds = dtcc.Bounds(319891, 6399790, 319891 + h, 6399790 + h)
@@ -20,10 +22,11 @@ buildings = dtcc.compute_building_heights(buildings, raster, overwrite=True)
 
 # Build LOD1 buildings
 buildings = dtcc.builder.build_lod1_buildings(
-    buildings, default_ground_height=raster.min, always_use_default_ground=True
+    buildings, default_ground_height=raster.min, always_use_default_ground=False
 )
 
-building_meshes = [b.lod1.mesh() for b in buildings]
-merged_mesh = dtcc.builder.meshing.merge_meshes(building_meshes, weld=True)
+building_meshes = [b.lod1.mesh(weld=True, snap=0.005) for b in buildings]
+merged_mesh = dtcc.builder.meshing.merge_meshes(building_meshes)
 
+merged_mesh.save("merged_lod1_buildings.obj")
 merged_mesh.view()

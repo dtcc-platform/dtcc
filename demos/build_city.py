@@ -12,25 +12,23 @@ buildings = dtcc.download_footprints(bounds=bounds)
 pointcloud = pointcloud.remove_global_outliers(3.0)
 
 # Build terrain raster and mesh
-terrain_raster = dtcc.builder.build_terrain_raster(
-    pointcloud, cell_size=5, ground_only=True
-)
-terrain_mesh = dtcc.builder.build_terrain_mesh(terrain_raster)
+raster = dtcc.builder.build_terrain_raster(pointcloud, cell_size=5, ground_only=True)
+mesh = dtcc.builder.build_terrain_mesh(raster)
 
 # Extract roof points and compute building heights
 buildings = dtcc.extract_roof_points(buildings, pointcloud)
-buildings = dtcc.compute_building_heights(buildings, terrain_raster, overwrite=True)
+buildings = dtcc.compute_building_heights(buildings, raster, overwrite=True)
 
 # Build LOD1 buildings
 buildings = dtcc.builder.build_lod1_buildings(
-    buildings, default_ground_height=terrain_raster.min, always_use_default_ground=True
+    buildings, default_ground_height=raster.min, always_use_default_ground=True
 )
 
 # Create city and add buildings and geometries
 city = dtcc.City()
 city.add_buildings(buildings)
-city.add_terrain(terrain_raster)
-city.add_terrain(terrain_mesh)
+city.add_terrain(raster)
+city.add_terrain(mesh)
 
 # View city
 city.view()

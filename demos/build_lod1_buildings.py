@@ -26,7 +26,13 @@ buildings = dtcc.builder.build_lod1_buildings(
 )
 
 building_meshes = [b.lod1.mesh(weld=True, snap=0.005) for b in buildings]
+
+# place the base of all buildings on z=0
+for b in building_meshes:
+    b.offset([0, 0, -b.bounds.zmin])
+
+
 merged_mesh = dtcc.builder.meshing.merge_meshes(building_meshes)
 
-merged_mesh.save("merged_lod1_buildings.obj")
+# merged_mesh.save("merged_lod1_buildings.obj")
 merged_mesh.view()

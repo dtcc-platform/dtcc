@@ -3,7 +3,7 @@
 import dtcc
 
 # Define bounds (a residential area in Helsingborg)
-h = 200.0
+h = 500.0
 bounds = dtcc.Bounds(319891, 6399790, 319891 + h, 6399790 + h)
 
 # Download pointcloud and building footprints

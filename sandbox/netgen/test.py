@@ -15,6 +15,8 @@ import re
 import time
 import sys
 
+import dtcc
+
 _t = None  # for timing
 
 
@@ -511,6 +513,46 @@ def bench():
         print(f"{h:10.3f} {n:10d} {t:10.3f} {rate:10.1f}")
 
 
+def bench_triangle():
+
+    x0 = 319995.962899
+    y0 = 6399009.716755
+    L = 500.0
+    bounds = dtcc.Bounds(x0 - 0.5 * L, y0 - 0.5 * L, x0 + 0.5 * L, y0 + 0.5 * L)
+    pointcloud = dtcc.download_pointcloud(bounds=bounds)
+    terrain_raster = dtcc.build_terrain_raster(pointcloud, cell_size=2.0)
+    buildings = dtcc.download_footprints(bounds=bounds)
+    # Simplify building footprints
+    buildings = dtcc.merge_building_footprints(buildings, max_distance=0.5, min_area=10)
+    buildings = dtcc.simplify_building_footprints(buildings, tolerance=0.25)
+    buildings = dtcc.fix_building_footprint_clearance(buildings, 0.5)
+    footprints = [building.lod0 for building in buildings]
+
+    mesh_sizes = [100.0, 10.0, 5.0, 2.0, 1.0, 0.5]
+    times = []
+    cells = []
+
+    for m in mesh_sizes:
+        print(f"\nMeshing with maxh = {m}")
+        start = time.time()
+        mesh = dtcc.build_terrain_mesh(
+            terrain_raster,
+            subdomains=footprints,
+            # subdomain_resolution=subdomain_resolution,
+            max_mesh_size=m,
+            min_mesh_angle=10,
+            smoothing=0,
+        )
+        dt = time.time() - start
+        times.append(dt)
+        cells.append(len(mesh.faces))
+    print(f"{'maxh':>10} {'#cells':>10} {'time (s)':>10} {'cells/s':>10}")
+    print("-" * 44)
+    for h, n, t in zip(mesh_sizes, cells, times):
+        rate = n / t if t > 0 else 0.0
+        print(f"{h:10.3f} {n:10d} {t:10.3f} {rate:10.1f}")
+
+
 # ------------- Main -------------
 
 if __name__ == "__main__":
@@ -518,6 +560,9 @@ if __name__ == "__main__":
 
     if "--bench" in sys.argv:
         bench()
+        exit()
+    if "--bench-triangle" in sys.argv:
+        bench_triangle()
         exit()
 
     test_square()

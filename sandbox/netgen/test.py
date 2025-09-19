@@ -11,6 +11,7 @@ from typing import List, Tuple, Optional, Dict
 import numpy as np
 import meshio
 from netgen.geom2d import SplineGeometry
+from netgen.meshing import MeshingParameters
 import re
 import time
 import sys
@@ -34,6 +35,21 @@ def toc(task: Optional[str] = None):
     else:
         print(f"Elapsed time: {dt:.3f} s")
     return dt
+
+
+def make_mp_fast(maxh=1.0):
+    mp = MeshingParameters(maxh=maxh)
+    for k, v in {
+        "optimize2d": "",  # disable smoothing / swaps
+        "grading": 0.7,  # allow faster size growth
+        "segmentsperedge": 0.5,  # fewer splits per edge
+        "curvaturesafety": 1.0,  # fine for straight lines
+        "check_overlap": 0,  # skip heavy checks (if you already validate)
+        "check_overlapping_boundary": 0,
+    }.items():
+        if hasattr(mp, k):
+            setattr(mp, k, v)
+    return mp
 
 
 # ------------- Types -------------
@@ -264,8 +280,10 @@ def mesh_polygon(
                 )
     toc("geometry build")
 
+    mp = make_mp_fast(maxh)
+
     tic()
-    ngmesh = geo.GenerateMesh(maxh=maxh)
+    ngmesh = geo.GenerateMesh(mp)
     toc("mesh generation")
 
     if not return_numpy:
@@ -339,8 +357,10 @@ def mesh_polygon_with_interfaces(
                 )
     toc("geometry build")
 
+    mp = make_mp_fast(maxh)
+
     tic()
-    ngmesh = geo.GenerateMesh(maxh=maxh)
+    ngmesh = geo.GenerateMesh(mp)
     dt = toc("mesh generation")
 
     # To NumPy

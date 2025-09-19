@@ -12,6 +12,27 @@ import numpy as np
 import meshio
 from netgen.geom2d import SplineGeometry
 import re
+import time
+
+_t = None  # for timing
+
+
+def tic():
+    global _t
+    _t = time.time()
+
+
+def toc(task: Optional[str] = None):
+    global _t
+    if _t is None:
+        raise RuntimeError("Must call tic() before toc()")
+    dt = time.time() - _t
+    _t = None
+    if task:
+        print(f"Elapsed time: {dt:.3f} s for {task}")
+    else:
+        print(f"Elapsed time: {dt:.3f} s")
+
 
 # ------------- Types -------------
 XY = Tuple[float, float]
@@ -92,6 +113,7 @@ def read_loops_from_file(path: str) -> Tuple[Loop, List[Loop]]:
       - Subsequent non-empty lines: additional inner loops (holes/islands) in same format
     Returns: (exterior, [inner_loops...])
     """
+    tic()
     lines: List[str] = []
     with open(path, "r") as f:
         for raw in f:
@@ -116,6 +138,7 @@ def read_loops_from_file(path: str) -> Tuple[Loop, List[Loop]]:
         c = polygon_centroid(loop)
         if not point_in_polygon(c, exterior):
             raise ValueError(f"Inner loop #{idx+1} centroid not inside exterior")
+    toc(f"read {len(lines)} loops from {path}")
     return exterior, inner_loops
 
 
@@ -218,6 +241,7 @@ def mesh_polygon(
         raise ValueError("Exterior loop appears nested; check input data")
 
     # Build Netgen geometry with left/right domains
+    tic()
     geo = SplineGeometry()
     for L in loops:
         poly = L["poly"]
@@ -236,8 +260,11 @@ def mesh_polygon(
                 geo.Append(
                     ["line", a, b], leftdomain=rd_outside, rightdomain=ld_inside, bc=1
                 )
+    toc("geometry build")
 
+    tic()
     ngmesh = geo.GenerateMesh(maxh=maxh)
+    toc("mesh generation")
 
     if not return_numpy:
         return ngmesh
@@ -284,6 +311,7 @@ def mesh_polygon_with_interfaces(
         raise ValueError("Exterior loop appears nested; check input data")
 
     # Build geometry with domains alternating 1/2
+    tic()
     geo = SplineGeometry()
     for L in loops:
         poly = L["poly"]
@@ -307,26 +335,34 @@ def mesh_polygon_with_interfaces(
                     rightdomain=int(inside_dom),
                     bc=1,
                 )
+    toc("geometry build")
 
+    tic()
     ngmesh = geo.GenerateMesh(maxh=maxh)
+    toc("mesh generation")
 
     # To NumPy
+    tic()
     points_xyz = np.array(
         [[p.p[0], p.p[1], p.p[2]] for p in ngmesh.Points()], dtype=np.float64
     )
     triangles = np.array(
         [[v.nr - 1 for v in el.vertices] for el in ngmesh.Elements2D()], dtype=np.int32
     )
+    toc("convert to NumPy")
 
     # Per-triangle region via centroid parity (matches domain assignment)
+    tic()
     tri_regions = np.empty(len(triangles), dtype=np.int32)
     loop_polys = [L["poly"] for L in loops]
     for i, tri in enumerate(triangles):
         cx, cy = tri_centroid(points_xyz, tri)
         count = sum(1 for poly in loop_polys if point_in_polygon((cx, cy), poly))
         tri_regions[i] = 1 if (count % 2 == 1) else 2
+    toc("compute triangle regions")
 
     # Optional: add line cells along provided loops
+    tic()
     line_cells = None
     if add_interface_lines:
         lut = build_point_lookup(points_xyz)
@@ -337,6 +373,7 @@ def mesh_polygon_with_interfaces(
             for k in range(len(ids)):
                 lines.append([ids[k], ids[(k + 1) % len(ids)]])
         line_cells = np.array(lines, dtype=np.int32) if lines else None
+    toc("map loops to line cells")
 
     if not return_numpy:
         return ngmesh
@@ -352,6 +389,7 @@ def save_vtu(
     edges: Optional[np.ndarray] = None,
     filename: str = "mesh.vtu",
 ) -> None:
+    tic()
     cells = [("triangle", triangles)]
     if edges is not None and len(edges) > 0:
         cells.append(("line", edges))
@@ -359,6 +397,7 @@ def save_vtu(
     print(
         f"Saved {filename} (triangles={len(triangles)}, lines={0 if edges is None else len(edges)})"
     )
+    toc(f"write {filename}")
 
 
 def save_vtu_with_regions_and_lines(
@@ -368,6 +407,7 @@ def save_vtu_with_regions_and_lines(
     line_cells: Optional[np.ndarray] = None,
     filename: str = "mesh_regions.vtu",
 ) -> None:
+    tic()
     cells = [("triangle", triangles)]
     cell_data = {"region": [regions]}
     if line_cells is not None and len(line_cells) > 0:
@@ -379,6 +419,7 @@ def save_vtu_with_regions_and_lines(
     print(
         f"Saved {filename} (triangles={len(triangles)}, lines={0 if line_cells is None else len(line_cells)})"
     )
+    toc(f"write {filename}")
 
 
 # ------------- Test geometries -------------

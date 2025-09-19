@@ -13,6 +13,7 @@ import meshio
 from netgen.geom2d import SplineGeometry
 import re
 import time
+import sys
 
 _t = None  # for timing
 
@@ -32,6 +33,7 @@ def toc(task: Optional[str] = None):
         print(f"Elapsed time: {dt:.3f} s for {task}")
     else:
         print(f"Elapsed time: {dt:.3f} s")
+    return dt
 
 
 # ------------- Types -------------
@@ -339,7 +341,7 @@ def mesh_polygon_with_interfaces(
 
     tic()
     ngmesh = geo.GenerateMesh(maxh=maxh)
-    toc("mesh generation")
+    dt = toc("mesh generation")
 
     # To NumPy
     tic()
@@ -352,32 +354,37 @@ def mesh_polygon_with_interfaces(
     toc("convert to NumPy")
 
     # Per-triangle region via centroid parity (matches domain assignment)
-    tic()
-    tri_regions = np.empty(len(triangles), dtype=np.int32)
-    loop_polys = [L["poly"] for L in loops]
-    for i, tri in enumerate(triangles):
-        cx, cy = tri_centroid(points_xyz, tri)
-        count = sum(1 for poly in loop_polys if point_in_polygon((cx, cy), poly))
-        tri_regions[i] = 1 if (count % 2 == 1) else 2
-    toc("compute triangle regions")
+    # tic()
+    # tri_regions = np.empty(len(triangles), dtype=np.int32)
+    # loop_polys = [L["poly"] for L in loops]
+    # for i, tri in enumerate(triangles):
+    #    cx, cy = tri_centroid(points_xyz, tri)
+    #    count = sum(1 for poly in loop_polys if point_in_polygon((cx, cy), poly))
+    #    tri_regions[i] = 1 if (count % 2 == 1) else 2
+    # toc("compute triangle regions")
 
     # Optional: add line cells along provided loops
-    tic()
+    # tic()
+    # line_cells = None
+    # if add_interface_lines:
+    #    lut = build_point_lookup(points_xyz)
+    #    which = loops if include_outer_lines else loops[1:]
+    #    lines: List[List[int]] = []
+    #    for L in which:
+    #        ids = map_loop_to_node_ids(L["poly"], points_xyz, lut)
+    #        for k in range(len(ids)):
+    #            lines.append([ids[k], ids[(k + 1) % len(ids)]])
+    #    line_cells = np.array(lines, dtype=np.int32) if lines else None
+    # toc("map loops to line cells")
+
+    # Takes a long time
+    tri_regions = np.empty(len(triangles), dtype=np.int32)
     line_cells = None
-    if add_interface_lines:
-        lut = build_point_lookup(points_xyz)
-        which = loops if include_outer_lines else loops[1:]
-        lines: List[List[int]] = []
-        for L in which:
-            ids = map_loop_to_node_ids(L["poly"], points_xyz, lut)
-            for k in range(len(ids)):
-                lines.append([ids[k], ids[(k + 1) % len(ids)]])
-        line_cells = np.array(lines, dtype=np.int32) if lines else None
-    toc("map loops to line cells")
 
     if not return_numpy:
         return ngmesh
-    return ngmesh, points_xyz, triangles, tri_regions, line_cells
+
+    return ngmesh, points_xyz, triangles, tri_regions, line_cells, dt
 
 
 # ------------- VTU writers -------------
@@ -438,7 +445,7 @@ def test_square_with_hole_interfaces(
 ) -> None:
     outer = [(0, 0), (3, 0), (3, 2), (0, 2)]
     hole = [(1, 0.5), (2, 0.5), (2, 1.5), (1, 1.5)]
-    _, pts, tris, regions, lines = mesh_polygon_with_interfaces(
+    _, pts, tris, regions, lines, __ = mesh_polygon_with_interfaces(
         outer, [hole], maxh=maxh, return_numpy=True
     )
     save_vtu_with_regions_and_lines(pts, tris, regions, lines, fname)
@@ -470,16 +477,49 @@ def read_loops_from_file_and_mesh_interfaces(
     path: str = "testcase.txt", maxh: float = 100.0, fname: str = "gbg_interfaces.vtu"
 ) -> None:
     outer, loops = read_loops_from_file(path)
-    _, pts, tris, regions, lines = mesh_polygon_with_interfaces(
+    _, pts, tris, regions, lines, dt = mesh_polygon_with_interfaces(
         outer, inner_loops=loops, maxh=maxh, return_numpy=True
     )
     save_vtu_with_regions_and_lines(pts, tris, regions, lines, fname)
+
+
+def bench():
+
+    import sys
+
+    outer, loops = read_loops_from_file("testcase.txt")
+
+    times = []
+    cells = []
+
+    mesh_sizes = [100.0, 10.0, 5.0, 2.0, 1.0, 0.5]
+    for h in mesh_sizes:
+        print(f"\nMeshing with maxh = {h}")
+        _, pts, tris, regions, lines, dt = mesh_polygon_with_interfaces(
+            outer, inner_loops=loops, maxh=h, return_numpy=True
+        )
+        times.append(dt)
+        cells.append(len(tris))
+
+    print()
+
+    # Print results as a nice little table with h, #cells, time, cells/s
+    print(f"{'maxh':>10} {'#cells':>10} {'time (s)':>10} {'cells/s':>10}")
+    print("-" * 44)
+    for h, n, t in zip(mesh_sizes, cells, times):
+        rate = n / t if t > 0 else 0.0
+        print(f"{h:10.3f} {n:10d} {t:10.3f} {rate:10.1f}")
 
 
 # ------------- Main -------------
 
 if __name__ == "__main__":
     print("Generating test meshes...")
+
+    if "--bench" in sys.argv:
+        bench()
+        exit()
+
     test_square()
     test_square_with_hole_interfaces()
     test_concave()

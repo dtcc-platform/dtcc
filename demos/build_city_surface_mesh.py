@@ -13,7 +13,7 @@ city.download_pointcloud(bounds=bounds, filter_on_z_bounds=True)
 city.download_footprints(bounds=bounds)
 
 city.building_heights_from_pointcloud()
-surface_mesh = city.build_city_surface_mesh()
+surface_mesh = city.build_surface_mesh()
 
 # View mesh
 surface_mesh.view()

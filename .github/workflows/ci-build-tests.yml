@@ -69,4 +69,4 @@ jobs:
             --data "{
               \"text\": \"❌ *FAILURE*\nRepository: \`${REPO_NAME}\`\nCommit: \`${SHORT_SHA}\`\nAuthor: ${COMMIT_AUTHOR}\nMessage: ${COMMIT_MESSAGE}\"
             }" \
-            ${{ secrets.SLACK_WEBHOOK_URL }}
+            ${{ secrets.SLACK_WEBHOOK_URL_FAIL }}

@@ -35,3 +35,38 @@ jobs:
       - name: Run tests
         run: |
           cd tests && pytest
+          
+notify:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: always()  # always run even if build fails
+    steps:
+      - name: Slack notification on success
+        if: ${{ needs.build-and-test.result == 'success' }}
+        run: |
+          # Gather some info from the context
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          REPO_NAME="${{ github.repository }}"
+          COMMIT_AUTHOR="${{ github.event.head_commit.author.name }}"
+          COMMIT_MESSAGE="${{ github.event.head_commit.message }}"
+
+          # Post to Slack (via webhook in secrets)
+          curl -X POST -H 'Content-type: application/json' \
+            --data "{
+              \"text\": \"✅ *SUCCESS*\nRepository: \`${REPO_NAME}\`\nCommit: \`${SHORT_SHA}\`\nAuthor: ${COMMIT_AUTHOR}\nMessage: ${COMMIT_MESSAGE}\"
+            }" \
+            ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Slack notification on failure
+        if: ${{ needs.build-and-test.result == 'failure' }}
+        run: |
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          REPO_NAME="${{ github.repository }}"
+          COMMIT_AUTHOR="${{ github.event.head_commit.author.name }}"
+          COMMIT_MESSAGE="${{ github.event.head_commit.message }}"
+
+          curl -X POST -H 'Content-type: application/json' \
+            --data "{
+              \"text\": \"❌ *FAILURE*\nRepository: \`${REPO_NAME}\`\nCommit: \`${SHORT_SHA}\`\nAuthor: ${COMMIT_AUTHOR}\nMessage: ${COMMIT_MESSAGE}\"
+            }" \
+            ${{ secrets.SLACK_WEBHOOK_URL }}

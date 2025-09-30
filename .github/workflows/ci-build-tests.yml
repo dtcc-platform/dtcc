@@ -35,8 +35,8 @@ jobs:
       - name: Run tests
         run: |
           cd tests && pytest
-          
-notify:
+
+  notify:
     needs: build-and-test
     runs-on: ubuntu-latest
     if: always()  # always run even if build fails

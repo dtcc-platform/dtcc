@@ -18,3 +18,5 @@ demos/data/
 /data/*
 !/data/download-demo*
 dtcc-demo-data/
+
+*.lock

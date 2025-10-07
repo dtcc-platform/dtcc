@@ -17,5 +17,7 @@ city.build_terrain(
     smoothing=3,
 )
 
+city.build_lod1_buildings()
 
 city.save("test_city.json")
+city.view()

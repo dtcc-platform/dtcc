@@ -55,7 +55,7 @@ jobs:
             --data "{
               \"text\": \"✅ *SUCCESS*\nRepository: \`${REPO_NAME}\`\nCommit: \`${SHORT_SHA}\`\nAuthor: ${COMMIT_AUTHOR}\nMessage: ${COMMIT_MESSAGE}\"
             }" \
-            ${{ secrets.SLACK_WEBHOOK_URL }}
+            ${{ secrets.SLACK_WEBHOOK_URL_GITHUB }}
 
       - name: Slack notification on failure
         if: ${{ needs.build-and-test.result == 'failure' }}
@@ -69,4 +69,4 @@ jobs:
             --data "{
               \"text\": \"❌ *FAILURE*\nRepository: \`${REPO_NAME}\`\nCommit: \`${SHORT_SHA}\`\nAuthor: ${COMMIT_AUTHOR}\nMessage: ${COMMIT_MESSAGE}\"
             }" \
-            ${{ secrets.SLACK_WEBHOOK_URL_FAIL }}
+            ${{ secrets.SLACK_WEBHOOK_URL_DEVELOPMENT }}

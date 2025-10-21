@@ -1,3 +1,13 @@
+# This script processes a GeoTIFF DEM to create a surface mesh of terrain and building footprints.
+# It includes functions for reprojecting rasters, cleaning point clouds, assigning building heights,
+# and visualizing building footprints.
+
+# This code needs the `dev/wrapper-spade` branch of dtcc-core with the latest changes (21/10/25).
+# The `set_building_heights_from_attribute` function has been checked out from develop branch for this purpose.
+
+# Some awkward processing for the dem is done due to dtcc-data only working with EPSG:3006 in Sweden currently.
+
+
 from pathlib import Path
 from typing import List, Tuple
 import numpy as np

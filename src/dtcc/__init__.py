@@ -1,16 +1,18 @@
 # Import core submodules
 
-from dtcc_core import common as common
-from dtcc_core import model as model
-from dtcc_core import io as io
-from dtcc_core import builder as builder
+import importlib
 
-modules = [common, model, io, builder,]
-__all__ = []
-for module in modules:
-    for name in module.__all__:
-        globals()[name] = getattr(module, name)
-    __all__ += module.__all__
+__all__ = ["common", "model", "io", "builder", "data"]
+
+def __getattr__(name):
+    if name in {"common", "model", "io", "builder"}:
+        mod = importlib.import_module(f"dtcc_core.{name}")
+    elif name == "data":
+        mod = importlib.import_module("dtcc_data")
+    else:
+        raise AttributeError(f"module 'dtcc' has no attribute {name}")
+    globals()[name] = mod  # cache
+    return mod
 
 # Local imports
 from .logging import debug, info, warning, error, critical
@@ -56,3 +58,29 @@ except ImportError:
 
     # Call the function to attach the default view method
     _attach_default_view_to_model_classes()
+
+
+"""
+Static imports for type checkers and IntelliSense.
+
+These imports are wrapped in `if TYPE_CHECKING`, which is always `False` at
+runtime. This means:
+  - The imports below **never execute** when the package is imported normally,
+    so they have **zero runtime cost** and do not introduce additional
+    dependencies.
+  - Static analyzers such as Pylance, Pyright, and mypy **do** evaluate them
+    to understand which symbols are re-exported at the top level of the
+    `dtcc` package.
+
+In short: this block exists purely to give IDEs full autocomplete and
+documentation for `dtcc.<symbol>` while keeping the runtime import logic
+dynamic and lightweight.
+"""
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    # These won't run at runtime, but Pylance will see them
+    from dtcc_core.common import *      # noqa: F401, F403
+    from dtcc_core.model import *       # noqa: F401, F403
+    from dtcc_core.io import *          # noqa: F401, F403
+    from dtcc_core.builder import *     # noqa: F401, F403
+    from dtcc_data import *             # noqa: F401, F403

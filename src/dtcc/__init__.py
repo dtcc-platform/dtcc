@@ -1,18 +1,17 @@
 # Import core submodules
 
-import importlib
+from dtcc_core import common as common
+from dtcc_core import model as model
+from dtcc_core import io as io
+from dtcc_core import builder as builder
+import dtcc_data as data
 
-__all__ = ["common", "model", "io", "builder", "data"]
-
-def __getattr__(name):
-    if name in {"common", "model", "io", "builder"}:
-        mod = importlib.import_module(f"dtcc_core.{name}")
-    elif name == "data":
-        mod = importlib.import_module("dtcc_data")
-    else:
-        raise AttributeError(f"module 'dtcc' has no attribute {name}")
-    globals()[name] = mod  # cache
-    return mod
+modules = [common, model, io, builder, data,]
+__all__ = []
+for module in modules:
+    for name in module.__all__:
+        globals()[name] = getattr(module, name)
+    __all__ += module.__all__
 
 # Local imports
 from .logging import debug, info, warning, error, critical

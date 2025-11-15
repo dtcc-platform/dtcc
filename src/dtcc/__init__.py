@@ -46,10 +46,11 @@ except ImportError:
         """Attach the default_view method to model classes that are subclasses of Model."""
         import inspect
         # Import Model locally within the function
+        import dtcc_core.model
         from dtcc_core.model.model import Model as _Model
 
         dtcc_model_classes = [
-            member for _, member in inspect.getmembers(model)
+            member for _, member in inspect.getmembers(dtcc_core.model)
             if inspect.isclass(member) and issubclass(member, _Model)
         ]
 

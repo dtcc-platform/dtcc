@@ -26,7 +26,7 @@ city.add_terrain(raster)
 city.add_buildings(buildings, remove_outside_terrain=True)
 
 # Build city mesh
-mesh = dtcc.build_city_mesh(city, lod=dtcc.GeometryType.LOD0)
+mesh = dtcc.build_city_mesh(city, lod=dtcc.GeometryType.LOD1)
 
 # View mesh
 mesh.view()

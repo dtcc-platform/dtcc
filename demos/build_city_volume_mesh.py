@@ -26,13 +26,13 @@ city.add_terrain(raster)
 city.add_buildings(buildings, remove_outside_terrain=True)
 
 # Build city volume mesh
-domain_height = 50.0  # Height of the volume mesh domain
+domain_height = 80.0  # Height of the volume mesh domain
 max_mesh_size = 10.0  # Maximum size of the mesh triangles
 
 volume_mesh = dtcc.build_city_volume_mesh(city, 
-                                          domain_height=domain_height, 
-                                          max_mesh_size=max_mesh_size,
-                                          boundary_face_markers=False)
+                                        max_mesh_size=max_mesh_size,
+                                        domain_height=domain_height, 
+                                        boundary_face_markers=True)
 
 # View mesh
 volume_mesh.view()

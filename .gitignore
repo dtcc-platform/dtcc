@@ -11,6 +11,12 @@ __pycache__
 *.json
 *.so
 *.o
+*.vtu
+*.vtk
+*.xdmf
+*.h5
+*.face
+*.node
 tests/cpp/bin/
 scratch/
 

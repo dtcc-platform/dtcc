@@ -15,8 +15,8 @@ pointcloud = pointcloud.remove_global_outliers(3.0)
 # Build terrain mesh
 mesh = dtcc.build_terrain_mesh(
     pointcloud,
-    max_mesh_size=10,
-    min_mesh_angle=25,
+    max_mesh_size=10.0,
+    min_mesh_angle=25.0,
     smoothing=3,
 )
 

@@ -22,14 +22,14 @@ classifiers = [
   "License :: OSI Approved :: MIT License",
 ]
 dependencies = [
-    "dtcc-core@git+https://github.com/dtcc-platform/dtcc-core.git@develop",
+    "dtcc-core@git+https://github.com/dtcc-platform/dtcc-core.git@release/0.9.4",
     "tqdm>=4.67.1",
 ]
 
 [project.optional-dependencies]
 test = ["pytest"]
 docs = ["sphinx", "sphinx-immaterial"]
-viewer = ["dtcc-viewer@git+https://github.com/dtcc-platform/dtcc-viewer.git@develop"]
+viewer = ["dtcc-viewer@git+https://github.com/dtcc-platform/dtcc-viewer.git@release/0.9.4"]
 
 [tool.scikit-build]
 wheel.expand-macos-universal-tags = true

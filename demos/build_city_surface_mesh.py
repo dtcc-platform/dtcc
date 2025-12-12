@@ -14,7 +14,7 @@ city.download_footprints(bounds=bounds)
 
 city.building_heights_from_pointcloud()
 
-lod = [dtcc.model.GeometryType.LOD1 for _ in city.buildings]
+lod = [dtcc.GeometryType.LOD1 for _ in city.buildings]
 surface_mesh = city.build_surface_mesh(lod=lod,
                                        treat_lod0_as_holes= False)
 

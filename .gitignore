@@ -8,8 +8,15 @@ __pycache__
 .DS_Store
 *.egg-info/
 
+*.json
 *.so
 *.o
+*.vtu
+*.vtk
+*.xdmf
+*.h5
+*.face
+*.node
 tests/cpp/bin/
 scratch/
 
@@ -17,3 +24,5 @@ demos/data/
 /data/*
 !/data/download-demo*
 dtcc-demo-data/
+
+*.lock

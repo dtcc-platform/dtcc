@@ -7,7 +7,7 @@ DTCC Platform
   :alt: Digital Twin Cities Centre
 
 Welcome to the documentation pages for `DTCC Platform
-<https://github.com/dtcc-platform/>`__, an open-source Python platform for
+<https://github.com/dtcc-platform/>`__, an open-source platform for
 digital twinning of cities.
 
 The platform is developed and maintained by the `Digital Twin Cities

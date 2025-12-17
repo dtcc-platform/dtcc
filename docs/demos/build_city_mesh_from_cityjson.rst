@@ -7,11 +7,18 @@ To run the demo, type::
 
     $ python build_city_mesh_from_cityjson.py
 
+
 Purpose
 -------
 This demo demonstrates how to download a CityJSON file from an external URL,
 load the city model from the file using DTCC, build a city mesh at a specified
 level of detail (LOD2 in this case), and visualize the resulting mesh.
+
+Expected Output
+----------------
+.. image:: ../images/build_city_mesh_from_cityjson.jpg
+   :alt: Demo Title
+   :align: center
 
 Step-by-step
 ------------

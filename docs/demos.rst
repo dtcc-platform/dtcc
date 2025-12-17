@@ -16,7 +16,13 @@ These demos illustrate how DTCC Platform can be used. New users should start wit
    demos/build_terrain_raster
    demos/build_terrain_mesh
    demos/build_terrain_mesh_with_footprints
-   demos/build_city_mesh
-   demos/build_city_mesh_from_cityjson
    demos/build_city
+   demos/build_lod1_buildings
+   demos/build_city_mesh
+   demos/build_city_surface_mesh
+   demos/build_city_volume_mesh
+   demos/build_city_mesh_from_cityjson
+   demos/build_view_cityjson
+   demos/create_cityjson
+   demos/create_tiled_city_mesh
    demos/simplify_building_footprints

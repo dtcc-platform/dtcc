@@ -30,8 +30,8 @@ mesh = dtcc.build_terrain_mesh(
     pointcloud,
     subdomains=footprints,
     subdomain_resolution=subdomain_resolution,
-    max_mesh_size=10,
-    min_mesh_angle=25,
+    max_mesh_size=10.0,
+    min_mesh_angle=25.0,
     smoothing=3,
 )
 

@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 import sys
 from pathlib import Path
-from lloyd_smoothing_3d import lloyd_smoothing
 from dtcc import *
+
 
 # FIXME: Obscure imports
 from dtcc_core.builder.model_conversion import (
@@ -34,7 +34,11 @@ print(f"dx = {dx}, dy = {dy}")
 # exit()
 xm = (x0 + x1) / 2
 ym = (y0 + y1) / 2
-bounds = Bounds(x0 + 650, y0 + 1150, x1 - 100, y1 - 300)
+
+# Problematic Bounds ( for testing)
+bounds = Bounds(x0+1000,y0+1000,x0 + 2000, y0 + 2000)
+
+bounds = Bounds(99515.5, 6213510, 100074, 6213830)
 print(bounds)
 # bounds = Bounds(99548.0, 6212920.0, 99700.0, 6213050.0)
 # bounds = Bounds(xmin=100050, ymin=6213370, xmax=100125, ymax=6213390)
@@ -43,22 +47,23 @@ print(bounds)
 
 # Set parameters
 _parameters = {}
+
 _parameters["max_mesh_size"] = 10
 _parameters["min_mesh_angle"] = 30
 _parameters["smoother_max_iterations"] = 5000
 _parameters["smoothing_relative_tolerance"] = 0.0005
-_parameters["debug_step"] = 2
+_parameters["debug_step"] = 7
+_parameters["aspect_ratio_threshold"] = 10.0
 
 # Set data paths
-# data_directory = Path("../data/helsingborg-residential-2022")
-data_directory = Path(
-    "/Users/georgespaias/Scratch/development_dtcc/data/helsingborg-harbour-2022"
-)
+data_directory = Path("../data/helsingborg-harbour-2022")
+
 buildings_path = data_directory / "footprints.shp"
 pointcloud_path = data_directory / "PointCloud.las"
 
 # FIXME: Can we get this data from dtcc-data?
-
+# bounds=Bounds(102746, 6213510, 103000, 6213770)
+# bounds=None
 # Load data
 pointcloud = load_pointcloud(pointcloud_path, bounds=bounds)
 footprints = load_footprints(buildings_path, bounds=bounds)
@@ -109,6 +114,8 @@ footprints = compute_building_heights(footprints, terrain, overwrite=True)
 # FIXME: Rename merge_building_footprints() --> merge_footprints()
 # FIXME: Rename simplify_building_footprints() --> simplify_footprints()
 # FIXME: Rename fix_building_footprint_clearance() --> fix_footprint_clearance()
+
+print(footprints)
 merge_footprints = merge_building_footprints
 simplify_footprints = simplify_building_footprints
 fix_footprint_clearance = fix_building_footprint_clearance
@@ -193,13 +200,14 @@ _surfaces = [
 # FIXME: Should have a free function build_volume_mesh()
 
 # Create volume mesh builder
-volume_mesh_builder = VolumeMeshBuilder(_surfaces, _dem, _ground_mesh, 0.0)
+volume_mesh_builder = VolumeMeshBuilder(_surfaces, _dem, _ground_mesh, 150.0)
 
 # Build volume mesh
 _volume_mesh = volume_mesh_builder.build(
     _parameters["smoother_max_iterations"],
     _parameters["smoothing_relative_tolerance"],
     0.0,
+    _parameters["aspect_ratio_threshold"],
     _parameters["debug_step"],
 )
 
@@ -209,7 +217,6 @@ _volume_mesh = volume_mesh_builder.build(
 volume_mesh = builder_volume_mesh_to_volume_mesh(_volume_mesh)
 
 # Save volume mesh to file
-# volume_mesh.save(data_directory / f"volume_mesh_{_parameters["debug_step"]}.vtu")
+volume_mesh.save(data_directory / f"volume_mesh_{_parameters["debug_step"]}.vtu")
 
-volume_mesh = lloyd_smoothing(volume_mesh, iterations=10, alpha=1.0)
-volume_mesh.save(data_directory / f"volume_mesh_lloyd_2s.vtu")
+# volume_mesh.save(data_directory / f"volume_mesh_elastic_step_{_parameters["debug_step"]}.vtu")

@@ -1,6 +1,6 @@
-# This demo illustrates how to build a city mesh from a point cloud and footprints.
-
 import dtcc
+
+from pathlib import Path
 
 # Define bounds (a residential area in Helsingborg)
 h = 2000.0
@@ -13,20 +13,25 @@ buildings = dtcc.download_footprints(bounds=bounds)
 # Remove global outliers
 pointcloud = pointcloud.remove_global_outliers(3.0)
 
-# Build terrain raster
-raster = dtcc.build_terrain_raster(pointcloud, cell_size=2, radius=3, ground_only=True)
+# Build terrain raster and mesh
+raster = dtcc.builder.build_terrain_raster(pointcloud, cell_size=5, ground_only=True)
 
 # Extract roof points and compute building heights
 buildings = dtcc.extract_roof_points(buildings, pointcloud)
 buildings = dtcc.compute_building_heights(buildings, raster, overwrite=True)
 
-# Create city and add geometries
-city = dtcc.City()
-city.add_terrain(raster)
-city.add_buildings(buildings, remove_outside_terrain=True)
+# Build LOD1 buildings
+buildings = dtcc.builder.build_lod1_buildings(
+    buildings, default_ground_height=raster.min, always_use_default_ground=False
+)
 
-# Build city mesh
-mesh = dtcc.build_city_mesh(city, lod=dtcc.GeometryType.LOD1)
+building_meshes = [b.lod1.mesh(weld=True, snap=0.005) for b in buildings]
 
-# View mesh
-mesh.view()
+# place the base of all buildings on z=0
+for b in building_meshes:
+    b.offset([0, 0, -b.bounds.zmin])
+
+
+merged_mesh = dtcc.builder.meshing.merge_meshes(building_meshes)
+
+merged_mesh.view()

@@ -1,10 +1,10 @@
-import dtcc
+from dtcc import City, Bounds
 
 # Define bounds (a residential area in Helsingborg)
 h = 2000.0
-bounds = dtcc.Bounds(319891, 6399790, 319891 + h, 6399790 + h)
+bounds = Bounds(319891, 6399790, 319891 + h, 6399790 + h)
 
-city = dtcc.City()
+city = City()
 city.bounds = bounds
 
 city.download_footprints()
@@ -19,5 +19,5 @@ city.build_terrain(
 
 city.build_lod1_buildings()
 
-# View city
+city.save("test_city.json")
 city.view()

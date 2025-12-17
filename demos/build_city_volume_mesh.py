@@ -1,9 +1,8 @@
 # This demo illustrates how to build a city mesh from a point cloud and footprints.
-
 import dtcc
 
 # Define bounds (a residential area in Helsingborg)
-h = 2000.0
+h = 500.0
 bounds = dtcc.Bounds(319891, 6399790, 319891 + h, 6399790 + h)
 
 # Download pointcloud and building footprints
@@ -25,8 +24,12 @@ city = dtcc.City()
 city.add_terrain(raster)
 city.add_buildings(buildings, remove_outside_terrain=True)
 
-# Build city mesh
-mesh = dtcc.build_city_mesh(city, lod=dtcc.GeometryType.LOD1)
+# Build city volume mesh
+volume_mesh = dtcc.build_city_volume_mesh(city, 
+                                        max_mesh_size=10.0,  # Maximum size of the mesh triangles
+                                        domain_height=80.0,  # Height of the volume mesh domain, 
+                                        boundary_face_markers=False, # Returns triangular boundary faces and markers
+                                        )
 
 # View mesh
-mesh.view()
+volume_mesh.view()

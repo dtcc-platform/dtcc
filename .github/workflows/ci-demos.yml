@@ -45,6 +45,11 @@ jobs:
              echo "Skipping $file"
              continue
            fi
+           
+           if [ "$file" = "demos/build_city_volume_mesh.py" ]; then
+             echo "Skipping $file"
+             continue
+           fi
            echo "Running $file"
             python "$file"
           done

@@ -29,8 +29,10 @@ jobs:
       
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip pytest
-          python -m pip install .
+          python -m pip install --upgrade pip setuptools wheel pytest
+          python -m pip install scikit-build-core cmake ninja pybind11 numpy
+          python -m pip install dtcc-pyspade-native
+          python -m pip install --no-build-isolation . # or `pip install -e .` for editable install
       
     #  - name: Run tests
     #    if: runner.os != 'Windows'

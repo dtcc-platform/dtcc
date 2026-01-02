@@ -21,6 +21,7 @@ tests/cpp/bin/
 scratch/
 
 demos/data/
+demos/tiled_city_meshes/
 /data/*
 !/data/download-demo*
 dtcc-demo-data/

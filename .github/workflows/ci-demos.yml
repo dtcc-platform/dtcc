@@ -40,6 +40,7 @@ jobs:
           curl -L -o dtcc-demo-data-cache.zip \
             "https://github.com/dtcc-platform/dtcc-data/releases/download/cache-v1/dtcc-demo-data-cache.zip"
           unzip -q dtcc-demo-data-cache.zip -d ~/.cache/
+          mv ~/.cache/dtcc-data-demo-cache ~/.cache/dtcc-data
           rm dtcc-demo-data-cache.zip
           echo "Cache contents:"
           ls -la ~/.cache/dtcc-data/
@@ -51,6 +52,7 @@ jobs:
           New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.cache"
           Invoke-WebRequest -Uri "https://github.com/dtcc-platform/dtcc-data/releases/download/cache-v1/dtcc-demo-data-cache.zip" -OutFile dtcc-demo-data-cache.zip
           Expand-Archive -Path dtcc-demo-data-cache.zip -DestinationPath "$env:USERPROFILE\.cache"
+          Rename-Item "$env:USERPROFILE\.cache\dtcc-data-demo-cache" "dtcc-data"
           Remove-Item dtcc-demo-data-cache.zip
           Write-Host "Cache contents:"
           Get-ChildItem "$env:USERPROFILE\.cache\dtcc-data"

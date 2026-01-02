@@ -33,8 +33,8 @@ jobs:
           python -m pip install dtcc-pyspade-native
           python -m pip install --no-build-isolation .
 
-      - name: Download cached demo data (Non-Windows)
-        if: matrix.os != 'windows-latest'
+      - name: Download cached demo data (Linux)
+        if: matrix.os == 'ubuntu-latest'
         run: |
           mkdir -p ~/.cache
           curl -L -o dtcc-demo-data-cache.zip \
@@ -45,17 +45,30 @@ jobs:
           echo "Cache contents:"
           ls -la ~/.cache/dtcc-data/
       
+      - name: Download cached demo data (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          mkdir -p ~/Library/Caches
+          curl -L -o dtcc-demo-data-cache.zip \
+            "https://github.com/dtcc-platform/dtcc-data/releases/download/cache-v1/dtcc-demo-data-cache.zip"
+          unzip -q dtcc-demo-data-cache.zip -d ~/Library/Caches/
+          mv ~/Library/Caches/dtcc-data-demo-cache ~/Library/Caches/dtcc-data
+          rm dtcc-demo-data-cache.zip
+          echo "Cache contents:"
+          ls -la ~/Library/Caches/dtcc-data/
+      
       - name: Download cached demo data (Windows)
         if: matrix.os == 'windows-latest'
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.cache"
+          New-Item -ItemType Directory -Force -Path "$env:LOCALAPPDATA\dtcc-data\dtcc-data\Cache"
           Invoke-WebRequest -Uri "https://github.com/dtcc-platform/dtcc-data/releases/download/cache-v1/dtcc-demo-data-cache.zip" -OutFile dtcc-demo-data-cache.zip
-          Expand-Archive -Path dtcc-demo-data-cache.zip -DestinationPath "$env:USERPROFILE\.cache"
-          Rename-Item "$env:USERPROFILE\.cache\dtcc-data-demo-cache" "dtcc-data"
+          Expand-Archive -Path dtcc-demo-data-cache.zip -DestinationPath "$env:TEMP"
+          Copy-Item -Path "$env:TEMP\dtcc-data-demo-cache\*" -Destination "$env:LOCALAPPDATA\dtcc-data\dtcc-data\Cache" -Recurse
           Remove-Item dtcc-demo-data-cache.zip
+          Remove-Item -Recurse "$env:TEMP\dtcc-data-demo-cache"
           Write-Host "Cache contents:"
-          Get-ChildItem "$env:USERPROFILE\.cache\dtcc-data"
+          Get-ChildItem "$env:LOCALAPPDATA\dtcc-data\dtcc-data\Cache"
 
       - name: Run demos on Non-Windows
         if: matrix.os != 'windows-latest'

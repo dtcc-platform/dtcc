@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-version = "0.9.5"
+version = "0.9.6dev"
 name = "dtcc"
 description = "DTCC"
 readme = "README.md"
@@ -22,7 +22,7 @@ classifiers = [
   "License :: OSI Approved :: MIT License",
 ]
 dependencies = [
-    "dtcc-core>=0.9.5",
+    "dtcc-core@git+https://github.com/dtcc-platform/dtcc-core.git@develop", 
     "tqdm>=4.67.1",
 ]
 

@@ -1,0 +1,72 @@
+name: PyPI Integration Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_pypi:
+        description: 'Use TestPyPI instead of PyPI'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  integration-test:
+    name: PyPI Test (${{ matrix.os }}, Python ${{ matrix.python-version }})
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ["3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install packages from PyPI
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install dtcc dtcc-core
+
+      - name: Verify package imports and versions
+        run: |
+          python -c "
+          from importlib.metadata import version, requires
+          import dtcc
+          import dtcc_core
+          print('dtcc imported successfully')
+          print('dtcc-core imported successfully')
+          print(f'dtcc version: {version(\"dtcc\")}')
+          print(f'dtcc-core version: {version(\"dtcc-core\")}')
+          print(f'dtcc requires: {requires(\"dtcc\")}')
+          "
+
+      - name: Run integration tests
+        run: |
+          python -m pip install pytest
+          cd tests && pytest test_init.py -v
+
+  notify:
+    needs: integration-test
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Slack notification on success
+        if: needs.integration-test.result == 'success'
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+            --data '{"text": "PyPI Integration Test: SUCCESS on all platforms"}' \
+            ${{ secrets.SLACK_WEBHOOK_URL_GITHUB }}
+
+      - name: Slack notification on failure
+        if: needs.integration-test.result == 'failure'
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+            --data '{"text": "PyPI Integration Test: FAILURE - check GitHub Actions"}' \
+            ${{ secrets.SLACK_WEBHOOK_URL_DEVELOPMENT }}

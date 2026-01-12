@@ -31,19 +31,17 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install dtcc dtcc-core
 
-      - name: Verify package versions
-        run: |
-          python -c "import dtcc; print(f'dtcc version: {dtcc.__version__}')"
-          python -c "import dtcc_core; print(f'dtcc-core version: {dtcc_core.__version__}')"
-
-      - name: Check dependency consistency
+      - name: Verify package imports and versions
         run: |
           python -c "
-          import pkg_resources
-          dtcc = pkg_resources.get_distribution('dtcc')
-          dtcc_core = pkg_resources.get_distribution('dtcc-core')
-          print(f'dtcc {dtcc.version} requires: {[str(r) for r in dtcc.requires()]}')
-          print(f'dtcc-core {dtcc_core.version} installed')
+          from importlib.metadata import version, requires
+          import dtcc
+          import dtcc_core
+          print('dtcc imported successfully')
+          print('dtcc-core imported successfully')
+          print(f'dtcc version: {version(\"dtcc\")}')
+          print(f'dtcc-core version: {version(\"dtcc-core\")}')
+          print(f'dtcc requires: {requires(\"dtcc\")}')
           "
 
       - name: Run integration tests

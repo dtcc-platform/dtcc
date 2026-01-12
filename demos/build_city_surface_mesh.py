@@ -13,7 +13,10 @@ city.download_pointcloud(bounds=bounds, filter_on_z_bounds=True)
 city.download_footprints(bounds=bounds)
 
 city.building_heights_from_pointcloud()
-surface_mesh = city.build_surface_mesh()
+
+lod = [dtcc.GeometryType.LOD1 for _ in city.buildings]
+surface_mesh = city.build_surface_mesh(lod=lod,
+                                       treat_lod0_as_holes= False)
 
 # View mesh
 surface_mesh.view()

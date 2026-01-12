@@ -34,5 +34,4 @@ for b in building_meshes:
 
 merged_mesh = dtcc.builder.meshing.merge_meshes(building_meshes)
 
-# merged_mesh.save("merged_lod1_buildings.obj")
 merged_mesh.view()

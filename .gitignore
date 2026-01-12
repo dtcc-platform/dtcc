@@ -11,10 +11,17 @@ __pycache__
 *.json
 *.so
 *.o
+*.vtu
+*.vtk
+*.xdmf
+*.h5
+*.face
+*.node
 tests/cpp/bin/
 scratch/
 
 demos/data/
+demos/tiled_city_meshes/
 /data/*
 !/data/download-demo*
 dtcc-demo-data/

@@ -4,6 +4,7 @@ from dtcc_core import common as common
 from dtcc_core import model as model
 from dtcc_core import io as io
 from dtcc_core import builder as builder
+from dtcc_core import datasets as datasets
 
 modules = [common, model, io, builder,]
 __all__ = []

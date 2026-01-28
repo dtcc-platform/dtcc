@@ -2,9 +2,11 @@
 
 from dtcc import datasets, Bounds
 
-# Define bounds (a residential area in Helsingborg)
-h = 2000.0
-bounds = Bounds(319891, 6399790, 319891 + h, 6399790 + h)
+# Define bounds (central Gothenburg)
+x0 = 319995.962899
+y0 = 6399009.716755
+L = 400.0
+bounds = Bounds(x0 - L / 2, y0 - L / 2, x0 + L / 2, y0 + L / 2)
 
 # Print information about all available datasets
 datasets.info()
@@ -23,3 +25,8 @@ terrain.view()
 buildings = datasets.buildings(bounds=bounds)
 print(buildings[0])
 buildings[0].view()
+
+# Get volume mesh dataset
+volume_mesh = datasets.volumemesh(bounds=bounds)
+print(volume_mesh)
+volume_mesh.view()
